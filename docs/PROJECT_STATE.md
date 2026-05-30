@@ -1,6 +1,6 @@
 # 项目驾驶舱
 
-更新时间：2026-05-30 23:35
+更新时间：2026-05-30 23:55
 
 ## 一句话
 
@@ -156,11 +156,15 @@ apps/lifepilot-miniprogram/data/video-manifest.js
 用户在方向小结补充的一句话会带到下一阶段商户解释
 第二阶段明确为“商家卡”，不是 offer 卡
 商户解释改为一张一张预取，避免一次批量请求慢和 429
+第二阶段商家卡已参考旧 workspace 重做展示结构：上半媒体、下半商家信息、小汪判断和留意事项分层展示
+商家卡 normalizer 已补 displayTags、coverThumbUrl、storeFacts、issueLines 等旧版展示字段
 ```
 
 最近提交：
 
 ```text
+106099a fix: improve merchant card presentation
+4c73e7f docs: sync openclaw bridge phase
 b3c2adb feat: enrich direction summary feedback
 23a24eb fix: move mute control outside video
 62933a6 fix: make video overlay controls tappable
@@ -227,8 +231,8 @@ OpenClaw trace / 长连接 / 流式过程展示后续可以用 web 控制台或�
 ## 当前已知问题
 
 ```text
-1. 视觉还没有完全恢复旧版质感，需要继续对齐旧小程序。
-2. 方向小结页刚补完，需要在开发者工具里人工测一轮。
+1. 商家卡展示刚参考旧版重做，需要在微信开发者工具里人工测一轮布局、滚动、视频和按钮。
+2. 方向小结页刚补完，也需要在开发者工具里人工测一轮。
 3. 商户卡解释仍依赖 Ark/Doubao 单卡预取，首张卡可能有等待。
 4. Evermind 通用长期记忆不应该每张卡都请求，后续要在 session 启动时读一次并缓存。
 5. 问小汪、汪记本、OpenClaw tool trace 展示尚未迁入新小程序。
@@ -240,8 +244,8 @@ OpenClaw trace / 长连接 / 流式过程展示后续可以用 web 控制台或�
 优先级从高到低：
 
 ```text
-1. 在微信开发者工具里完整跑一轮饭点流程，重点检查方向小结反馈、新静音按钮、商家卡预取。
-2. 继续对齐旧版方向卡/商家卡视觉，减少新前端“工程味”。
+1. 在微信开发者工具里完整跑一轮饭点流程，重点检查方向小结反馈、新静音按钮、商家卡新版布局和商家卡预取。
+2. 根据实机截图继续微调商家卡：信息区高度、长文滚动、标签密度、底部按钮间距。
 3. 把 session 启动时的长期记忆读取做成一次性缓存，避免 Evermind 每轮请求拖慢。
 4. 给商户饭后反馈接入 merchant weight：好吃加权，难吃降权，环境差等字段进入商户历史标签。
 5. 继续迁移/设计“问小汪”入口，但第一版仍可隐藏。

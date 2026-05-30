@@ -1,6 +1,6 @@
 # 新会话交接
 
-更新时间：2026-05-30 23:35
+更新时间：2026-05-30 23:55
 
 ## 请先理解
 
@@ -38,7 +38,7 @@ apps/lifepilot-miniprogram/pages/meal/meal.wxss
 
 ## 最近刚做完
 
-最近几次修复集中在视频和方向小结：
+最近几次修复集中在视频、方向小结和商家卡视觉：
 
 ```text
 方向卡视频改为 COS manifest，恢复旧版有声视频源
@@ -48,6 +48,9 @@ apps/lifepilot-miniprogram/pages/meal/meal.wxss
 方向小结页展示用户保留/排除的方向
 方向小结页增加“差不多 / 补充一句”
 用户补充会传给下一阶段商户解释 prompt
+商家卡参考旧 workspace 第二阶段重做了一轮展示
+商家卡现在是上半媒体、下半商家信息、标签、推荐吃法、小汪判断、留意事项分层展示
+补齐了商家卡 normalizer 字段：displayTags、coverThumbUrl、storeFacts、issueLines
 ```
 
 阶段表也已同步：`docs/MIGRATION_PHASES.json` 里的 P6 是 `in_progress`，不是空白待办。OpenClaw memory bridge、dreaming skill 设计和 Evermind 读写已经有最小实现，后续主要补原生消息渠道、trace 展示和问小汪入口。
@@ -55,6 +58,8 @@ apps/lifepilot-miniprogram/pages/meal/meal.wxss
 最新关键提交：
 
 ```text
+106099a fix: improve merchant card presentation
+4c73e7f docs: sync openclaw bridge phase
 b3c2adb feat: enrich direction summary feedback
 23a24eb fix: move mute control outside video
 01567f0 fix: restore direction video sound controls
@@ -80,9 +85,9 @@ b3c2adb feat: enrich direction summary feedback
 建议下一轮从这里开始：
 
 ```text
-1. 让用户在微信开发者工具里测试刚刚的小结页和静音按钮。
-2. 如果小结页视觉不满意，继续对齐旧小程序样式。
-3. 如果主链路可用，下一步做商家卡视觉和商家解释体验。
+1. 让用户在微信开发者工具里测试刚刚的小结页、静音按钮和新版商家卡。
+2. 重点看商家卡：媒体高度、信息区滚动、标签密度、小汪判断块、底部“就这家”按钮是否顺眼。
+3. 如果商家卡还有工程感，继续对齐旧小程序第二阶段样式，但保持新代码模块化。
 4. 接着做 session 启动时一次性读取长期记忆并缓存，避免每张商家卡请求 Evermind。
 ```
 
@@ -103,6 +108,12 @@ b3c2adb feat: enrich direction summary feedback
    小程序默认请求 http://127.0.0.1:4331。
 
 5. 商家卡 AI 解释已改为单卡预取，不要再默认一次请求 10 张。
+
+6. 商家卡刚改成专门结构，涉及：
+   apps/lifepilot-miniprogram/pages/meal/meal.wxml
+   apps/lifepilot-miniprogram/pages/meal/meal.wxss
+   apps/lifepilot-miniprogram/utils/card-normalizer.js
+   继续改视觉时优先在这三个文件里小步调整。
 ```
 
 ## 开始前命令
