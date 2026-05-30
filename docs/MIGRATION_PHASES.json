@@ -1,0 +1,103 @@
+{
+  "schema_version": "lifepilot.migration_phases.v1",
+  "updated_at": "2026-05-30",
+  "source_workspace": "/Users/mona/.openclaw/workspace",
+  "backup_workspace": "/Users/mona/.openclaw/backups/lifepilot-workspace-20260530-120256",
+  "target_workspace": "/Users/mona/Documents/lifepilot",
+  "old_runtime_port": 4321,
+  "new_runtime_port": 4331,
+  "principles": [
+    "Do not mutate the old workspace during rebuild except for explicit OpenClaw runtime updates.",
+    "Keep product frontend/backend outside ~/.openclaw/workspace.",
+    "Product backend owns authoritative session and memory state.",
+    "OpenClaw accesses product state through backend APIs.",
+    "Migrate by runnable slices, not by broad rewrites."
+  ],
+  "phases": [
+    {
+      "id": "P0",
+      "name": "backup_and_cockpit",
+      "status": "completed",
+      "goal": "Freeze the old workspace, create the new repo, and write cockpit/contracts.",
+      "completion": [
+        "Full backup exists.",
+        "Old workspace has git checkpoint.",
+        "New repo is initialized.",
+        "Project state and contracts exist."
+      ]
+    },
+    {
+      "id": "P1",
+      "name": "minimal_backend_session_shell",
+      "status": "pending",
+      "goal": "Create a runnable backend that supports health, food directions, session start/swipe/view.",
+      "routes": [
+        "GET /api/health",
+        "GET /api/food-directions",
+        "POST /api/session/start",
+        "POST /api/session/swipe",
+        "GET /api/session/:id"
+      ],
+      "validation": [
+        "node --check server/src/index.mjs",
+        "node tests/smoke-session.mjs"
+      ]
+    },
+    {
+      "id": "P2",
+      "name": "ark_direction_summary",
+      "status": "pending",
+      "goal": "Add Ark/Doubao provider and migrate direction summary to low-latency API calls with local fallback.",
+      "routes": [
+        "POST /api/session/advance"
+      ],
+      "validation": [
+        "node tests/smoke-session.mjs",
+        "record provider, latency, prompt_tokens, completion_tokens"
+      ]
+    },
+    {
+      "id": "P3",
+      "name": "offer_cards_and_finalize",
+      "status": "pending",
+      "goal": "Migrate offer card generation and final recommendation while preserving API contracts.",
+      "routes": [
+        "POST /api/food-offers",
+        "POST /api/session/finalize"
+      ]
+    },
+    {
+      "id": "P4",
+      "name": "memory_authority",
+      "status": "pending",
+      "goal": "Migrate memory CRUD and candidate confirmation as backend-owned authoritative state.",
+      "routes": [
+        "GET /api/memory/ledger",
+        "GET /api/memory/preferences",
+        "POST /api/memory/preferences",
+        "PATCH /api/memory/preferences/:id",
+        "DELETE /api/memory/preferences/:id",
+        "POST /api/memory/candidates/:id/confirm",
+        "POST /api/memory/candidates/:id/reject"
+      ]
+    },
+    {
+      "id": "P5",
+      "name": "openclaw_bridge",
+      "status": "pending",
+      "goal": "Expose explicit APIs for OpenClaw skills to read context and submit job results or memory candidates.",
+      "routes": [
+        "GET /api/openclaw/context",
+        "GET /api/openclaw/session/:id",
+        "POST /api/openclaw/memory-candidates",
+        "POST /api/openclaw/jobs/:id/result"
+      ]
+    },
+    {
+      "id": "P6",
+      "name": "miniapp_modularization",
+      "status": "pending",
+      "goal": "Move mini program code from one large page file into API, asset, session-flow, card-swipe, Xiaowang, and memory modules."
+    }
+  ]
+}
