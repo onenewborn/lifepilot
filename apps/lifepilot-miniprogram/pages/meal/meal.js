@@ -195,8 +195,10 @@ Page({
           locationText: `${Number(res.latitude).toFixed(5)}, ${Number(res.longitude).toFixed(5)}`
         });
       },
-      fail: () => {
-        this.setData({ locationText: "未获取到位置，会先用默认位置" });
+      fail: (error) => {
+        console.warn("[LifePilot] getLocation failed", error);
+        const message = error && error.errMsg ? error.errMsg.replace(/^getLocation:fail\s*/i, "") : "未获取到位置";
+        this.setData({ locationText: `${message}，会先用默认位置` });
       }
     });
   },

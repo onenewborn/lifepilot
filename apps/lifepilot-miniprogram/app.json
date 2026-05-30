@@ -10,5 +10,13 @@
   },
   "style": "v2",
   "lazyCodeLoading": "requiredComponents",
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于按当前位置筛选附近商家、估算距离和路线。"
+    }
+  },
   "sitemapLocation": "sitemap.json"
 }
