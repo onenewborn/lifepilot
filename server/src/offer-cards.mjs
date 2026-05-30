@@ -258,7 +258,7 @@ function normalizeOfferCard(offer, merchant, score, explanation, context = {}) {
   const distanceKm = distanceKmFromMerchant(merchant);
   const userFeedback = userFeedbackForOffer(offer, merchant, context);
   return {
-    card_id: offer.offer_id,
+    card_id: offer.merchant_id,
     offer_id: offer.offer_id,
     merchant_id: offer.merchant_id,
     merchant_name: cleanMerchantName(merchant.name),
@@ -288,6 +288,7 @@ function normalizeOfferCard(offer, merchant, score, explanation, context = {}) {
       temperature: offer.temperature,
       satisfaction_level: offer.satisfaction_level,
       signature_items: offer.signature_items || [],
+      recommended_offer_title: offer.title || "",
       environment: merchant.environment || {},
       environment_note: offer.environment_note,
       decision_tags: offer.decision_tags || [],
@@ -305,6 +306,43 @@ function normalizeOfferCard(offer, merchant, score, explanation, context = {}) {
     explanation,
     synthetic_only: true,
   };
+}
+
+function collapseToMerchantCards(cards) {
+  const byMerchant = new Map();
+  for (const card of cards) {
+    const existing = byMerchant.get(card.merchant_id);
+    if (!existing) {
+      byMerchant.set(card.merchant_id, {
+        ...card,
+        alternative_offers: [],
+        facts: {
+          ...card.facts,
+          recommended_items: [card.title].filter(Boolean),
+        },
+      });
+      continue;
+    }
+    const alternatives = [
+      ...(existing.alternative_offers || []),
+      {
+        offer_id: card.offer_id,
+        title: card.title,
+        price_per_person: card.facts?.price_per_person || null,
+        tags: card.tags || [],
+        score: card.score,
+      },
+    ].sort((left, right) => Number(right.score || 0) - Number(left.score || 0)).slice(0, 4);
+    existing.alternative_offers = alternatives;
+    existing.facts = {
+      ...existing.facts,
+      recommended_items: [
+        existing.title,
+        ...alternatives.map((item) => item.title),
+      ].filter(Boolean).slice(0, 5),
+    };
+  }
+  return [...byMerchant.values()];
 }
 
 export async function buildFoodOffers({session = {}, body = {}, limit = DEFAULT_OFFER_LIMIT} = {}) {
@@ -336,15 +374,18 @@ export async function buildFoodOffers({session = {}, body = {}, limit = DEFAULT_
     if (right.score !== left.score) return right.score - left.score;
     return Number(left.facts.price_per_person || 0) - Number(right.facts.price_per_person || 0);
   });
-  let topCards = cards.slice(0, Number(limit || DEFAULT_OFFER_LIMIT));
+  const merchantCards = collapseToMerchantCards(cards);
+  let topCards = merchantCards.slice(0, Number(limit || DEFAULT_OFFER_LIMIT));
   const aiExplanations = await maybeApplyAiExplanations(topCards, session, body, directionContext);
   topCards = aiExplanations.cards;
   return {
     cards: topCards,
-    candidate_count: cards.length,
+    candidate_count: merchantCards.length,
+    raw_offer_count: cards.length,
     ai_explanations: aiExplanations.meta,
     offer_payload_meta: {
-      card_grain: "offer",
+      card_grain: "merchant",
+      recommended_offer_policy: "one_best_offer_per_merchant",
       limit: Number(limit || DEFAULT_OFFER_LIMIT),
       kept_direction_ids: [...context.keptDirections],
       disliked_direction_ids: [...context.dislikedDirections],

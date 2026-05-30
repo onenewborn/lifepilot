@@ -110,7 +110,7 @@
 
   <view wx:elif="{{stage === 'direction' || stage === 'offer'}}" class="flow">
     <view class="session-strip">
-      <text>{{stage === 'direction' ? '方向卡' : '商户卡'}}</text>
+      <text>{{stage === 'direction' ? '方向卡' : '商家卡'}}</text>
       <text>{{index + 1}} / {{cards.length}}</text>
     </view>
 
@@ -168,6 +168,10 @@
 
           <view wx:if="{{currentCard.cardType === 'offer'}}" class="offer-detail">
             <view wx:for="{{currentCard.facts}}" wx:key="*this" class="fact-line">{{item}}</view>
+            <view wx:if="{{currentCard.recommendedItems.length}}" class="reason-block">
+              <view class="mini-title">这家可以这样吃</view>
+              <view wx:for="{{currentCard.recommendedItems}}" wx:key="*this" class="reason-line">{{item}}</view>
+            </view>
             <view wx:if="{{currentCard.matched.length}}" class="reason-block">
               <view class="mini-title">小汪觉得适合</view>
               <view wx:for="{{currentCard.matched}}" wx:key="*this" class="reason-line">{{item}}</view>

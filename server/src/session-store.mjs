@@ -229,7 +229,7 @@ function findCardForEvent(session, body) {
   const offerId = raw.offer_id || raw.offerId;
   const merchantId = raw.merchant_id || raw.merchantId;
   return (session.current_cards || []).find((card) => (
-    (cardId && (card.card_id === cardId || card.offer_id === cardId || card.direction_id === cardId))
+    (cardId && (card.card_id === cardId || card.offer_id === cardId || card.merchant_id === cardId || card.direction_id === cardId))
     || (directionId && card.direction_id === directionId)
     || (offerId && card.offer_id === offerId)
     || (merchantId && card.merchant_id === merchantId)

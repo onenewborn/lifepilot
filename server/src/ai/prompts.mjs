@@ -212,6 +212,7 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     JSON.stringify({
       cards: [{
         offer_id: "",
+        merchant_id: "",
         matched: [],
         watchouts: [],
         conflicts: [],
@@ -228,8 +229,10 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     `记忆上下文：${JSON.stringify(compactMemoryContext(memoryContext || {}), null, 2)}`,
     `商家卡事实：${JSON.stringify(cards.map((card) => ({
       offer_id: card.offer_id,
+      merchant_id: card.merchant_id,
       merchant_name: card.merchant_name,
-      title: card.title,
+      recommended_item: card.title,
+      alternative_offers: card.alternative_offers || [],
       matched_directions: card.matched_directions || [],
       tags: card.tags,
       facts: card.facts,

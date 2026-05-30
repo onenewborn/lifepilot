@@ -245,9 +245,12 @@ try {
   assert.equal(offerAdvance.payload.session.next_step, "swipe_food_offers");
   assert.ok(offerAdvance.payload.session.current_cards.length > 0);
   assert.ok(offerAdvance.payload.session.current_cards.length <= 10);
+  assert.equal(offerAdvance.payload.offer_payload.offer_payload_meta.card_grain, "merchant");
+  assert.equal(new Set(offerAdvance.payload.session.current_cards.map((card) => card.merchant_id)).size, offerAdvance.payload.session.current_cards.length);
   const offerCard = offerAdvance.payload.session.current_cards[0];
   assert.ok(offerCard.offer_id);
   assert.ok(offerCard.merchant_id);
+  assert.equal(offerCard.card_id, offerCard.merchant_id);
   assert.ok(offerCard.facts.distance_text.endsWith("km"));
   assert.equal(Object.hasOwn(offerCard.facts, "subway_walk_min"), false);
   assert.ok(offerCard.facts.address);
