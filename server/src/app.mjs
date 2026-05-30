@@ -3,10 +3,10 @@ import { buildFoodDirectionCards, filterFoodDirectionCards } from "./cards.mjs";
 import { config } from "./config.mjs";
 import { buildDirectionSummary } from "./direction-summary.mjs";
 import { parseEntry } from "./entry-parser.mjs";
-import { buildFoodOffers, selectFinalDecision } from "./offer-cards.mjs";
+import { buildFoodOffers, explainOneOfferCard, selectFinalDecision } from "./offer-cards.mjs";
 import { queuePayload, routePayload, weatherPayload } from "./context-providers.mjs";
 import { fail, ok, readBody } from "./http.mjs";
-import { appendMemoryCandidatesToDayContext, appendSwipeEvent, applyDirectionSummary, applyFinalDecision, applyOfferCards, createSession, getDayContext, getSession, normalizeSwipeEvent, setSessionMemoryContext } from "./session-store.mjs";
+import { appendMemoryCandidatesToDayContext, appendSwipeEvent, applyDirectionSummary, applyFinalDecision, applyOfferCards, createSession, getDayContext, getSession, normalizeSwipeEvent, setSessionMemoryContext, updateCurrentOfferCard } from "./session-store.mjs";
 import {
   confirmMemoryCandidate,
   createConfirmedPreference,
@@ -215,6 +215,38 @@ async function handleSessionAdvance(req, res) {
       },
     },
   });
+}
+
+async function handleSessionOfferExplanation(req, res) {
+  const body = await readBody(req);
+  const session = await getSession(body.session_id || body.sessionId);
+  if (!session) {
+    fail(res, 404, "session_not_found", "Session not found.");
+    return;
+  }
+  if (session.stage !== "offer") {
+    fail(res, 409, "invalid_session_stage", "Offer explanation can only run in offer stage.", {stage: session.stage});
+    return;
+  }
+  const cardId = body.card_id || body.cardId;
+  const offerId = body.offer_id || body.offerId;
+  const card = (session.current_cards || []).find((item) => (
+    (offerId && item.offer_id === offerId) || (cardId && (item.card_id === cardId || item.offer_id === cardId))
+  ));
+  if (!card) {
+    fail(res, 404, "card_not_found", "Card not found in current session stack.");
+    return;
+  }
+  const payload = await explainOneOfferCard({
+    session,
+    card,
+    body: {
+      ...body,
+      offer_ai_timeout_ms: body.offer_ai_timeout_ms || body.offerAiTimeoutMs || 7000,
+    },
+  });
+  await updateCurrentOfferCard(session, payload.card);
+  ok(res, {card: payload.card, meta: payload.meta});
 }
 
 async function handleFoodOffers(req, res) {
@@ -566,6 +598,10 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/session/finalize") {
       await handleSessionFinalize(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/session/offer-explanation") {
+      await handleSessionOfferExplanation(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/food-offers") {

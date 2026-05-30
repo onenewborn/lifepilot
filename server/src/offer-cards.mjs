@@ -441,6 +441,29 @@ async function requestAiExplanationBatch(cards, session, body, directionContext,
   };
 }
 
+async function requestAiExplanationForCards(cards, session, body, directionContext, memoryContext, meta) {
+  const explanations = new Map();
+  for (const card of cards) {
+    const result = await requestAiExplanationBatch([card], session, body, directionContext, memoryContext);
+    meta.attempts.push({
+      card_count: 1,
+      offer_id: card.offer_id,
+      depth: 0,
+      ok: result.ok,
+      reason: result.reason,
+      status: result.status,
+    });
+    if (result.usage) meta.usage.push(result.usage);
+    if (!result.ok) {
+      meta.fallback_reasons.push(result.status === 429 ? "provider_429" : result.reason);
+    }
+    for (const [offerId, explanation] of (result.explanations || new Map()).entries()) {
+      explanations.set(offerId, explanation);
+    }
+  }
+  return explanations;
+}
+
 function shouldSplitAiBatch(result) {
   return result.status === 429 || ["provider_timeout", "provider_error", "invalid_ai_json", "partial_ai_json"].includes(result.reason);
 }
@@ -513,7 +536,11 @@ async function maybeApplyAiExplanations(cards, session, body, directionContext =
     usage: [],
     max_attempts: Number(body.offer_ai_max_attempts || body.offerAiMaxAttempts || 0),
   };
-  const explanations = await explainCardsWithSplitFallback(cards, session, body, directionContext, memoryContext, splitMeta);
+  const perCardCount = Number(body.offer_ai_per_card_count || body.offerAiPerCardCount || 0);
+  const explanationTargets = perCardCount > 0 ? cards.slice(0, perCardCount) : cards;
+  const explanations = perCardCount > 0
+    ? await requestAiExplanationForCards(explanationTargets, session, body, directionContext, memoryContext, splitMeta)
+    : await explainCardsWithSplitFallback(cards, session, body, directionContext, memoryContext, splitMeta);
   if (!explanations.size) {
     return {
       cards,
@@ -552,6 +579,7 @@ async function maybeApplyAiExplanations(cards, session, body, directionContext =
       mode: "ark",
       fallback_used: explainedCount < cards.length,
       fallback_reason: explainedCount < cards.length ? "partial_ai_explanations" : null,
+      strategy: perCardCount > 0 ? "per_card" : "batch",
       total_ms: Date.now() - startedAt,
       explained_count: explainedCount,
       requested_count: cards.length,
@@ -563,6 +591,57 @@ async function maybeApplyAiExplanations(cards, session, body, directionContext =
         policy: memoryContext.policy || "only_active_confirmed_preferences_are_recommendation_context",
       },
       usage: splitMeta.usage,
+    },
+  };
+}
+
+export async function explainOneOfferCard({session = {}, card = {}, body = {}, directionContext = null} = {}) {
+  const keptDirections = keptDirectionIds(session, body);
+  const dislikedDirections = dislikedDirectionIds(session, body);
+  const directions = await readDirections();
+  const resolvedDirectionContext = directionContext || {
+    kept: [...keptDirections].map((id) => compactDirection(directions.get(id) || {direction_id: id})),
+    disliked: [...dislikedDirections].map((id) => compactDirection(directions.get(id) || {direction_id: id})),
+  };
+  const memoryContext = body.memory_context || body.memoryContext || session.memory_context || {
+    confirmed_preferences: [],
+    preference_count: 0,
+    evermind_weak_memories: [],
+    evermind_memory_count: 0,
+  };
+  const meta = {attempts: [], fallback_reasons: [], usage: []};
+  const explanations = await requestAiExplanationForCards([card], session, body, resolvedDirectionContext, memoryContext, meta);
+  const explanation = explanations.get(card.offer_id);
+  if (!explanation) {
+    return {
+      card,
+      meta: {
+        mode: "local_fallback",
+        fallback_used: true,
+        fallback_reason: meta.fallback_reasons[0] || "invalid_ai_json",
+        attempts: meta.attempts,
+      },
+    };
+  }
+  return {
+    card: {
+      ...card,
+      explanation: {
+        matched: explanation.matched.length ? explanation.matched : card.explanation.matched,
+        watchouts: explanation.watchouts,
+        conflicts: explanation.conflicts,
+        unknown: card.explanation.unknown,
+      },
+      ai_explanation_mode: "ark",
+    },
+    meta: {
+      mode: "ark",
+      fallback_used: false,
+      explained_count: 1,
+      requested_count: 1,
+      strategy: "per_card",
+      attempts: meta.attempts,
+      usage: meta.usage,
     },
   };
 }

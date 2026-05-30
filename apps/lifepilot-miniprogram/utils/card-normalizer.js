@@ -62,7 +62,8 @@ function normalizeOfferCard(card = {}, order = 0) {
     ].filter(Boolean),
     matched: joinTags(matched, 3),
     watchouts: joinTags(watchouts, 2),
-    conflicts: joinTags(conflicts, 2)
+    conflicts: joinTags(conflicts, 2),
+    aiExplanationMode: card.ai_explanation_mode || card.aiExplanationMode || ""
   };
 }
 

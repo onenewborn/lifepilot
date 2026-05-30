@@ -20,8 +20,13 @@ function finalizeSession(data) {
   return request("/api/session/finalize", { data, timeout: 90000 });
 }
 
+function explainOfferCard(data) {
+  return request("/api/session/offer-explanation", { data, timeout: 12000 });
+}
+
 module.exports = {
   advanceSession,
+  explainOfferCard,
   finalizeSession,
   getSession,
   startSession,

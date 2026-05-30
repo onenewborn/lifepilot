@@ -82,6 +82,7 @@ Page({
     this.swipeTimer = null;
     this.videoTimer = null;
     this.isCommittingSwipe = false;
+    this.offerExplanationRequests = {};
     this.currentStartedAt = Date.now();
     this.restoreSession();
   },
@@ -276,7 +277,37 @@ Page({
       videoMuted: this.data.stage === "offer" ? false : this.data.videoMuted
     }, () => {
       this.enableVideoSoon();
+      this.prefetchOfferExplanations();
     });
+  },
+
+  prefetchOfferExplanations() {
+    if (this.data.stage !== "offer" || !this.data.sessionId) return;
+    const upcoming = [this.data.currentCard, this.data.nextCard].filter(Boolean);
+    upcoming.forEach((card) => this.prefetchOfferExplanation(card));
+  },
+
+  async prefetchOfferExplanation(card) {
+    if (!card || card.cardType !== "offer" || card.aiExplanationMode === "ark") return;
+    const key = card.offerId || card.cardId;
+    if (!key || this.offerExplanationRequests[key]) return;
+    this.offerExplanationRequests[key] = true;
+    try {
+      const payload = await sessionApi.explainOfferCard({
+        session_id: this.data.sessionId,
+        offer_id: card.offerId,
+        card_id: card.cardId,
+        offer_ai_timeout_ms: 7000
+      });
+      if (!payload.card) return;
+      const normalized = normalizeOfferCard(payload.card, card.order);
+      const cards = this.data.cards.map((item) => (
+        item.offerId === normalized.offerId ? normalized : item
+      ));
+      this.setData({ cards }, () => this.syncCards());
+    } catch (error) {
+      this.offerExplanationRequests[key] = false;
+    }
   },
 
   enableVideoSoon() {
@@ -437,6 +468,7 @@ Page({
         ai_explanations: true,
         offer_ai_timeout_ms: 7000,
         offer_ai_max_attempts: 1,
+        offer_ai_per_card_count: 1,
         limit: 10
       });
       this.applySession(payload.session);

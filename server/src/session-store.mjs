@@ -304,6 +304,14 @@ export async function applyOfferCards(session, payload) {
   return touchSession(session);
 }
 
+export async function updateCurrentOfferCard(session, card) {
+  if (!session || !card?.offer_id) return session;
+  session.current_cards = (session.current_cards || []).map((item) => (
+    item.offer_id === card.offer_id ? card : item
+  ));
+  return touchSession(session);
+}
+
 export async function applyFinalDecision(session, result) {
   session.stage = "final";
   session.next_step = "done";
