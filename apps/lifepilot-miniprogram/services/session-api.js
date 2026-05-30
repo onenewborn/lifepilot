@@ -25,7 +25,7 @@ function finalizeSession(data) {
 }
 
 function explainOfferCard(data) {
-  return request("/api/session/offer-explanation", { data, timeout: 12000 });
+  return request("/api/session/offer-explanation", { data, timeout: 25000 });
 }
 
 module.exports = {

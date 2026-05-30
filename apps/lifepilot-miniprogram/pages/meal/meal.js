@@ -97,6 +97,7 @@ Page({
     this.videoTimer = null;
     this.isCommittingSwipe = false;
     this.offerExplanationRequests = {};
+    this.offerExplanationAttempts = {};
     this.currentStartedAt = Date.now();
     this.prepareSessionRestore();
     this.autoLocateOnce();
@@ -406,7 +407,7 @@ Page({
 
   prefetchOfferExplanations() {
     if (this.data.stage !== "offer" || !this.data.sessionId) return;
-    const upcoming = [this.data.currentCard, this.data.nextCard].filter(Boolean);
+    const upcoming = this.data.cards.slice(this.data.index, this.data.index + 5).filter(Boolean);
     upcoming.forEach((card) => this.prefetchOfferExplanation(card));
   },
 
@@ -414,20 +415,32 @@ Page({
     if (!card || card.cardType !== "offer" || card.aiExplanationMode === "ark") return;
     const key = card.offerId || card.cardId;
     if (!key || this.offerExplanationRequests[key]) return;
+    const attempts = this.offerExplanationAttempts[key] || 0;
+    if (attempts >= 2) return;
     this.offerExplanationRequests[key] = true;
+    this.offerExplanationAttempts[key] = attempts + 1;
     try {
       const payload = await sessionApi.explainOfferCard({
         session_id: this.data.sessionId,
         offer_id: card.offerId,
         card_id: card.cardId,
-        offer_ai_timeout_ms: 7000
+        offer_ai_timeout_ms: 15000
       });
       if (!payload.card) return;
       const normalized = normalizeOfferCard(payload.card, card.order);
       const cards = this.data.cards.map((item) => (
         item.offerId === normalized.offerId ? normalized : item
       ));
-      this.setData({ cards }, () => this.syncCards());
+      if (normalized.aiExplanationMode !== "ark") {
+        this.offerExplanationRequests[key] = false;
+      }
+      const currentCard = cards[this.data.index] || null;
+      const nextCard = cards[this.data.index + 1] || null;
+      this.setData({
+        cards,
+        currentCard,
+        nextCard
+      }, () => this.prefetchOfferExplanations());
     } catch (error) {
       this.offerExplanationRequests[key] = false;
     }
