@@ -1,18 +1,18 @@
 # LifePilot
 
-LifePilot is the product workspace for the "饭点定了" mini program and backend.
+LifePilot 是“饭点定了”小程序和产品后端的新工程目录。
 
-This repository is intentionally separate from the OpenClaw runtime workspace.
+这个仓库刻意从 OpenClaw runtime workspace 中独立出来。产品工程不再长期放在 `~/.openclaw/workspace` 里，避免前端、后端、数据、素材和旧实验污染 agent 工作上下文。
 
-## Runtime Boundary
+## Runtime 边界
 
-- This repo owns product runtime: mini program, backend API, session state, memory CRUD, recommendation rules, data contracts, and asset contracts.
-- OpenClaw owns agent runtime: `AGENTS.md`, `SOUL.md`, skills, background jobs, content generation, memory reflection, and interactive Xiaowang tasks.
-- OpenClaw reads and writes product context through backend APIs. It should not directly mutate product database files.
+- 本仓库负责产品 runtime：小程序、后端 API、饭点 session、memory CRUD、推荐规则、数据合同和资产合同。
+- OpenClaw 负责 agent runtime：`AGENTS.md`、`SOUL.md`、skills、后台任务、内容生成、记忆复盘和小汪互动。
+- OpenClaw 通过产品后端 API 读取和提交产品上下文，不直接修改产品数据库文件。
 
-## Current Status
+## 当前状态
 
-Start every work session by reading:
+每次继续工作前，先读：
 
 - [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md)
 - [docs/MIGRATION_PHASES.json](docs/MIGRATION_PHASES.json)
@@ -25,3 +25,22 @@ Start every work session by reading:
 - [docs/contracts/assets.md](docs/contracts/assets.md)
 - [docs/contracts/legacy-api-map.md](docs/contracts/legacy-api-map.md)
 - [docs/contracts/openclaw-jobs.md](docs/contracts/openclaw-jobs.md)
+
+## 当前可运行能力
+
+P1 最小后端已经完成：
+
+```text
+GET  /api/health
+GET  /api/food-directions
+POST /api/session/start
+POST /api/session/swipe
+GET  /api/session/:session_id
+```
+
+运行检查：
+
+```bash
+npm run check
+npm run smoke:session
+```

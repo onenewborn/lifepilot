@@ -1,16 +1,16 @@
-# Asset Contract
+# 资产合同
 
-Updated: 2026-05-30
+更新时间：2026-05-30
 
-## Current Runtime Fact
+## 当前运行事实
 
-Mini program assets are served from Tencent Cloud COS:
+小程序生产资产走腾讯云 COS：
 
 ```text
 https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com
 ```
 
-The source data should continue storing asset paths as stable relative paths:
+源数据继续存稳定的相对路径：
 
 ```text
 /assets/food-directions/hot_soup_noodles.jpg
@@ -18,17 +18,17 @@ The source data should continue storing asset paths as stable relative paths:
 /assets/offer-media/menya-inoichi/visit_final.mp4
 ```
 
-The mini program resolves those paths to COS at runtime.
+小程序运行时把这些路径解析到 COS。
 
-## Owner
+## 归属
 
-The product repo owns asset metadata and path contracts.
+产品仓库负责资产元数据和路径合同。
 
-COS owns production delivery bytes.
+COS 负责生产环境字节分发。
 
-OpenClaw content skills may generate draft assets, but promotion to runtime assets must be explicit.
+OpenClaw 内容 skills 可以生成草稿资产，但草稿进入 runtime assets 必须经过显式 promotion。
 
-## Asset Classes
+## 资产类型
 
 ```text
 direction_cover
@@ -40,15 +40,14 @@ mascot
 generated_draft
 ```
 
-## Rules
+## 规则
 
-- Data files store relative `/assets/...` paths where possible.
-- Mini program resolves relative paths against COS.
-- Local H5/dev may resolve relative paths against local backend static server.
-- Generated drafts do not become runtime assets until promoted.
-- Runtime asset names should be stable and cache-aware.
+- 数据文件优先存 `/assets/...` 相对路径。
+- 小程序把相对路径解析到 COS。
+- 本地 H5/dev 可以把相对路径解析到本地后端静态服务。
+- 生成草稿不会自动变成运行时资产。
+- 运行时资产命名要稳定，并考虑缓存刷新。
 
-## Migration Requirement
+## 迁移要求
 
-Do not break existing `/assets/...` paths during rebuild.
-
+重建过程中不能破坏现有 `/assets/...` 路径。

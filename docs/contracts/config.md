@@ -1,8 +1,8 @@
-# Config Contract
+# 配置合同
 
-Updated: 2026-05-30
+更新时间：2026-05-30
 
-## Backend Runtime
+## 后端运行配置
 
 ```text
 HOST=127.0.0.1
@@ -10,29 +10,29 @@ PORT=4331
 NODE_ENV=development
 ```
 
-Old backend default:
+旧后端默认端口：
 
 ```text
 PORT=4321
 ```
 
-New backend should use `4331` during migration to avoid disrupting the old mini program flow.
+迁移期间新后端使用 `4331`，避免打扰旧小程序流程。
 
-## P1 Dual-Run Verification
+## P1 双跑验证
 
-The existing mini program does not automatically call the new backend. During P1 verification, point the mini program to the new backend by setting `getApp().globalData.apiBaseUrl` or temporarily editing the mini program config to:
+现有小程序不会自动调用新后端。P1 验证时，需要通过 `getApp().globalData.apiBaseUrl` 或临时修改小程序配置，把 API base 指到：
 
 ```text
 http://127.0.0.1:4331
 ```
 
-Old backend remains available at:
+旧后端继续保留在：
 
 ```text
 http://127.0.0.1:4321
 ```
 
-If a smoke test appears to pass, confirm the response contains the new backend marker from `GET /api/health` so tests are not accidentally hitting the old service.
+如果 smoke test 看起来通过，必须确认 `/api/health` 响应里有新后端 marker，避免误测到旧服务。
 
 ## Realtime AI
 
@@ -46,7 +46,7 @@ ARK_MAX_TOKENS=256
 ARK_TEMPERATURE=0.2
 ```
 
-Provider values:
+Provider 可选值：
 
 ```text
 ark
@@ -54,7 +54,7 @@ local
 openclaw
 ```
 
-P1 can run without `ARK_API_KEY`; AI routes must use local fallback when provider is unavailable.
+P1 不依赖 `ARK_API_KEY`。如果 provider 不可用，AI 路由必须走本地 fallback。
 
 ## OpenClaw Bridge
 
@@ -63,30 +63,30 @@ OPENCLAW_API_BASE=http://127.0.0.1:4331
 OPENCLAW_JOB_SHARED_SECRET=
 ```
 
-P5 will define authentication and job submission in more detail.
+P5 再细化认证和 job 提交流程。
 
-## Asset Delivery
+## 资产分发
 
-Mini program COS base:
+小程序 COS base：
 
 ```text
 LIFEPILOT_ASSET_BASE_URL=https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com
 ```
 
-Local fallback:
+本地 fallback：
 
 ```text
 http://127.0.0.1:4331/assets
 ```
 
-## Fallback Triggers
+## Fallback 触发条件
 
-Use deterministic fallback when:
+以下情况使用确定性 fallback：
 
-- provider env is missing
-- provider request times out
-- provider returns non-2xx
-- provider returns invalid JSON for a JSON contract task
-- provider output fails normalization
+- provider 环境变量缺失
+- provider 请求超时
+- provider 返回非 2xx
+- JSON 合同任务中 provider 返回无效 JSON
+- provider 输出无法通过 normalize
 
-Fallback should be visible in response timing/meta, but should not break the main card flow.
+Fallback 要体现在响应 timing/meta 中，但不能打断主卡流。

@@ -67,8 +67,7 @@ function findCardForEvent(session, body) {
 
 function normalizeSwipeAction(action) {
   const value = String(action || "").trim();
-  if (["like", "super_like"].includes(value)) return "keep";
-  if (["keep", "dislike", "skip"].includes(value)) return value;
+  if (["keep", "dislike"].includes(value)) return value;
   return "";
 }
 

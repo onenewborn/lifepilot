@@ -7,33 +7,33 @@
   "old_runtime_port": 4321,
   "new_runtime_port": 4331,
   "principles": [
-    "Do not mutate the old workspace during rebuild except for explicit OpenClaw runtime updates.",
-    "Keep product frontend/backend outside ~/.openclaw/workspace.",
-    "Product backend owns authoritative session and memory state.",
-    "OpenClaw accesses product state through backend APIs.",
-    "Migrate by runnable slices, not by broad rewrites."
+    "重建过程中不要修改旧 workspace，除非是明确的 OpenClaw runtime 更新。",
+    "产品前端和后端保持在 ~/.openclaw/workspace 之外。",
+    "产品后端拥有权威 session 和 memory 状态。",
+    "OpenClaw 通过产品后端 API 访问产品状态。",
+    "按可运行切片迁移，不做一次性大重写。"
   ],
   "phases": [
     {
       "id": "P0",
       "name": "backup_and_cockpit",
       "status": "completed",
-      "goal": "Freeze the old workspace, create the new repo, and write cockpit/contracts.",
+      "goal": "冻结旧 workspace，创建新仓库，并写入驾驶舱和合同文件。",
       "completion": [
-        "Full backup exists.",
-        "Old workspace has git checkpoint.",
-        "New repo is initialized.",
-        "Project state and contracts exist."
+        "完整备份已存在。",
+        "旧 workspace 已有 git checkpoint。",
+        "新仓库已初始化。",
+        "项目状态和合同文件已存在。"
       ]
     },
     {
       "id": "P1",
       "name": "minimal_backend_session_shell",
       "status": "completed",
-      "goal": "Create a runnable backend that supports health, food directions, session start/swipe/view.",
+      "goal": "创建可运行的最小后端，支持健康检查、方向卡、session 创建、滑卡和查看。",
       "storage": {
         "session_store": "in_memory_for_P1",
-        "reason": "P1 validates API compatibility and card flow without taking on persistence risk. Store abstraction should allow JSON or SQLite later."
+        "reason": "P1 先验证 API 兼容和卡流，不提前承担持久化风险。store 抽象后续应允许替换为 JSON 或 SQLite。"
       },
       "routes": [
         "GET /api/health",
@@ -52,43 +52,46 @@
       "validation": [
         "node --check server/src/index.mjs",
         "node tests/smoke-session.mjs",
-        "GET /api/health returns ok=true",
-        "GET /api/food-directions returns at least one card with image_url and direction_id",
-        "GET /api/food-directions asserts service_id equals direction_id for each direction card",
-        "POST /api/session/start returns a session with stage=direction and current_cards",
-        "POST /api/session/swipe appends a direction event",
-        "GET /api/session/:id returns the updated session",
-        "invalid session id returns ok=false error.code=session_not_found"
+        "GET /api/health 返回 ok=true",
+        "GET /api/food-directions 至少返回一张包含 image_url 和 direction_id 的卡片",
+        "GET /api/food-directions 断言每张方向卡 service_id 等于 direction_id",
+        "POST /api/session/start 返回 stage=direction 且包含 current_cards 的 session",
+        "POST /api/session/swipe 能写入 direction event",
+        "POST /api/session/swipe 拒绝 skip/super_like 等非 canonical action",
+        "GET /api/session/:id 返回更新后的 session",
+        "无效 session id 返回 ok=false error.code=session_not_found"
       ],
       "completed_at": "2026-05-30",
       "implementation": [
-        "Added package.json with start/check/smoke scripts.",
-        "Added server/src/index.mjs as a thin startup file.",
-        "Added server/src/app.mjs for P1 routes.",
-        "Added server/src/cards.mjs for food direction card loading and P1 filtering.",
-        "Added server/src/session-store.mjs with in-memory meal sessions.",
-        "Copied data/synthetic_food_futian/food_directions.json from the old workspace.",
-        "Added tests/smoke-session.mjs with concrete P1 assertions."
+        "新增 package.json，包含 start/check/smoke 脚本。",
+        "新增 server/src/index.mjs 作为薄启动文件。",
+        "新增 server/src/app.mjs 承载 P1 路由。",
+        "新增 server/src/cards.mjs 负责方向卡读取和 P1 过滤。",
+        "新增 server/src/session-store.mjs，使用内存 meal session。",
+        "从旧 workspace 复制 data/synthetic_food_futian/food_directions.json。",
+        "新增 tests/smoke-session.mjs，包含具体 P1 断言。",
+        "校正 swipe action 模型：只接受 keep/dislike，拒绝 skip/super_like/like。",
+        "smoke 使用随机空闲端口，避免误测到残留服务。"
       ]
     },
     {
       "id": "P2",
       "name": "ark_direction_summary",
       "status": "pending",
-      "goal": "Add Ark/Doubao provider and migrate direction summary to low-latency API calls with local fallback.",
+      "goal": "新增 Ark/Doubao provider，把方向总结迁到低延迟 API 调用，并保留本地 fallback。",
       "routes": [
         "POST /api/session/advance"
       ],
       "validation": [
         "node tests/smoke-session.mjs",
-        "record provider, latency, prompt_tokens, completion_tokens"
+        "记录 provider、latency、prompt_tokens、completion_tokens"
       ]
     },
     {
       "id": "P3",
       "name": "offer_cards_and_finalize",
       "status": "pending",
-      "goal": "Migrate offer card generation and final recommendation while preserving API contracts.",
+      "goal": "迁移 Offer 卡生成和最终推荐，同时保持 API 合同兼容。",
       "routes": [
         "POST /api/food-offers",
         "POST /api/session/finalize"
@@ -98,7 +101,7 @@
       "id": "P4",
       "name": "memory_authority",
       "status": "pending",
-      "goal": "Migrate memory CRUD and candidate confirmation as backend-owned authoritative state.",
+      "goal": "迁移 memory CRUD 和候选记忆确认，让后端拥有权威状态。",
       "routes": [
         "GET /api/memory/ledger",
         "GET /api/memory/preferences",
@@ -113,7 +116,7 @@
       "id": "P5",
       "name": "openclaw_bridge",
       "status": "pending",
-      "goal": "Expose explicit APIs for OpenClaw skills to read context and submit job results or memory candidates.",
+      "goal": "暴露明确 API，让 OpenClaw skills 读取上下文并提交任务结果或候选记忆。",
       "routes": [
         "GET /api/openclaw/context",
         "GET /api/openclaw/session/:id",
@@ -125,7 +128,7 @@
       "id": "P6",
       "name": "miniapp_modularization",
       "status": "pending",
-      "goal": "Move mini program code from one large page file into API, asset, session-flow, card-swipe, Xiaowang, and memory modules."
+      "goal": "把小程序从单个大页面文件拆成 API、资产、session-flow、card-swipe、小汪和 memory 模块。"
     }
   ]
 }

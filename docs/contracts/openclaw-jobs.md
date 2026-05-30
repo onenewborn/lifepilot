@@ -1,26 +1,26 @@
-# OpenClaw Jobs Contract
+# OpenClaw Jobs 合同
 
-Updated: 2026-05-30
+更新时间：2026-05-30
 
-## Meaning
+## 含义
 
-An OpenClaw job is an agentic background or interactive task performed by Xiaowang's OpenClaw runtime.
+OpenClaw job 是小汪通过 OpenClaw runtime 执行的一次后台或互动任务。
 
-It is not a meal session.
+它不是 meal session。
 
-## Typical Jobs
+## 典型任务
 
-- generate proactive Xiaowang message
-- draft an interaction card
-- write a short article to invite user interaction
-- run a mini game skill
-- analyze recent sessions for memory candidates
-- generate video prompts
-- run content production workflows
+- 生成小汪主动消息
+- 生成互动卡片草稿
+- 写一篇邀请用户互动的短文章
+- 运行小游戏 skill
+- 分析近期 session 并提出候选记忆
+- 生成视频 prompt
+- 运行内容生产工作流
 
-## Product Context API
+## 产品上下文 API
 
-OpenClaw should read product context through APIs such as:
+OpenClaw 应通过这些 API 读取产品上下文：
 
 ```text
 GET  /api/openclaw/context?user_id=...
@@ -29,9 +29,9 @@ POST /api/openclaw/memory-candidates
 POST /api/openclaw/jobs/:job_id/result
 ```
 
-## Context Levels
+## 上下文层级
 
-Default context:
+默认上下文：
 
 ```text
 confirmed_preferences
@@ -39,13 +39,13 @@ recent_session_summaries
 current_session_snapshot when relevant
 ```
 
-Avoid default full swipe-event dumps. Detailed event history should be fetched only for explicit review or debugging jobs.
+默认不要把完整 swipe events 全量塞给 OpenClaw。只有明确做复盘、审计或调试任务时，才按需读取详细事件。
 
-## Result Boundary
+## 结果边界
 
-OpenClaw job results are suggestions, drafts, or candidates until accepted by the product backend.
+OpenClaw job 结果在产品后端接受之前，只是建议、草稿或候选。
 
-Examples:
+示例：
 
 ```json
 {
@@ -60,7 +60,6 @@ Examples:
 }
 ```
 
-## Authority
+## 权威归属
 
-The backend decides whether to publish, persist, notify, or convert job output into memory candidates.
-
+是否发布、持久化、通知用户，或把 job output 转成候选记忆，都由产品后端决定。

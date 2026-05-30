@@ -1,49 +1,49 @@
-# AI Provider Contract
+# AI Provider 合同
 
-Updated: 2026-05-30
+更新时间：2026-05-30
 
-## Provider Classes
+## Provider 分类
 
 ```text
 realtime_ai
-  Low-latency calls for card flow. Default target: Ark Doubao Seed 1.6 Flash.
+  用于卡流里的低延迟调用。默认目标：Ark Doubao Seed 1.6 Flash。
 
 agent_ai
-  Background / interactive / skill-based tasks. Default target: OpenClaw.
+  用于后台、互动和 skill-based 任务。默认目标：OpenClaw。
 
 local_fallback
-  Deterministic product rules used when AI is unavailable or too slow.
+  AI 不可用或超时时使用的确定性产品规则。
 ```
 
-## Realtime AI Responsibilities
+## Realtime AI 职责
 
-Realtime AI may handle:
+Realtime AI 可以处理：
 
-- entry parsing
-- direction summary
-- offer card explanation
-- final recommendation explanation
+- 入口理解
+- 方向总结
+- Offer 卡解释
+- 最终推荐解释
 
-Realtime AI must not:
+Realtime AI 不能：
 
-- call tools
-- mutate memory
-- claim real platform lookup
-- own session state
+- 调用工具
+- 修改 memory
+- 声称查询了真实平台
+- 拥有 session 状态
 
-## Agent AI Responsibilities
+## Agent AI 职责
 
-OpenClaw may handle:
+OpenClaw 可以处理：
 
-- Xiaowang chat and interaction skills
-- proactive content drafts
-- memory reflection and candidate generation
-- video/content generation workflows
-- background analysis
+- 小汪聊天和互动 skills
+- 主动触达内容草稿
+- 记忆复盘和候选记忆生成
+- 视频/内容生产工作流
+- 后台分析任务
 
-OpenClaw must use backend APIs for product context.
+OpenClaw 必须通过产品后端 API 获取产品上下文。
 
-## Standard Response Envelope
+## 标准响应 Envelope
 
 ```json
 {
@@ -65,7 +65,7 @@ OpenClaw must use backend APIs for product context.
 }
 ```
 
-## Ark Defaults
+## Ark 默认配置
 
 ```json
 {
@@ -78,7 +78,6 @@ OpenClaw must use backend APIs for product context.
 }
 ```
 
-## Fallback Rule
+## Fallback 规则
 
-If AI fails, times out, or returns invalid JSON, the product flow must continue with local deterministic fallback.
-
+如果 AI 失败、超时或返回无效 JSON，产品流程必须继续使用本地确定性 fallback。

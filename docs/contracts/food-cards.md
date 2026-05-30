@@ -1,10 +1,10 @@
-# Food Cards Contract
+# 餐饮卡片合同
 
-Updated: 2026-05-30
+更新时间：2026-05-30
 
-## Direction Card
+## 方向卡
 
-Direction cards are the first swipe layer.
+方向卡是第一层滑卡。
 
 ```json
 {
@@ -29,7 +29,7 @@ Direction cards are the first swipe layer.
 }
 ```
 
-Required fields for P1:
+P1 必填字段：
 
 ```text
 card_id
@@ -44,23 +44,23 @@ media_type
 synthetic_only
 ```
 
-Compatibility aliases:
+兼容别名：
 
 ```text
-service_id should equal direction_id for old UI compatibility.
-card_id should equal direction_id for direction cards.
+service_id 必须等于 direction_id，用于兼容旧 UI。
+card_id 必须等于 direction_id，用于方向卡兼容。
 ```
 
-P1 smoke must assert:
+P1 smoke 必须断言：
 
 ```text
 card.service_id === card.direction_id
 card.card_id === card.direction_id
 ```
 
-## Offer Card
+## Offer 卡
 
-Offer cards are the second swipe layer.
+Offer 卡是第二层滑卡。
 
 ```json
 {
@@ -95,17 +95,17 @@ Offer cards are the second swipe layer.
 }
 ```
 
-## Asset URL Rule
+## 资产 URL 规则
 
-Data stores relative paths beginning with `/assets/`.
+数据里存以 `/assets/` 开头的相对路径。
 
-Mini program resolves these against COS.
+小程序把这些路径解析到 COS。
 
-Local web/backend may resolve these against local static files.
+本地 web/backend 可以把这些路径解析到本地静态文件。
 
-## Compatibility Warning
+## 兼容提醒
 
-Do not rename these fields during migration without updating the mini program compatibility layer:
+迁移时不要随意重命名这些字段，除非同步更新小程序兼容层：
 
 ```text
 image_url

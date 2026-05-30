@@ -1,18 +1,18 @@
-# Session API Contract
+# Session API 合同
 
-Updated: 2026-05-30
+更新时间：2026-05-30
 
-## Meaning
+## 含义
 
-A `meal_session` is one user journey for deciding what to eat.
+`meal_session` 表示用户完成一次饭点决策的产品会话。
 
-It is product state. It is not an OpenClaw agent session.
+它是产品状态，不是 OpenClaw agent session。
 
-## Owner
+## 归属
 
-The product backend owns meal session creation, mutation, persistence, and validation.
+产品后端负责创建、修改、持久化和校验 meal session。
 
-## Core Routes
+## 核心路由
 
 ```text
 POST /api/session/start
@@ -22,7 +22,7 @@ POST /api/session/finalize
 GET  /api/session/:session_id
 ```
 
-## Minimal Session Shape
+## 最小 Session 结构
 
 ```json
 {
@@ -52,7 +52,7 @@ GET  /api/session/:session_id
 }
 ```
 
-## Swipe Event Shape
+## 滑卡事件结构
 
 ```json
 {
@@ -71,18 +71,21 @@ GET  /api/session/:session_id
 }
 ```
 
-Allowed actions:
+## 合法滑卡动作
+
+产品只有两个滑动动作：
 
 ```text
-keep
-dislike
-skip
-super_like
+keep     右滑保留
+dislike  左滑放弃
 ```
 
-## OpenClaw Boundary
+`super_like` 不属于饭点卡流动作。用户非常喜欢某个方向时，应通过“看这个方向的店”这类独立意图/路由推进，而不是写入 `direction_events`。
 
-OpenClaw can read session summaries through OpenClaw bridge APIs.
+`skip` 不属于用户滑卡动作。P1 后端不应把 `skip` 写入事件账本。
 
-OpenClaw must not directly mutate meal session state.
+## OpenClaw 边界
 
+OpenClaw 可以通过 OpenClaw bridge API 读取 session 摘要。
+
+OpenClaw 不能直接修改 meal session 状态。

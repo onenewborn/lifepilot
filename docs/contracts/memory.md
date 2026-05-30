@@ -1,18 +1,18 @@
-# Memory Contract
+# Memory 合同
 
-Updated: 2026-05-30
+更新时间：2026-05-30
 
-## Meaning
+## 含义
 
-Memory is the audited product ledger for what Xiaowang is allowed to remember and use.
+Memory 是小汪“允许记住什么、如何使用这些记忆”的可审计产品账本。
 
-## Authority
+## 权威归属
 
-The product backend memory service is the only authority for memory CRUD.
+产品后端 memory service 是唯一权威。
 
-OpenClaw, Ark/Doubao, and Xiaowang chat can propose candidate memories, but they do not directly write authoritative long-term preferences.
+OpenClaw、Ark/Doubao 和小汪聊天都可以提出候选记忆，但不能直接写入权威长期偏好。
 
-## Layers
+## 分层
 
 ```text
 session_events
@@ -22,7 +22,7 @@ profile_summary
 recommendation_context
 ```
 
-## Candidate
+## 候选记忆
 
 ```json
 {
@@ -45,7 +45,7 @@ recommendation_context
 }
 ```
 
-## Confirmed Preference
+## 已确认偏好
 
 ```json
 {
@@ -69,26 +69,25 @@ recommendation_context
 }
 ```
 
-## CRUD Rules
+## CRUD 规则
 
-- View, create, update, pause, delete, confirm, and reject are backend operations.
-- Sensitive text must be rejected before persistence.
-- Single swipe events must not directly become confirmed preferences.
-- OpenClaw-generated memory must enter as candidates.
-- Evermind is an external memory provider, not the product authority.
+- 查看、新增、更新、暂停、删除、确认、拒绝都是后端操作。
+- 敏感文本必须在持久化前被拒绝。
+- 单次滑卡事件不能直接成为 confirmed preference。
+- OpenClaw 生成的记忆必须先进入 candidates。
+- Evermind 是外部记忆 provider，不是产品权威账本。
 
-## OpenClaw Boundary
+## OpenClaw 边界
 
-OpenClaw can:
+OpenClaw 可以：
 
-- request memory context
-- submit memory candidates
-- submit interaction summaries
-- ask backend to record job evidence
+- 请求 memory context
+- 提交候选记忆
+- 提交互动摘要
+- 请求后端记录 job evidence
 
-OpenClaw cannot:
+OpenClaw 不能：
 
-- directly update confirmed preferences
-- directly delete product memory
-- bypass user confirmation
-
+- 直接更新 confirmed preferences
+- 直接删除产品 memory
+- 绕过用户确认

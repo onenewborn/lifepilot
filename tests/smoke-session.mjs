@@ -1,9 +1,22 @@
 import { spawn } from "node:child_process";
 import assert from "node:assert/strict";
+import net from "node:net";
 
 const HOST = "127.0.0.1";
-const PORT = Number(process.env.LIFEPILOT_TEST_PORT || 4331);
+const PORT = Number(process.env.LIFEPILOT_TEST_PORT || await findFreePort());
 const BASE = `http://${HOST}:${PORT}`;
+
+function findFreePort() {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(0, HOST, () => {
+      const address = server.address();
+      const port = address && typeof address === "object" ? address.port : 0;
+      server.close(() => resolve(port));
+    });
+    server.on("error", reject);
+  });
+}
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -25,7 +38,7 @@ async function waitForHealth() {
       const {status, payload} = await request("/api/health");
       if (status === 200 && payload.ok && payload.marker === "lifepilot-next-p1") return payload;
     } catch {
-      // Server may still be starting.
+      // 服务可能还在启动中。
     }
     await wait(100);
   }
@@ -97,6 +110,19 @@ try {
   assert.equal(viewed.payload.ok, true);
   assert.equal(viewed.payload.session.direction_events.length, 1);
 
+  const invalidAction = await request("/api/session/swipe", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+      action: "skip",
+      card_id: swipeCard.card_id,
+    },
+  });
+  assert.equal(invalidAction.status, 422);
+  assert.equal(invalidAction.payload.ok, false);
+  assert.equal(invalidAction.payload.error.code, "invalid_payload");
+  assert.equal(viewed.payload.session.direction_events.length, 1);
+
   const missing = await request("/api/session/missing_session");
   assert.equal(missing.status, 404);
   assert.equal(missing.payload.ok, false);
@@ -104,7 +130,7 @@ try {
 
   console.log(JSON.stringify({
     ok: true,
-    assertions: 18,
+    assertions: 22,
     cards: directions.payload.cards.length,
     marker: health.marker,
   }, null, 2));

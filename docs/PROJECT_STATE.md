@@ -1,103 +1,103 @@
-# Project State
+# 项目驾驶舱
 
-Updated: 2026-05-30
+更新时间：2026-05-30
 
-## One Sentence
+## 一句话
 
-LifePilot is being rebuilt as a clean product runtime outside `~/.openclaw/workspace`, while OpenClaw remains the agent runtime for skills, background intelligence, memory reflection, and Xiaowang interactions.
+LifePilot 正在从 `~/.openclaw/workspace` 中拆出，重建为一个干净的产品 runtime；OpenClaw 继续作为小汪的 agent runtime，负责 skills、后台智能、记忆复盘和互动生成。
 
-## Current Decision
+## 当前核心决策
 
-Use a two-runtime architecture:
+采用双 runtime 架构：
 
 ```text
-Mini Program / Product Backend
-  owns meal sessions, chat threads, memory CRUD, recommendation rules, data contracts, COS asset resolution, and low-latency Ark/Doubao AI calls
+小程序 / 产品后端
+  负责 meal session、chat thread、memory CRUD、推荐规则、数据合同、COS 资产解析、低延迟 Ark/Doubao AI 调用
 
 OpenClaw Runtime
-  owns AGENTS/SOUL/skills, background jobs, Xiaowang interactive content, video/content generation, and memory-candidate reflection
+  负责 AGENTS/SOUL/skills、后台任务、小汪互动内容、视频/内容生成、候选记忆复盘
 ```
 
-OpenClaw must access product state through backend APIs, not by directly reading or mutating product runtime files.
+OpenClaw 必须通过产品后端 API 访问产品状态，不能直接读取或修改产品 runtime 文件。
 
-## Old Workspace Safety
+## 旧 Workspace 安全状态
 
-Old workspace remains untouched at:
+旧 workspace 保持原路径不动：
 
 ```text
 /Users/mona/.openclaw/workspace
 ```
 
-Full backup:
+完整备份：
 
 ```text
 /Users/mona/.openclaw/backups/lifepilot-workspace-20260530-120256
 ```
 
-Old workspace git checkpoint:
+旧 workspace git checkpoint：
 
 ```text
 commit: d741a9e chore: checkpoint before lifepilot rebuild
 tag: lifepilot-rebuild-base-20260530
 ```
 
-Known old workspace dirty state after checkpoint:
+checkpoint 后旧 workspace 仍有两个未跟踪目录：
 
 ```text
 ?? memory/users/smoke_test_evermind_1780043397065/
 ?? memory/users/smoke_test_evermind_ipv4_1780044939954/
 ```
 
-These look like smoke-test residue and were not included in the empty checkpoint commit.
+它们看起来是 smoke test 残留，没有进入 checkpoint commit。
 
-## Product Scope
+## 产品范围
 
-Main product:
-
-```text
-饭点定了 mini program
-```
-
-Main flow:
+当前主产品：
 
 ```text
-entry form
-→ food direction cards
-→ direction swipes
-→ low-latency AI direction summary
-→ offer cards
-→ offer swipes
-→ final recommendation
-→ weather / queue / route context
-→ feedback / memory candidates
-→ Xiaowang interaction
+饭点定了小程序
 ```
 
-## AI Boundary
+主流程：
 
-Low-latency card flow:
+```text
+入口表单
+→ 餐饮方向卡
+→ 方向卡左右滑
+→ 低延迟 AI 方向总结
+→ Offer 卡
+→ Offer 卡左右滑
+→ 最终推荐
+→ 天气 / 排队 / 路线上下文
+→ 反馈 / 候选记忆
+→ 小汪互动
+```
+
+## AI 边界
+
+实时卡流：
 
 ```text
 Ark Doubao Seed 1.6 Flash API
 ```
 
-Background / agentic intelligence:
+后台 / agentic intelligence：
 
 ```text
 OpenClaw skills
 ```
 
-Memory authority:
+权威记忆：
 
 ```text
-Product backend memory service
+产品后端 memory service
 ```
 
-LLMs and OpenClaw can propose memory candidates. Only backend memory service can create, update, pause, delete, confirm, or reject authoritative memory records.
+LLM 和 OpenClaw 可以提出候选记忆。只有产品后端 memory service 可以创建、更新、暂停、删除、确认或拒绝权威 memory 记录。
 
-## Current Progress
+## 当前进展
 
-Phase 0.5 implementation contracts are complete:
+P0.5 实施合同已完成：
 
 ```text
 docs/contracts/api-errors.md
@@ -106,7 +106,7 @@ docs/contracts/config.md
 docs/contracts/legacy-api-map.md
 ```
 
-Phase 1 minimal backend is complete:
+P1 最小后端已完成：
 
 ```text
 GET /api/health
@@ -116,39 +116,50 @@ POST /api/session/swipe
 GET /api/session/:id
 ```
 
-Validation completed:
+已完成验证：
 
 ```text
 npm run check
 npm run smoke:session
 ```
 
-Smoke result:
+Smoke 结果：
 
 ```text
-18 direction cards
+18 张方向卡
 marker: lifepilot-next-p1
-session start/swipe/view passed
-missing session returns error.code=session_not_found
+session start/swipe/view 通过
+缺失 session 返回 error.code=session_not_found
+skip 等非 canonical action 被拒绝
 ```
 
-## Immediate Next Step
+## 产品语义校正
 
-Phase 2 should add the Ark/Doubao realtime AI provider and migrate direction summary:
+饭点卡流只有两个 canonical swipe action：
+
+```text
+keep     右滑保留
+dislike  左滑放弃
+```
+
+`skip` 和 `super_like` 不再作为用户滑卡事件进入 `direction_events`。用户非常喜欢某个方向时，应走“看这个方向的店”这类推进意图，而不是写成特殊 swipe action。
+
+## 下一步
+
+P2 增加 Ark/Doubao realtime AI provider，并迁移方向总结：
 
 ```text
 POST /api/session/advance
 ```
 
-The first `advance` from `stage=direction` should produce `direction_summary`, move the session to `stage=direction_summary`, and keep deterministic local fallback as a first-class path.
-```
+当 session 处于 `stage=direction` 时，第一次 `advance` 应生成 `direction_summary`，把 session 推进到 `stage=direction_summary`，并把确定性本地 fallback 当成一等路径。
 
-## Hard Rule
+## 硬规则
 
-Every implementation phase must answer:
+每个实施阶段结束时必须回答：
 
 ```text
-1. Which old responsibility moved into the new product repo?
-2. Which new route/module now carries real behavior?
-3. Which smoke test proves the old user experience was not broken?
+1. 哪个旧职责已经迁入新产品仓库？
+2. 哪个新路由/模块开始承接真实行为？
+3. 哪个 smoke test 证明旧用户体验没有被悄悄打断？
 ```

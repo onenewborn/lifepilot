@@ -47,7 +47,7 @@ async function handleSessionSwipe(req, res) {
   }
   const event = normalizeSwipeEvent(session, body);
   if (!event) {
-    fail(res, 422, "invalid_payload", "action must be keep, dislike, skip, like, or super_like.");
+    fail(res, 422, "invalid_payload", "action must be keep or dislike.");
     return;
   }
   appendSwipeEvent(session, event);

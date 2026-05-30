@@ -1,12 +1,12 @@
-# API Errors Contract
+# API 错误合同
 
-Updated: 2026-05-30
+更新时间：2026-05-30
 
-## Response Envelope
+## 响应 Envelope
 
-All JSON API responses use one of these shapes.
+所有 JSON API 响应使用以下两类结构。
 
-Success:
+成功：
 
 ```json
 {
@@ -16,7 +16,7 @@ Success:
 }
 ```
 
-Legacy-compatible success may return top-level fields during migration:
+迁移期为了兼容旧小程序，部分 legacy route 可以继续返回顶层字段：
 
 ```json
 {
@@ -27,9 +27,9 @@ Legacy-compatible success may return top-level fields during migration:
 }
 ```
 
-P1 may preserve legacy-compatible top-level fields for the mini program. New internal routes should prefer `data`.
+P1 可以保留旧的顶层字段。新的内部路由优先使用 `data`。
 
-Error:
+失败：
 
 ```json
 {
@@ -46,7 +46,7 @@ Error:
 }
 ```
 
-## HTTP Status
+## HTTP 状态码
 
 ```text
 400 invalid_request
@@ -59,7 +59,7 @@ Error:
 504 provider_timeout
 ```
 
-## Required Error Codes
+## 必备错误码
 
 ```text
 invalid_json
@@ -76,11 +76,11 @@ route_not_found
 internal_error
 ```
 
-## Fallback Responses
+## Fallback 响应
 
-When AI fails but deterministic fallback succeeds, the response remains `ok: true`.
+当 AI 失败但确定性 fallback 成功时，响应仍然是 `ok: true`。
 
-Fallback responses must set `meta.fallback_used=true`. Legacy-compatible routes may also expose top-level `mode`, `warning`, and `timing`, but `meta.fallback_used` is required.
+Fallback 响应必须设置 `meta.fallback_used=true`。兼容旧接口时可以额外暴露顶层 `mode`、`warning`、`timing`，但 `meta.fallback_used` 是硬要求。
 
 ```json
 {
@@ -105,4 +105,4 @@ Fallback responses must set `meta.fallback_used=true`. Legacy-compatible routes 
 }
 ```
 
-The card flow should not fail only because realtime AI failed.
+实时卡流不能仅因为 AI 失败而中断。

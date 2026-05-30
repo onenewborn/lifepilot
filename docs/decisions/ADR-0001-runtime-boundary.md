@@ -1,45 +1,55 @@
-# ADR-0001 Runtime Boundary
+# ADR-0001 Runtime 边界
 
-Date: 2026-05-30
+日期：2026-05-30
 
-## Status
+## 状态
 
-Accepted.
+已接受。
 
-## Context
+## 背景
 
-The old `~/.openclaw/workspace` mixed product frontend, backend, data, assets, OpenClaw runtime config, skills, outputs, and historical experiments.
+旧的 `~/.openclaw/workspace` 混在了一起：
 
-This made OpenClaw startup context too large and made product refactoring risky.
+```text
+产品前端
+产品后端
+数据
+资产
+OpenClaw runtime 配置
+skills
+outputs
+历史实验
+```
 
-## Decision
+这会导致 OpenClaw 启动上下文过大，也让产品重构风险变高。
 
-Move product frontend/backend/data/contracts into a standalone product repository:
+## 决策
+
+把产品前端、后端、数据和合同迁到独立产品仓库：
 
 ```text
 /Users/mona/Documents/lifepilot
 ```
 
-Keep OpenClaw runtime in:
+OpenClaw runtime 保持在：
 
 ```text
 /Users/mona/.openclaw/workspace
 ```
 
-OpenClaw accesses product state through backend APIs.
+OpenClaw 通过产品后端 API 访问产品状态。
 
-## Consequences
+## 影响
 
-Positive:
+好处：
 
-- cleaner product architecture
-- faster realtime AI path
-- less OpenClaw context pollution
-- clearer competition narrative
+- 产品架构更清楚
+- 实时 AI 路径更快
+- OpenClaw 上下文污染更少
+- 比赛叙事更明确
 
-Tradeoffs:
+代价：
 
-- must maintain API bridge between OpenClaw and product backend
-- need explicit contracts for session, memory, assets, and jobs
-- cannot rely on OpenClaw implicitly reading product files
-
+- 需要维护 OpenClaw 和产品后端之间的 API bridge
+- session、memory、assets、jobs 必须有明确合同
+- 不能再依赖 OpenClaw 隐式读取产品文件
