@@ -9,8 +9,8 @@ const DEFAULT_USER_ID = "demo_weiyingru";
 Page({
   data: {
     stage: "entry",
-    stageLabel: "入口",
-    stageSubtitle: "先说今天怎么吃",
+    stageLabel: "饭点",
+    stageSubtitle: "先告诉小汪今天想怎么吃",
     sessionId: "",
     sessionStage: "",
     sessionDebug: {
@@ -98,7 +98,7 @@ Page({
     if (!sessionId) return;
     this.setData({
       resumableSessionId: sessionId,
-      bootNotice: "有一轮未完成的饭点 session，可以继续，也可以直接开始新一轮。"
+      bootNotice: "可以继续上次没选完的店。"
     });
   },
 
@@ -265,7 +265,7 @@ Page({
 
   subtitleForStage(stage) {
     const subtitles = {
-      entry: "先说今天怎么吃",
+      entry: "先告诉小汪今天想怎么吃",
       direction: "右滑保留，左滑放弃",
       direction_summary: "小汪先收窄口味边界",
       offer: "继续筛具体商家",
@@ -562,8 +562,8 @@ Page({
     wx.removeStorageSync(STORAGE_SESSION_ID);
     this.setData({
       stage: "entry",
-      stageLabel: "入口",
-      stageSubtitle: "先说今天怎么吃",
+      stageLabel: "饭点",
+      stageSubtitle: "先告诉小汪今天想怎么吃",
       sessionId: "",
       sessionStage: "",
       cards: [],

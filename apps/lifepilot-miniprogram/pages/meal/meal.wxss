@@ -30,7 +30,7 @@ button::after {
   align-items: center;
   justify-content: space-between;
   gap: 20rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 18rpx;
 }
 
 .brand {
@@ -70,8 +70,9 @@ button::after {
 }
 
 .notice {
-  background: #e7f4ef;
-  color: #17634f;
+  background: rgba(255, 255, 255, 0.62);
+  color: rgba(75, 50, 31, 0.72);
+  box-shadow: inset 0 0 0 1rpx rgba(125, 78, 44, 0.1);
 }
 
 .error {
@@ -219,6 +220,11 @@ button::after {
   padding: 20rpx;
   border-radius: 20rpx;
   background: rgba(255, 255, 255, 0.72);
+}
+
+.compact-location {
+  margin: 24rpx 0 20rpx;
+  padding: 16rpx 18rpx;
 }
 
 .location-text {

@@ -1,22 +1,21 @@
 <view class="page">
   <view class="topbar">
     <view>
-      <text class="brand">LifePilot</text>
-      <text class="stage">{{stageLabel}}</text>
+      <text class="brand">饭点定了</text>
     </view>
-    <view class="status-pill">{{stageSubtitle}}</view>
+    <view wx:if="{{stage !== 'entry'}}" class="status-pill">{{stageSubtitle}}</view>
   </view>
 
   <view wx:if="{{bootNotice}}" class="notice">{{bootNotice}}</view>
   <view wx:if="{{errorText}}" class="error">{{errorText}}</view>
 
   <view wx:if="{{stage === 'entry'}}" class="entry-panel">
-    <view class="section-title">今天这顿饭，先定个大概</view>
+    <view class="section-title">今天想怎么吃？</view>
     <view class="xiaowang-card">
       <image class="xiaowang-mascot" src="{{xiaowangMascotUrl}}" mode="aspectFit" />
       <view class="xiaowang-copy">
         <view class="xiaowang-name">小汪</view>
-        <view class="xiaowang-line">我先闻闻主人的饭点需求</view>
+        <view class="xiaowang-line">先选几项，也可以直接把今天的想法告诉我。</view>
       </view>
     </view>
     <view class="field-block">
@@ -97,9 +96,9 @@
       />
     </view>
 
-    <view class="location-row">
+    <view class="location-row compact-location">
       <view>
-        <view class="field-label">当前位置</view>
+        <view class="field-label">位置</view>
         <view class="location-text">{{locationText}}</view>
       </view>
       <button class="ghost-button" bindtap="getLocation">定位</button>
