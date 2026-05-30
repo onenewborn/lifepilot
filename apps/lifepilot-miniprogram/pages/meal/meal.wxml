@@ -35,7 +35,7 @@
     <view class="field-block">
       <view class="budget-head">
         <view class="field-label">预算</view>
-        <view class="budget-value">{{entryForm.budget === '0' ? '先不限制' : entryForm.budget + ' 元以内'}}</view>
+        <view class="budget-value">{{entryForm.budget === '500' ? '先不限制' : entryForm.budget + ' 元以内'}}</view>
       </view>
       <slider
         class="budget-slider"
@@ -51,9 +51,9 @@
         bindchange="onBudgetChange"
       />
       <view class="budget-scale">
-        <text>不限</text>
+        <text>0</text>
         <text>250</text>
-        <text>500</text>
+        <text>不限</text>
       </view>
     </view>
 

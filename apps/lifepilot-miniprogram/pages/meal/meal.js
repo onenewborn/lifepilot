@@ -158,9 +158,10 @@ Page({
     const { entryForm } = this.data;
     const radiusMap = { near_1km: 1, near_3km: 3, futian: 8 };
     const budgetValue = Number(entryForm.budget);
+    const budgetMax = Number.isFinite(budgetValue) && budgetValue >= 500 ? null : budgetValue;
     return {
       party_size: entryForm.partySize === "two" ? 2 : (entryForm.partySize === "group" ? 4 : 1),
-      budget_per_person_max: Number.isFinite(budgetValue) && budgetValue > 0 ? budgetValue : null,
+      budget_per_person_max: Number.isFinite(budgetMax) && budgetMax > 0 ? budgetMax : null,
       radius_km: radiusMap[entryForm.radius],
       flavor_preference: this.optionText("flavor", entryForm.flavor),
       raw_query: entryForm.text,
