@@ -54,6 +54,7 @@
         "node tests/smoke-session.mjs",
         "GET /api/health returns ok=true",
         "GET /api/food-directions returns at least one card with image_url and direction_id",
+        "GET /api/food-directions asserts service_id equals direction_id for each direction card",
         "POST /api/session/start returns a session with stage=direction and current_cards",
         "POST /api/session/swipe appends a direction event",
         "GET /api/session/:id returns the updated session",

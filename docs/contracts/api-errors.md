@@ -80,9 +80,15 @@ internal_error
 
 When AI fails but deterministic fallback succeeds, the response remains `ok: true`.
 
+Fallback responses must set `meta.fallback_used=true`. Legacy-compatible routes may also expose top-level `mode`, `warning`, and `timing`, but `meta.fallback_used` is required.
+
 ```json
 {
   "ok": true,
+  "meta": {
+    "fallback_used": true,
+    "fallback_reason": "provider_timeout"
+  },
   "mode": "local_fallback",
   "warning": {
     "code": "provider_timeout",
@@ -100,4 +106,3 @@ When AI fails but deterministic fallback succeeds, the response remains `ok: tru
 ```
 
 The card flow should not fail only because realtime AI failed.
-

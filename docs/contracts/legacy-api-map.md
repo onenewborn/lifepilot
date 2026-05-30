@@ -38,6 +38,28 @@ During migration, preserve these routes and key fields unless a compatibility ad
 | `GET /api/memory/ledger` | same | P4 | Memory ledger. |
 | `POST /api/xiaowang/chat` | same | P5/P6 | OpenClaw-backed or hybrid. |
 
+## Known Deferred Routes
+
+These routes exist in the old backend but are not part of P1. They are intentionally deferred rather than forgotten.
+
+| Old route | Target phase | Migration intent |
+| --- | --- | --- |
+| `GET /api/cards` | P3 or archive | Legacy H5 card feed. Keep only if still useful for web preview. |
+| `POST /api/plan` | archive | Old planner compatibility route. Do not include in realtime meal flow by default. |
+| `POST /api/map/route` | P3 | Context provider for final recommendation. |
+| `GET/POST /api/weather/forecast` | P3 | Context provider for final recommendation. |
+| `GET/POST /api/queue/status` | P3 | Mock queue provider for final recommendation. |
+| `GET /api/admin/catalog` | P6+ | Admin tooling. Not needed for realtime card flow. |
+| `POST/PUT/DELETE /api/admin/merchants/*` | P6+ | Admin tooling. |
+| `POST/PUT/DELETE /api/admin/offers/*` | P6+ | Admin tooling. |
+| `POST/PUT/DELETE /api/admin/directions/*` | P6+ | Admin tooling. |
+| `GET /api/xiaowang/sessions` | P5/P6 | Chat thread management. |
+| `POST /api/xiaowang/sessions` | P5/P6 | Chat thread management. |
+| `GET /api/xiaowang/sessions/:id` | P5/P6 | Chat thread management. |
+| `POST /api/memory/post-meal-feedback` | P4 | Candidate memory generation from feedback. |
+| `POST /api/agent/final-decision-explanation` | P3 | Realtime AI explanation or local fallback. |
+| `GET /api/memory/candidates` | P4 | Memory ledger support. |
+
 ## Legacy Success Shapes
 
 Food directions:
@@ -144,4 +166,3 @@ explanation
 - `local_only` / `localOnly` request flags should force local fallback.
 - `timeout_ms` request field may be supplied by mini program and should be honored when practical.
 - Session `current_cards` drives swipe card lookup, so cards must remain in session response.
-

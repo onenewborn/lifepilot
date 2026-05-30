@@ -34,6 +34,7 @@ Required fields for P1:
 ```text
 card_id
 direction_id
+service_id
 title
 tags
 image_url
@@ -48,6 +49,13 @@ Compatibility aliases:
 ```text
 service_id should equal direction_id for old UI compatibility.
 card_id should equal direction_id for direction cards.
+```
+
+P1 smoke must assert:
+
+```text
+card.service_id === card.direction_id
+card.card_id === card.direction_id
 ```
 
 ## Offer Card
@@ -111,4 +119,3 @@ offer_id
 direction_id
 service_id
 ```
-

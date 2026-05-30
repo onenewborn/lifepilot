@@ -18,6 +18,22 @@ PORT=4321
 
 New backend should use `4331` during migration to avoid disrupting the old mini program flow.
 
+## P1 Dual-Run Verification
+
+The existing mini program does not automatically call the new backend. During P1 verification, point the mini program to the new backend by setting `getApp().globalData.apiBaseUrl` or temporarily editing the mini program config to:
+
+```text
+http://127.0.0.1:4331
+```
+
+Old backend remains available at:
+
+```text
+http://127.0.0.1:4321
+```
+
+If a smoke test appears to pass, confirm the response contains the new backend marker from `GET /api/health` so tests are not accidentally hitting the old service.
+
 ## Realtime AI
 
 ```text
@@ -74,4 +90,3 @@ Use deterministic fallback when:
 - provider output fails normalization
 
 Fallback should be visible in response timing/meta, but should not break the main card flow.
-
