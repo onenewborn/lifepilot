@@ -442,7 +442,10 @@ async function requestAiExplanationBatch(cards, session, body, directionContext,
       {role: "system", content: "你是饭点定了小程序里的小汪，只输出符合要求的 JSON。"},
       {role: "user", content: buildOfferExplanationPrompt({
         goal: session.goal || body.goal || "",
-        directionSummary: session.direction_summary || body.direction_summary || {},
+        directionSummary: {
+          ...(session.direction_summary || {}),
+          ...(body.direction_summary || body.directionSummary || {}),
+        },
         understanding: session.understanding || body.understanding || {},
         directionContext,
         memoryContext,

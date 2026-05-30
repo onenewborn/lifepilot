@@ -251,8 +251,31 @@
   <view wx:elif="{{stage === 'direction_summary' || stage === 'direction_summary_loading'}}" class="summary-panel">
     <image class="summary-mascot" src="{{xiaowangSummaryUrl}}" mode="aspectFit" />
     <view class="section-title">小汪先帮主人收窄一下</view>
-    <view wx:if="{{directionSummary}}" class="summary-text">{{directionSummary.text}}</view>
+    <view wx:if="{{directionSummary}}" class="summary-choice-block">
+      <view class="summary-choice-line">主人保留了 {{directionSummary.keptText}}。</view>
+      <view class="summary-choice-line">先避开：{{directionSummary.dislikedText}}。</view>
+    </view>
+    <view wx:if="{{directionSummary && (directionSummary.text || directionSummary.intentText)}}" class="summary-highlight">
+      {{directionSummary.text || directionSummary.intentText}}
+    </view>
     <view wx:else class="summary-text">{{loadingText || '正在整理这轮选择...'}}</view>
+    <view wx:if="{{directionSummary}}" class="summary-feedback">
+      <view class="summary-feedback-title">小汪理解对了吗？</view>
+      <view class="summary-feedback-actions">
+        <button class="mini-feedback-button" bindtap="markDirectionSummaryOk">差不多</button>
+        <button class="mini-feedback-button" bindtap="openDirectionCorrectionInput">补充一句</button>
+      </view>
+      <view wx:if="{{summaryCorrectionOpen}}" class="summary-correction-box">
+        <input
+          class="summary-correction-input"
+          value="{{summaryCorrectionText}}"
+          placeholder="比如：其实我更想快一点吃完"
+          bindinput="onDirectionCorrectionInput"
+        />
+        <button class="summary-correction-submit" bindtap="applyDirectionCorrection">应用</button>
+      </view>
+      <view wx:if="{{directionCorrectionNotice}}" class="summary-feedback-notice">{{directionCorrectionNotice}}</view>
+    </view>
     <view class="summary-actions">
       <button class="secondary-button" bindtap="resetFlow">重新开始</button>
       <button class="primary-button inline-button" loading="{{isLoading}}" bindtap="continueToOffers">看具体商家</button>

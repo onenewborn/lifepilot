@@ -78,6 +78,9 @@ Page({
     directionEvents: [],
     offerEvents: [],
     directionSummary: null,
+    summaryCorrectionOpen: false,
+    summaryCorrectionText: "",
+    directionCorrectionNotice: "",
     result: null,
     postMealFeedbackText: "",
     postMealResponse: null,
@@ -270,10 +273,14 @@ Page({
   applySession(session, options = {}) {
     const stage = session.stage || "direction";
     const cards = this.normalizeCardsForStage(stage, session.current_cards || []);
+    const directionEvents = session.direction_events || this.data.directionEvents || [];
+    const offerEvents = session.offer_events || this.data.offerEvents || [];
     const summary = session.direction_summary ? {
+      ...this.buildDirectionSummaryFromEvents(directionEvents),
       text: session.direction_summary.summary_text,
       mode: session.direction_summary.mode,
-      timing: session.direction_summary.timing
+      timing: session.direction_summary.timing,
+      userFeedback: (this.data.directionSummary && this.data.directionSummary.userFeedback) || ""
     } : null;
     const result = session.result ? normalizeResult(session.result) : null;
     const memoryMeta = options.meta && options.meta.memory_context;
@@ -289,6 +296,8 @@ Page({
       isGoalUpdating: false,
       cards,
       index: 0,
+      directionEvents,
+      offerEvents,
       directionSummary: summary,
       result,
       sessionDebug: {
@@ -573,7 +582,44 @@ Page({
       direction_id: card.directionId || "",
       offer_id: card.offerId || "",
       merchant_id: card.merchantId || "",
+      tags: card.tags || [],
       created_at: new Date().toISOString()
+    };
+  },
+
+  listText(items, emptyText) {
+    const names = (items || []).map((item) => String(item.title || "").trim()).filter(Boolean);
+    if (!names.length) return emptyText;
+    const visible = names.slice(0, 6);
+    const hiddenCount = names.length - visible.length;
+    return hiddenCount > 0 ? `${visible.join("、")}等 ${names.length} 个方向` : visible.join("、");
+  },
+
+  topTags(events = []) {
+    const counts = {};
+    events.forEach((event) => {
+      (event.tags || []).forEach((tag) => {
+        counts[tag] = (counts[tag] || 0) + 1;
+      });
+    });
+    return Object.keys(counts)
+      .sort((left, right) => counts[right] - counts[left])
+      .slice(0, 4)
+      .join("、");
+  },
+
+  buildDirectionSummaryFromEvents(events = this.data.directionEvents) {
+    const kept = events.filter((event) => event.action === "keep");
+    const disliked = events.filter((event) => event.action === "dislike");
+    const keptTagText = this.topTags(kept);
+    return {
+      keptText: this.listText(kept, "还没有特别保留的方向"),
+      dislikedText: this.listText(disliked, "暂时没有明确排除"),
+      intentText: keptTagText
+        ? `我会优先看 ${keptTagText} 的具体选择。`
+        : "我会先从低冲突、适合一个人的具体选择里继续筛。",
+      keptCount: kept.length,
+      dislikedCount: disliked.length
     };
   },
 
@@ -588,7 +634,16 @@ Page({
 
   async loadDirectionSummary() {
     if (this.data.isLoading || !this.data.sessionId) return;
-    this.setData({ stage: "direction_summary_loading", stageLabel: "方向小结", isLoading: true, loadingText: "小汪正在总结刚刚的选择..." });
+    this.setData({
+      stage: "direction_summary_loading",
+      stageLabel: "方向小结",
+      directionSummary: this.buildDirectionSummaryFromEvents(),
+      summaryCorrectionOpen: false,
+      summaryCorrectionText: "",
+      directionCorrectionNotice: "",
+      isLoading: true,
+      loadingText: "小汪正在总结刚刚的选择..."
+    });
     try {
       const payload = await sessionApi.advanceSession({
         session_id: this.data.sessionId,
@@ -605,12 +660,49 @@ Page({
     }
   },
 
+  markDirectionSummaryOk() {
+    this.setData({
+      directionCorrectionNotice: "好，小汪就按这个理解继续找商家。",
+      summaryCorrectionOpen: false,
+      summaryCorrectionText: ""
+    });
+  },
+
+  openDirectionCorrectionInput() {
+    this.setData({
+      summaryCorrectionOpen: true,
+      directionCorrectionNotice: ""
+    });
+  },
+
+  onDirectionCorrectionInput(event) {
+    this.setData({ summaryCorrectionText: event.detail.value || "" });
+  },
+
+  applyDirectionCorrection() {
+    const text = String(this.data.summaryCorrectionText || "").trim();
+    if (!text) return;
+    this.setData({
+      directionSummary: {
+        ...(this.data.directionSummary || {}),
+        userFeedback: text
+      },
+      directionCorrectionNotice: `收到，主人补充：${text}`,
+      summaryCorrectionOpen: false,
+      summaryCorrectionText: ""
+    });
+  },
+
   async continueToOffers() {
     if (this.data.isLoading || !this.data.sessionId) return;
     this.setData({ isLoading: true, loadingText: "小汪正在筛具体商家..." });
     try {
       const payload = await sessionApi.advanceSession({
         session_id: this.data.sessionId,
+        direction_summary: {
+          ...(this.data.directionSummary || {}),
+          user_feedback: (this.data.directionSummary && this.data.directionSummary.userFeedback) || ""
+        },
         ai_explanations: true,
         offer_ai_timeout_ms: 7000,
         offer_ai_max_attempts: 1,
