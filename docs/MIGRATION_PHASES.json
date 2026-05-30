@@ -29,7 +29,7 @@
     {
       "id": "P1",
       "name": "minimal_backend_session_shell",
-      "status": "pending",
+      "status": "completed",
       "goal": "Create a runnable backend that supports health, food directions, session start/swipe/view.",
       "storage": {
         "session_store": "in_memory_for_P1",
@@ -59,6 +59,16 @@
         "POST /api/session/swipe appends a direction event",
         "GET /api/session/:id returns the updated session",
         "invalid session id returns ok=false error.code=session_not_found"
+      ],
+      "completed_at": "2026-05-30",
+      "implementation": [
+        "Added package.json with start/check/smoke scripts.",
+        "Added server/src/index.mjs as a thin startup file.",
+        "Added server/src/app.mjs for P1 routes.",
+        "Added server/src/cards.mjs for food direction card loading and P1 filtering.",
+        "Added server/src/session-store.mjs with in-memory meal sessions.",
+        "Copied data/synthetic_food_futian/food_directions.json from the old workspace.",
+        "Added tests/smoke-session.mjs with concrete P1 assertions."
       ]
     },
     {

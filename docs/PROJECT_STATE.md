@@ -95,7 +95,7 @@ Product backend memory service
 
 LLMs and OpenClaw can propose memory candidates. Only backend memory service can create, update, pause, delete, confirm, or reject authoritative memory records.
 
-## Immediate Next Step
+## Current Progress
 
 Phase 0.5 implementation contracts are complete:
 
@@ -106,7 +106,7 @@ docs/contracts/config.md
 docs/contracts/legacy-api-map.md
 ```
 
-Phase 1 should create the smallest runnable new backend without touching the old workspace:
+Phase 1 minimal backend is complete:
 
 ```text
 GET /api/health
@@ -116,16 +116,31 @@ POST /api/session/swipe
 GET /api/session/:id
 ```
 
-Run it on a new port, for example:
+Validation completed:
 
 ```text
-4331
+npm run check
+npm run smoke:session
 ```
 
-Old backend remains on:
+Smoke result:
 
 ```text
-4321
+18 direction cards
+marker: lifepilot-next-p1
+session start/swipe/view passed
+missing session returns error.code=session_not_found
+```
+
+## Immediate Next Step
+
+Phase 2 should add the Ark/Doubao realtime AI provider and migrate direction summary:
+
+```text
+POST /api/session/advance
+```
+
+The first `advance` from `stage=direction` should produce `direction_summary`, move the session to `stage=direction_summary`, and keep deterministic local fallback as a first-class path.
 ```
 
 ## Hard Rule

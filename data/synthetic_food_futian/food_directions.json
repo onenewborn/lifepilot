@@ -1,0 +1,717 @@
+{
+  "schema_version": "lifepilot.synthetic_food_directions.v0",
+  "city_area": "深圳福田",
+  "synthetic_only": true,
+  "directions": [
+    {
+      "direction_id": "dir_hot_soup_noodles",
+      "title": "下班热汤粉面",
+      "hook": "热乎、快，一个人吃不用想太多。",
+      "budget_band": "20-35",
+      "tags": [
+        "独食友好",
+        "低预算",
+        "不太油",
+        "快"
+      ],
+      "fit": [
+        "工作日晚餐",
+        "一个人",
+        "赶时间",
+        "想吃热的"
+      ],
+      "avoid_for": [
+        "想吃精致正餐",
+        "想聊天久坐"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "noodle",
+          "rice_noodle",
+          "wonton"
+        ],
+        "oil_level_max": "medium",
+        "solo_friendly": true,
+        "budget_max": 35
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/hot_soup_noodles.png",
+        "future_video_prompt": "2-5 秒，下班后一个人吃热汤粉面，暖色灯光，快速、舒服、不油腻",
+        "video_url": "/assets/food-direction-videos/hot_soup_noodles.mp4",
+        "poster_url": "/assets/food-directions/hot_soup_noodles.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_light_rice_noodles",
+      "title": "清爽米粉粿条",
+      "hook": "不太油，吃完舒服，适合福田口岸附近随手解决。",
+      "budget_band": "25-45",
+      "tags": [
+        "不太油",
+        "米粉",
+        "粿条",
+        "独食友好"
+      ],
+      "fit": [
+        "想吃清爽",
+        "一个人",
+        "预算 50 内"
+      ],
+      "avoid_for": [
+        "想吃重口味",
+        "想吃大份肉"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "rice_noodle",
+          "chaoshan",
+          "wonton"
+        ],
+        "oil_level_max": "low",
+        "budget_max": 45
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/light_rice_noodles.png",
+        "future_video_prompt": "2-5 秒，清汤米粉和粿条，明亮小店，一个人安静吃完",
+        "video_url": "/assets/food-direction-videos/light_rice_noodles.mp4",
+        "poster_url": "/assets/food-directions/light_rice_noodles.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_budget_rice_bowls",
+      "title": "小碗菜",
+      "hook": "选择多，预算稳，环境普通但不用纠结。",
+      "budget_band": "18-40",
+      "tags": [
+        "选择多",
+        "低预算",
+        "工作餐",
+        "普通环境"
+      ],
+      "fit": [
+        "岗厦北地铁口",
+        "一个人",
+        "想吃米饭",
+        "预算 50 内"
+      ],
+      "avoid_for": [
+        "想吃精致环境",
+        "想约会聊天"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "rice_bowl",
+          "canteen",
+          "home_style"
+        ],
+        "budget_max": 45,
+        "solo_friendly": true
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/budget_rice_bowls.png",
+        "future_video_prompt": "2-5 秒，写字楼附近小碗菜，自选菜台，一人份米饭，实用不精致",
+        "video_url": "/assets/food-direction-videos/budget_rice_bowls.mp4",
+        "poster_url": "/assets/food-directions/budget_rice_bowls.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_pork_knuckle_rice",
+      "title": "猪脚饭快餐",
+      "hook": "顶饱、快，但会比粉面更油一点。",
+      "budget_band": "25-40",
+      "tags": [
+        "顶饱",
+        "快餐",
+        "偏油",
+        "低预算"
+      ],
+      "fit": [
+        "很饿",
+        "一个人",
+        "赶时间"
+      ],
+      "avoid_for": [
+        "不想太油",
+        "想吃清爽"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "pork_knuckle_rice",
+          "rice_bowl"
+        ],
+        "oil_level_min": "medium",
+        "budget_max": 40
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/pork_knuckle_rice.png",
+        "future_video_prompt": "2-5 秒，猪脚饭快餐档口，米饭和卤汁，顶饱但偏油",
+        "video_url": "/assets/food-direction-videos/pork_knuckle_rice.mp4",
+        "poster_url": "/assets/food-directions/pork_knuckle_rice.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_malatang_light",
+      "title": "麻辣烫",
+      "hook": "想自己挑菜，但不想吃得太重油。",
+      "budget_band": "35-55",
+      "tags": [
+        "可自选",
+        "可清淡",
+        "预算可控",
+        "独食友好"
+      ],
+      "fit": [
+        "想多吃菜",
+        "一个人",
+        "口味自由"
+      ],
+      "avoid_for": [
+        "完全不吃辣",
+        "讨厌自选称重"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "malatang"
+        ],
+        "oil_level_max": "medium",
+        "budget_max": 55
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/malatang_light.png",
+        "future_video_prompt": "2-5 秒，麻辣烫自选菜筐，清汤或微辣，干净明亮小店",
+        "video_url": "/assets/food-direction-videos/malatang_light.mp4",
+        "poster_url": "/assets/food-directions/malatang_light.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_japanese_teishoku",
+      "title": "日式定食",
+      "hook": "干净稳定，适合想吃得规整一点。",
+      "budget_band": "30-80",
+      "tags": [
+        "定食",
+        "稳定",
+        "不太油",
+        "商场简餐"
+      ],
+      "fit": [
+        "商场晚餐",
+        "一个人",
+        "预算稍高"
+      ],
+      "avoid_for": [
+        "预算 30 内",
+        "想吃重口味"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "japanese",
+          "teishoku"
+        ],
+        "oil_level_max": "medium",
+        "budget_max": 80
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/japanese_teishoku.png",
+        "future_video_prompt": "2-5 秒，日式定食托盘，米饭味噌汤和主菜，商场简餐氛围",
+        "video_url": "/assets/food-direction-videos/japanese_teishoku.mp4",
+        "poster_url": "/assets/food-directions/japanese_teishoku.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_korean_bibimbap",
+      "title": "韩式拌饭简餐",
+      "hook": "热乎、有味道，但不会像火锅那么重。",
+      "budget_band": "45-70",
+      "tags": [
+        "韩式",
+        "热乎",
+        "简餐",
+        "独食友好"
+      ],
+      "fit": [
+        "想吃米饭",
+        "想要一点酱香",
+        "一个人"
+      ],
+      "avoid_for": [
+        "完全不吃辣",
+        "想吃清汤"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "korean",
+          "bibimbap"
+        ],
+        "spice_level_max": "medium",
+        "budget_max": 70
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/korean_bibimbap.png",
+        "future_video_prompt": "2-5 秒，石锅拌饭冒热气，韩式小店，一人份满足",
+        "video_url": "/assets/food-direction-videos/korean_bibimbap.mp4",
+        "poster_url": "/assets/food-directions/korean_bibimbap.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_tomato_mini_hotpot",
+      "title": "清爽番茄小锅",
+      "hook": "热乎、有仪式感，但不走牛油重口那条路。",
+      "budget_band": "55-85",
+      "tags": [
+        "小火锅",
+        "番茄锅",
+        "不太油",
+        "独食可"
+      ],
+      "fit": [
+        "想吃热锅",
+        "不想太油",
+        "一个人或两个人"
+      ],
+      "avoid_for": [
+        "预算 50 内",
+        "想吃很辣很爽"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "hotpot",
+          "tomato_hotpot"
+        ],
+        "oil_level_max": "medium",
+        "budget_max": 85
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/tomato_mini_hotpot.png",
+        "future_video_prompt": "2-5 秒，番茄小锅冒热气，单人小桌，清爽不油腻",
+        "video_url": "",
+        "poster_url": "/assets/food-directions/tomato_mini_hotpot.png",
+        "video_version": "",
+        "has_sound": false
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_beef_hotpot_chaoshan",
+      "title": "潮汕牛肉火锅",
+      "hook": "适合 2-3 个人，清汤牛肉，比牛油锅轻一些。",
+      "budget_band": "90-140",
+      "tags": [
+        "潮汕",
+        "牛肉火锅",
+        "朋友聚餐",
+        "清汤"
+      ],
+      "fit": [
+        "朋友小聚",
+        "想吃肉",
+        "不想太辣"
+      ],
+      "avoid_for": [
+        "一个人随便吃",
+        "预算 80 内"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "chaoshan",
+          "beef_hotpot"
+        ],
+        "party_size_min": 2,
+        "budget_min": 80
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/beef_hotpot_chaoshan.png",
+        "future_video_prompt": "2-5 秒，潮汕牛肉火锅清汤锅，牛肉盘，朋友小聚",
+        "video_url": "/assets/food-direction-videos/beef_hotpot_chaoshan.mp4",
+        "poster_url": "/assets/food-directions/beef_hotpot_chaoshan.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_butter_hotpot",
+      "title": "重庆牛油火锅",
+      "hook": "就是想吃爽一点，今天不走清淡路线。",
+      "budget_band": "100-160",
+      "tags": [
+        "重口味",
+        "牛油锅",
+        "聚餐",
+        "偏油"
+      ],
+      "fit": [
+        "想吃辣",
+        "朋友聚餐",
+        "不怕油"
+      ],
+      "avoid_for": [
+        "不想太油",
+        "一个人随便吃",
+        "预算 80 内"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "hotpot",
+          "butter_hotpot"
+        ],
+        "oil_level_min": "high",
+        "spice_level_min": "medium",
+        "party_size_min": 2
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/butter_hotpot.png",
+        "future_video_prompt": "2-5 秒，红油牛油火锅翻滚，热闹聚餐，重口味",
+        "video_url": "/assets/food-direction-videos/butter_hotpot.mp4",
+        "poster_url": "/assets/food-directions/butter_hotpot.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_sukiyaki_solo",
+      "title": "寿喜烧",
+      "hook": "比普通快餐更有仪式感，可以一个人吃，也可以组局。",
+      "budget_band": "70-110",
+      "tags": [
+        "寿喜烧",
+        "独食可",
+        "商场",
+        "仪式感"
+      ],
+      "fit": [
+        "一个人想吃好一点",
+        "不想太吵",
+        "预算稍高"
+      ],
+      "avoid_for": [
+        "预算 50 内",
+        "想快速吃完"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "japanese",
+          "sukiyaki"
+        ],
+        "solo_friendly": true,
+        "budget_min": 65,
+        "spice_level_min": "none",
+        "oil_level_min": "medium",
+        "oil_level_max": "medium",
+        "budget_max": 299
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/sukiyaki_solo.png",
+        "future_video_prompt": "2-5 秒，一人份寿喜烧小锅，商场暖光座位，安静仪式感",
+        "video_url": "/assets/food-direction-videos/shouxishao.mp4",
+        "poster_url": "/assets/food-directions/sukiyaki_solo.png",
+        "video_version": "",
+        "has_sound": false
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_hunan_stir_fry",
+      "title": "湘菜",
+      "hook": "香、下饭，适合今天想吃有味道的正餐。",
+      "budget_band": "60-100",
+      "tags": [
+        "湘菜",
+        "下饭",
+        "偏辣",
+        "朋友可"
+      ],
+      "fit": [
+        "想吃米饭",
+        "能吃辣",
+        "两人以上更合适"
+      ],
+      "avoid_for": [
+        "完全不吃辣",
+        "不想太油"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "hunan",
+          "stir_fry"
+        ],
+        "spice_level_min": "medium",
+        "oil_level_min": "medium"
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/hunan_stir_fry.png",
+        "future_video_prompt": "2-5 秒，湘菜小炒上桌，米饭和热气，香辣下饭",
+        "video_url": "/assets/food-direction-videos/hunan_stir_fry.mp4",
+        "poster_url": "/assets/food-directions/hunan_stir_fry.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_sichuan_small_bistro",
+      "title": "川菜",
+      "hook": "想吃麻辣有劲，但不一定非要火锅。",
+      "budget_band": "55-90",
+      "tags": [
+        "川味",
+        "麻辣",
+        "小馆",
+        "重口味"
+      ],
+      "fit": [
+        "想吃辣",
+        "想吃下饭菜",
+        "朋友或一个人都可"
+      ],
+      "avoid_for": [
+        "完全不吃辣",
+        "不想太油"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "sichuan",
+          "spicy"
+        ],
+        "spice_level_min": "medium"
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/sichuan_small_bistro.png",
+        "future_video_prompt": "2-5 秒，川味小馆小桌，红油菜和米饭，热闹但日常",
+        "video_url": "/assets/food-direction-videos/sichuan_small_bistro.mp4",
+        "poster_url": "/assets/food-directions/sichuan_small_bistro.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_roast_meat_rice",
+      "title": "粤式烧腊饭",
+      "hook": "快、香、顶饱，但对不想粤菜的人要避开。",
+      "budget_band": "30-50",
+      "tags": [
+        "粤式",
+        "烧腊",
+        "快餐",
+        "偏油"
+      ],
+      "fit": [
+        "想吃快餐",
+        "不介意粤式",
+        "想吃肉"
+      ],
+      "avoid_for": [
+        "不想吃粤菜",
+        "不想太油"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "cantonese",
+          "roast_meat"
+        ],
+        "oil_level_min": "medium",
+        "budget_max": 50
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/roast_meat_rice.png",
+        "future_video_prompt": "2-5 秒，烧腊饭快餐盘，明档切肉，香但偏油",
+        "video_url": "/assets/food-direction-videos/roast_meat_rice.mp4",
+        "poster_url": "/assets/food-directions/roast_meat_rice.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_light_salad",
+      "title": "轻食减脂餐",
+      "hook": "不油，但可能没那么有满足感。",
+      "budget_band": "25-85",
+      "tags": [
+        "轻食",
+        "不油",
+        "商场/写字楼",
+        "低负担"
+      ],
+      "fit": [
+        "想吃轻一点",
+        "不想犯困",
+        "预算稍高"
+      ],
+      "avoid_for": [
+        "很饿",
+        "想吃热的",
+        "预算 40 内"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "salad",
+          "light_meal"
+        ],
+        "oil_level_max": "low"
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/light_salad.png",
+        "future_video_prompt": "2-5 秒，写字楼轻食碗，蔬菜和蛋白质，干净但不热闹",
+        "video_url": "/assets/food-direction-videos/light_salad.mp4",
+        "poster_url": "/assets/food-directions/light_salad.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_tea_restaurant",
+      "title": "茶餐厅简餐",
+      "hook": "选择多、出餐快，但口味和油量要看点什么。",
+      "budget_band": "40-70",
+      "tags": [
+        "茶餐厅",
+        "选择多",
+        "快",
+        "粤式"
+      ],
+      "fit": [
+        "不知道吃什么",
+        "想快点",
+        "能接受粤式"
+      ],
+      "avoid_for": [
+        "不想吃粤菜",
+        "严格低油"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "hongkong_cafe",
+          "cantonese"
+        ],
+        "budget_max": 70
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/tea_restaurant.png",
+        "future_video_prompt": "2-5 秒，茶餐厅卡座，碟头饭和冻柠茶，快节奏",
+        "video_url": "/assets/food-direction-videos/tea_restaurant.mp4",
+        "poster_url": "/assets/food-directions/tea_restaurant.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_sushi_chat",
+      "title": "寿司",
+      "hook": "贵一点，但环境和聊天感会更好。",
+      "budget_band": "120-220",
+      "tags": [
+        "寿司",
+        "朋友聊天",
+        "环境好",
+        "周末"
+      ],
+      "fit": [
+        "Coco Park",
+        "朋友小聚",
+        "想吃好一点"
+      ],
+      "avoid_for": [
+        "预算 80 内",
+        "一个人随便吃"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "sushi",
+          "japanese"
+        ],
+        "budget_min": 100,
+        "chat_friendly": true
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/sushi_chat.png",
+        "future_video_prompt": "2-5 秒，寿司吧台和朋友聊天，环境好，周末稍贵",
+        "video_url": "/assets/food-direction-videos/sushi_chat.mp4",
+        "poster_url": "/assets/food-directions/sushi_chat.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_coconut_chicken",
+      "title": "椰子鸡正餐",
+      "hook": "清爽、适合朋友吃，但预算会比快餐高。",
+      "budget_band": "90-140",
+      "tags": [
+        "椰子鸡",
+        "清爽",
+        "朋友聚餐",
+        "正餐"
+      ],
+      "fit": [
+        "两人以上",
+        "不想吃辣",
+        "想吃清爽锅"
+      ],
+      "avoid_for": [
+        "预算 80 内",
+        "一个人随便吃"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "coconut_chicken"
+        ],
+        "party_size_min": 2,
+        "budget_min": 80
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/coconut_chicken.png",
+        "future_video_prompt": "2-5 秒，椰子鸡清汤锅，朋友围坐，清爽正餐",
+        "video_url": "/assets/food-direction-videos/coconut_chicken.mp4",
+        "poster_url": "/assets/food-directions/coconut_chicken.jpg",
+        "video_version": "2026-05-21-a",
+        "has_sound": true
+      },
+      "synthetic": true
+    }
+  ]
+}
