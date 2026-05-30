@@ -187,8 +187,8 @@
         />
 
         <view class="media-shade" catchtap="toggleVideoPlay"></view>
-        <button wx:if="{{currentCard.videoUrl}}" class="sound-button" catchtap="toggleVideoMuted">{{videoMuted ? '开声音' : '静音'}}</button>
-        <view wx:if="{{videoPaused}}" class="pause-badge" catchtap="toggleVideoPlay">继续播放</view>
+        <cover-view wx:if="{{currentCard.videoUrl && !videoDisabled}}" class="sound-button" catchtap="toggleVideoMuted">{{videoMuted ? '开声音' : '静音'}}</cover-view>
+        <cover-view wx:if="{{videoPaused}}" class="pause-badge" catchtap="toggleVideoPlay">⏸</cover-view>
 
         <view class="card-body">
           <view class="badge">{{currentCard.badge}}</view>

@@ -467,6 +467,8 @@ button::after {
   z-index: 4;
   width: 132rpx;
   height: 52rpx;
+  line-height: 52rpx;
+  text-align: center;
   border-radius: 999rpx;
   background: rgba(255, 255, 255, 0.86);
   color: #1f2428;
@@ -480,11 +482,14 @@ button::after {
   top: 50%;
   z-index: 4;
   transform: translate(-50%, -50%);
-  padding: 18rpx 28rpx;
+  width: 108rpx;
+  height: 108rpx;
+  line-height: 108rpx;
+  text-align: center;
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.88);
-  color: #2d2118;
-  font-size: 24rpx;
+  background: rgba(31, 36, 40, 0.28);
+  color: #ffffff;
+  font-size: 58rpx;
   font-weight: 900;
 }
 
