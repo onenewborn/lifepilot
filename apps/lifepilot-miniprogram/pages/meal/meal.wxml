@@ -176,6 +176,7 @@
           loop
           muted="{{videoMuted}}"
           object-fit="cover"
+          enable-play-gesture="{{true}}"
           show-center-play-btn="{{false}}"
           show-fullscreen-btn="{{false}}"
           show-play-btn="{{false}}"

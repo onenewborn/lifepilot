@@ -334,6 +334,7 @@ Page({
     const currentCard = this.data.cards[this.data.index] || null;
     const nextCard = this.data.cards[this.data.index + 1] || null;
     this.currentStartedAt = Date.now();
+    this._videoContext = null;
     this.setData({
       currentCard,
       nextCard,
@@ -446,10 +447,10 @@ Page({
 
   toggleVideoMuted() {
     const muted = !this.data.videoMuted;
-    const context = this.videoContext();
-    if (muted && context.mute) context.mute();
-    if (!muted && context.play) context.play();
-    this.setData({ videoMuted: muted, videoPaused: false });
+    this.skipNextVideoTap = true;
+    this.setData({ videoMuted: muted, videoPaused: false }, () => {
+      this.videoContext().play();
+    });
   },
 
   videoContext() {
@@ -491,7 +492,17 @@ Page({
     if (!this.touchStart || this.isCommittingSwipe) return;
     const touch = event.changedTouches[0] || {};
     const dx = (touch.clientX || this.touchStart.x) - this.touchStart.x;
+    const dy = (touch.clientY || this.touchStart.y) - this.touchStart.y;
     this.touchStart = null;
+    if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+      if (this.skipNextVideoTap) {
+        this.skipNextVideoTap = false;
+      } else {
+        this.toggleVideoPlay();
+      }
+      this.setData(swipeGesture.resetStyles());
+      return;
+    }
     if (dx > 70) {
       this.commitSwipe("keep");
       return;

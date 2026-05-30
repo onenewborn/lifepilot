@@ -1,10 +1,20 @@
 const { assetUrl } = require("../config/assets");
+const { videoByDirectionId } = require("../data/video-manifest");
 const { compactText, joinTags, moneyText } = require("./format");
+
+const directionVideos = videoByDirectionId();
+
+function versionedAssetUrl(path, version) {
+  const url = assetUrl(path);
+  if (!url || !version) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}v=${encodeURIComponent(version)}`;
+}
 
 function normalizeDirectionCard(card = {}, order = 0) {
   const directionId = card.direction_id || card.directionId || card.card_id || `direction_${order}`;
-  const imageUrl = assetUrl(card.image_url || card.imageUrl || card.poster_url || card.posterUrl || "");
-  const videoUrl = assetUrl(card.video_url || card.videoUrl || "");
+  const manifestVideo = directionVideos[directionId] || {};
+  const imageUrl = assetUrl(card.image_url || card.imageUrl || manifestVideo.posterUrl || card.poster_url || card.posterUrl || "");
+  const videoUrl = versionedAssetUrl(manifestVideo.url || card.video_url || card.videoUrl || "", manifestVideo.version);
   return {
     raw: card,
     order,
@@ -15,9 +25,9 @@ function normalizeDirectionCard(card = {}, order = 0) {
     subtitle: compactText(card.hook || card.description, "小汪会继续帮主人筛具体商家"),
     badge: compactText(card.badge, "深圳福田 · 方向卡"),
     imageUrl,
-    posterUrl: assetUrl(card.poster_url || card.posterUrl || card.image_url || card.imageUrl || ""),
+    posterUrl: assetUrl(manifestVideo.posterUrl || card.poster_url || card.posterUrl || card.image_url || card.imageUrl || ""),
     videoUrl,
-    hasSound: Boolean(card.has_sound || card.hasSound),
+    hasSound: Boolean(manifestVideo.hasSound || card.has_sound || card.hasSound),
     tags: joinTags([...(card.tags || []), card.budget_band || card.budgetBand], 5),
     fit: joinTags(card.fit || [], 4),
     avoidFor: joinTags(card.avoid_for || card.avoidFor || [], 3)
