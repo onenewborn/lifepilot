@@ -153,3 +153,52 @@ export function buildDirectionSummaryPrompt({goal, events = [], entryContext = n
     `长期记忆上下文：${JSON.stringify(memoryContext || {confirmed_preferences: []})}`,
   ].join("\n");
 }
+
+export function buildOfferExplanationPrompt({goal, directionSummary = {}, understanding = {}, cards = []} = {}) {
+  const compactUnderstanding = {
+    constraints: understanding.constraints || {},
+    dimensions: understanding.dimensions || {},
+    hard_constraints: understanding.hard_constraints || [],
+    soft_preferences: understanding.soft_preferences || [],
+    special_signals: understanding.special_signals || [],
+    missing_info: understanding.missing_info || [],
+    parse_mode: understanding.parse_mode || "",
+  };
+  return [
+    "请扮演微信小程序里的 AI 助手小汪。",
+    "用户已经进入第二阶段商家卡，后端已经完成商家召回、硬筛选和软排序。",
+    "你不能改变卡片顺序，不能新增或删除商家，只能基于事实改写每张卡的解释文案。",
+    "只返回一个 JSON 对象，不要 markdown，不要解释。",
+    "",
+    "要求：",
+    "- 每张输入卡都要返回一项。",
+    "- matched 写 1-3 条，说明为什么适合主人当前需求。",
+    "- watchouts 写 0-2 条，说明到店前需要注意什么。",
+    "- conflicts 只在事实明确冲突时填写。",
+    "- 不要编造真实美团、大众点评、订单、支付、营业、实时排队或真实路线。",
+    "- 距离使用 facts.distance_text，例如 0.9km，不要写 subway_walk_min。",
+    "- 文案短，适合卡片展示。",
+    "",
+    "输出 JSON schema：",
+    JSON.stringify({
+      cards: [{
+        offer_id: "",
+        matched: [],
+        watchouts: [],
+        conflicts: [],
+      }],
+    }, null, 2),
+    "",
+    `用户目标：${goal || ""}`,
+    `入口理解：${JSON.stringify(compactUnderstanding, null, 2)}`,
+    `方向小结：${JSON.stringify(directionSummary || {}, null, 2)}`,
+    `商家卡事实：${JSON.stringify(cards.map((card) => ({
+      offer_id: card.offer_id,
+      merchant_name: card.merchant_name,
+      title: card.title,
+      tags: card.tags,
+      facts: card.facts,
+      local_explanation: card.explanation,
+    })), null, 2)}`,
+  ].join("\n");
+}

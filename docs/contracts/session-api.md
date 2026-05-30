@@ -145,4 +145,40 @@ session.current_cards = []
 }
 ```
 
-`direction_summary -> offer` 放到 P3。
+## P3 Advance 状态机
+
+P3 新增第二段状态转移：
+
+```text
+direction_summary -> offer
+```
+
+成功后：
+
+```text
+session.stage = "offer"
+session.next_step = "swipe_food_offers"
+session.current_cards = offer cards top10
+session.offer_payload_meta 存在
+```
+
+如果 session 不在 `direction` 或 `direction_summary` 阶段，返回 `invalid_session_transition`。
+
+## P3 Finalize
+
+请求：
+
+```text
+POST /api/session/finalize
+```
+
+P3 只支持从 `offer` 阶段 finalize。
+
+成功后：
+
+```text
+session.stage = "final"
+session.next_step = "done"
+session.result.primary 存在
+session.result.alternatives 最多 2 个
+```

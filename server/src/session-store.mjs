@@ -133,3 +133,20 @@ export function applyDirectionSummary(session, summaryPayload) {
   touchSession(session);
   return session;
 }
+
+export function applyOfferCards(session, payload) {
+  session.stage = "offer";
+  session.next_step = "swipe_food_offers";
+  session.current_cards = payload.cards || [];
+  session.offer_payload_meta = payload.offer_payload_meta || null;
+  touchSession(session);
+  return session;
+}
+
+export function applyFinalDecision(session, result) {
+  session.stage = "final";
+  session.next_step = "done";
+  session.result = result;
+  touchSession(session);
+  return session;
+}

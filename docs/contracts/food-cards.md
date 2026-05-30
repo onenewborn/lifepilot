@@ -114,10 +114,11 @@ Offer 卡是第二层滑卡。
   "facts": {
     "price_per_person": 28,
     "neighborhood": "福田",
+    "distance_km": 0.9,
+    "distance_text": "0.9km",
     "queue_risk": "low",
     "oil_level": "medium",
     "spice_level": "none",
-    "subway_walk_min": 6,
     "signature_items": ["鸡腿饭"]
   },
   "explanation": {
@@ -128,6 +129,36 @@ Offer 卡是第二层滑卡。
   },
   "synthetic_only": true
 }
+```
+
+## 商家卡距离规则
+
+P3 商家卡主字段使用直观距离：
+
+```text
+facts.distance_km
+facts.distance_text
+```
+
+示例：
+
+```json
+{
+  "distance_km": 0.9,
+  "distance_text": "0.9km"
+}
+```
+
+`subway_walk_min` 不再作为新商家卡主字段。旧数据如果只有步行分钟，可以在后端内部近似换算为距离，但响应合同优先暴露 `distance_km` 和 `distance_text`。
+
+## 商家卡 AI 解释
+
+P3 默认尝试使用 realtime AI 改写商家卡解释，但 AI 不能参与召回、硬筛选、软排序或最终选择。
+
+```text
+后端规则决定 cards top10 和 score。
+AI 只能改写 explanation.matched / watchouts / conflicts。
+AI 失败时保留本地规则解释。
 ```
 
 ## 资产 URL 规则

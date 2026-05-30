@@ -122,11 +122,21 @@
     {
       "id": "P3",
       "name": "offer_cards_and_finalize",
-      "status": "pending",
+      "status": "completed",
       "goal": "迁移 Offer 卡生成和最终推荐，同时保持 API 合同兼容。",
       "routes": [
         "POST /api/food-offers",
-        "POST /api/session/finalize"
+        "POST /api/session/finalize",
+        "POST /api/map/route",
+        "GET/POST /api/weather/forecast",
+        "GET/POST /api/queue/status"
+      ],
+      "implementation_notes": [
+        "新增 direction_summary -> offer 状态转移，商家卡默认 top10。",
+        "商家卡主距离字段为 distance_km / distance_text，不再把 subway_walk_min 作为新合同主字段。",
+        "最终推荐从 offer 阶段产生 primary 和最多 2 个 alternatives。",
+        "route/weather/queue 先迁移 mock provider，响应保留 provider 和 synthetic_only 标记。",
+        "P3 smoke 覆盖商家卡、商家滑卡、finalize 和三个 provider。"
       ]
     },
     {

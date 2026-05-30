@@ -190,16 +190,87 @@ try {
   assert.equal(advanced.payload.session.direction_summary.mode, "local_fallback");
   assert.equal(advanced.payload.meta.fallback_used, true);
 
-  const secondAdvance = await request("/api/session/advance", {
+  const offerAdvance = await request("/api/session/advance", {
     method: "POST",
     body: {
       session_id: "smoke_p1_session",
-      local_only: true,
+      limit: 10,
     },
   });
-  assert.equal(secondAdvance.status, 409);
-  assert.equal(secondAdvance.payload.ok, false);
-  assert.equal(secondAdvance.payload.error.code, "invalid_session_transition");
+  assert.equal(offerAdvance.status, 200);
+  assert.equal(offerAdvance.payload.ok, true);
+  assert.equal(offerAdvance.payload.session.stage, "offer");
+  assert.equal(offerAdvance.payload.session.next_step, "swipe_food_offers");
+  assert.ok(offerAdvance.payload.session.current_cards.length > 0);
+  assert.ok(offerAdvance.payload.session.current_cards.length <= 10);
+  const offerCard = offerAdvance.payload.session.current_cards[0];
+  assert.ok(offerCard.offer_id);
+  assert.ok(offerCard.merchant_id);
+  assert.ok(offerCard.facts.distance_text.endsWith("km"));
+  assert.equal(Object.hasOwn(offerCard.facts, "subway_walk_min"), false);
+
+  const offerSwipe = await request("/api/session/swipe", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+      action: "keep",
+      card_id: offerCard.card_id,
+      dwell_ms: 1111,
+    },
+  });
+  assert.equal(offerSwipe.status, 200);
+  assert.equal(offerSwipe.payload.event.action, "keep");
+  assert.equal(offerSwipe.payload.event.offer_id, offerCard.offer_id);
+  assert.equal(offerSwipe.payload.session.offer_events.length, 1);
+
+  const finalized = await request("/api/session/finalize", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+    },
+  });
+  assert.equal(finalized.status, 200);
+  assert.equal(finalized.payload.ok, true);
+  assert.equal(finalized.payload.session.stage, "final");
+  assert.equal(finalized.payload.result.hasSelection, true);
+  assert.equal(finalized.payload.result.primary.offer_id, offerCard.offer_id);
+
+  const route = await request("/api/map/route", {
+    method: "POST",
+    body: {
+      merchant_id: offerCard.merchant_id,
+      distance_km: offerCard.facts.distance_km,
+    },
+  });
+  assert.equal(route.status, 200);
+  assert.equal(route.payload.ok, true);
+  assert.ok(route.payload.recommended.distance_text.endsWith("km"));
+
+  const weather = await request("/api/weather/forecast", {method: "GET"});
+  assert.equal(weather.status, 200);
+  assert.equal(weather.payload.ok, true);
+  assert.equal(weather.payload.provider, "mock");
+
+  const queue = await request("/api/queue/status", {
+    method: "POST",
+    body: {
+      merchant_id: offerCard.merchant_id,
+      queue_risk: offerCard.facts.queue_risk,
+    },
+  });
+  assert.equal(queue.status, 200);
+  assert.equal(queue.payload.ok, true);
+  assert.equal(queue.payload.provider, "mock");
+
+  const invalidAdvance = await request("/api/session/advance", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+    },
+  });
+  assert.equal(invalidAdvance.status, 409);
+  assert.equal(invalidAdvance.payload.ok, false);
+  assert.equal(invalidAdvance.payload.error.code, "invalid_session_transition");
 
   const missing = await request("/api/session/missing_session");
   assert.equal(missing.status, 404);
@@ -208,7 +279,7 @@ try {
 
   console.log(JSON.stringify({
     ok: true,
-    assertions: 42,
+    assertions: 72,
     cards: directions.payload.cards.length,
     marker: health.marker,
   }, null, 2));

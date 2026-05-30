@@ -3,8 +3,10 @@ import { buildFoodDirectionCards, filterFoodDirectionCards } from "./cards.mjs";
 import { config } from "./config.mjs";
 import { buildDirectionSummary } from "./direction-summary.mjs";
 import { parseEntry } from "./entry-parser.mjs";
+import { buildFoodOffers, selectFinalDecision } from "./offer-cards.mjs";
+import { queuePayload, routePayload, weatherPayload } from "./context-providers.mjs";
 import { fail, ok, readBody } from "./http.mjs";
-import { appendSwipeEvent, applyDirectionSummary, createSession, getSession, normalizeSwipeEvent } from "./session-store.mjs";
+import { appendSwipeEvent, applyDirectionSummary, applyFinalDecision, applyOfferCards, createSession, getSession, normalizeSwipeEvent } from "./session-store.mjs";
 
 function publicSession(session) {
   return session;
@@ -105,10 +107,16 @@ async function handleSessionAdvance(req, res) {
     fail(res, 404, "session_not_found", "Session not found.");
     return;
   }
+  if (session.stage === "direction_summary") {
+    const payload = await buildFoodOffers({session, body, limit: body.limit || 10});
+    applyOfferCards(session, payload);
+    ok(res, {session: publicSession(session), offer_payload: payload});
+    return;
+  }
   if (session.stage !== "direction") {
     fail(res, 409, "invalid_session_transition", "Session can only advance from direction in P2.", {
       stage: session.stage,
-      supported_transition: "direction -> direction_summary",
+      supported_transition: "direction -> direction_summary -> offer",
     });
     return;
   }
@@ -128,6 +136,44 @@ async function handleSessionAdvance(req, res) {
     session: publicSession(session),
     meta: summaryPayload.meta || {fallback_used: false},
   });
+}
+
+async function handleFoodOffers(req, res) {
+  const body = await readBody(req);
+  const session = body.session_id || body.sessionId ? getSession(body.session_id || body.sessionId) : null;
+  const payload = await buildFoodOffers({session: session || {}, body, limit: body.limit || 10});
+  ok(res, payload);
+}
+
+async function handleSessionFinalize(req, res) {
+  const body = await readBody(req);
+  const session = getSession(body.session_id || body.sessionId);
+  if (!session) {
+    fail(res, 404, "session_not_found", "Session not found.");
+    return;
+  }
+  if (session.stage !== "offer") {
+    fail(res, 409, "invalid_session_transition", "Session can only finalize from offer in P3.", {stage: session.stage});
+    return;
+  }
+  const result = selectFinalDecision(session);
+  applyFinalDecision(session, result);
+  ok(res, {session: publicSession(session), result});
+}
+
+async function handleQueueStatus(req, res) {
+  const body = req.method === "POST" ? await readBody(req) : {};
+  ok(res, queuePayload(body.merchant || body));
+}
+
+async function handleWeatherForecast(req, res) {
+  const body = req.method === "POST" ? await readBody(req) : {};
+  ok(res, weatherPayload(body));
+}
+
+async function handleMapRoute(req, res) {
+  const body = await readBody(req);
+  ok(res, routePayload(body));
 }
 
 async function route(req, res) {
@@ -156,6 +202,26 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/session/advance") {
       await handleSessionAdvance(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/session/finalize") {
+      await handleSessionFinalize(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/food-offers") {
+      await handleFoodOffers(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/map/route") {
+      await handleMapRoute(req, res);
+      return;
+    }
+    if ((req.method === "GET" || req.method === "POST") && url.pathname === "/api/weather/forecast") {
+      await handleWeatherForecast(req, res);
+      return;
+    }
+    if ((req.method === "GET" || req.method === "POST") && url.pathname === "/api/queue/status") {
+      await handleQueueStatus(req, res);
       return;
     }
     if (req.method === "GET" && url.pathname.startsWith("/api/session/")) {

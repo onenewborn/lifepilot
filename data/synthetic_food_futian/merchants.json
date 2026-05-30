@@ -1,0 +1,824 @@
+{
+  "schema_version": "lifepilot.synthetic_food_merchants.v0",
+  "city_area": "深圳福田",
+  "synthetic_only": true,
+  "merchants": [
+    {
+      "merchant_id": "m_futian_001",
+      "name": "合成候选·沙县小吃",
+      "area": "深圳福田",
+      "neighborhood": "车公庙",
+      "scene": "写字楼地铁口沙县小吃快餐",
+      "environment": {
+        "space_type": "连锁小吃快餐店",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 5,
+      "opening_hours": {
+        "weekday": [
+          "07:30",
+          "21:30"
+        ],
+        "weekend": [
+          "08:30",
+          "20:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "quick_snack",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_002",
+      "name": "合成候选·辣子王兰州拉面店",
+      "area": "深圳福田",
+      "neighborhood": "车公庙",
+      "scene": "兰州牛肉面快餐",
+      "environment": {
+        "space_type": "牛肉面快餐店",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 7,
+      "opening_hours": {
+        "weekday": [
+          "10:30",
+          "22:00"
+        ],
+        "weekend": [
+          "10:30",
+          "22:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "quick_meal",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_003",
+      "name": "合成候选·岗厦北小碗菜",
+      "area": "深圳福田",
+      "neighborhood": "岗厦北",
+      "scene": "地铁口工作餐",
+      "environment": {
+        "space_type": "写字楼便餐",
+        "noise_level": "high",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 4,
+      "opening_hours": {
+        "weekday": [
+          "10:30",
+          "21:00"
+        ],
+        "weekend": [
+          "11:00",
+          "20:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "quick_meal",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_004",
+      "name": "合成候选·岗厦北麻辣烫档",
+      "area": "深圳福田",
+      "neighborhood": "岗厦北",
+      "scene": "自选称重简餐",
+      "environment": {
+        "space_type": "地铁商业小店",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 6,
+      "opening_hours": {
+        "weekday": [
+          "10:30",
+          "22:30"
+        ],
+        "weekend": [
+          "11:00",
+          "22:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "quick_meal",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_005",
+      "name": "合成候选·福田口岸粿条铺",
+      "area": "深圳福田",
+      "neighborhood": "福田口岸",
+      "scene": "口岸附近清爽粉面",
+      "environment": {
+        "space_type": "街边小店",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "low",
+      "subway_walk_min": 8,
+      "opening_hours": {
+        "weekday": [
+          "08:00",
+          "21:30"
+        ],
+        "weekend": [
+          "08:30",
+          "21:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "quick_meal",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_006",
+      "name": "合成候选·福田口岸云吞面",
+      "area": "深圳福田",
+      "neighborhood": "福田口岸",
+      "scene": "清淡云吞和汤面",
+      "environment": {
+        "space_type": "小吃店",
+        "noise_level": "low",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "low",
+      "subway_walk_min": 6,
+      "opening_hours": {
+        "weekday": [
+          "09:00",
+          "21:00"
+        ],
+        "weekend": [
+          "09:30",
+          "20:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "quick_meal",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_007",
+      "name": "合成候选·会展中心商场定食",
+      "area": "深圳福田",
+      "neighborhood": "会展中心",
+      "scene": "工作日商场简餐",
+      "environment": {
+        "space_type": "商场简餐",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": true,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 6,
+      "opening_hours": {
+        "weekday": [
+          "10:30",
+          "22:00"
+        ],
+        "weekend": [
+          "10:30",
+          "22:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "quick_meal",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_008",
+      "name": "合成候选·会展中心韩式简餐",
+      "area": "深圳福田",
+      "neighborhood": "会展中心",
+      "scene": "商场韩式一人饭",
+      "environment": {
+        "space_type": "商场小店",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 5,
+      "opening_hours": {
+        "weekday": [
+          "10:30",
+          "21:30"
+        ],
+        "weekend": [
+          "10:30",
+          "22:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "quick_meal",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_009",
+      "name": "合成候选·购物公园番茄小锅",
+      "area": "深圳福田",
+      "neighborhood": "购物公园",
+      "scene": "商场小火锅",
+      "environment": {
+        "space_type": "商场餐厅",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": true,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "high",
+      "subway_walk_min": 7,
+      "opening_hours": {
+        "weekday": [
+          "11:00",
+          "22:00"
+        ],
+        "weekend": [
+          "11:00",
+          "22:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "popular_dine_in",
+      "reservation_mode": "recommended"
+    },
+    {
+      "merchant_id": "m_futian_010",
+      "name": "合成候选·一绪寿喜烧",
+      "area": "深圳福田",
+      "neighborhood": "购物公园",
+      "scene": "和牛寿喜烧自助餐",
+      "environment": {
+        "space_type": "商场日式餐厅",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": true,
+        "comfort_level": "comfortable"
+      },
+      "queue_risk": "high",
+      "subway_walk_min": 50,
+      "opening_hours": {
+        "weekday": [
+          "11:00",
+          "22:00"
+        ],
+        "weekend": [
+          "11:00",
+          "22:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "popular_dine_in",
+      "reservation_mode": "recommended"
+    },
+    {
+      "merchant_id": "m_futian_011",
+      "name": "合成候选·CocoPark寿司小馆",
+      "area": "深圳福田",
+      "neighborhood": "CocoPark",
+      "scene": "周末朋友聊天寿司",
+      "environment": {
+        "space_type": "商场寿司店",
+        "noise_level": "low",
+        "solo_friendly": false,
+        "chat_friendly": true,
+        "comfort_level": "comfortable"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 9,
+      "opening_hours": {
+        "weekday": [
+          "11:30",
+          "22:00"
+        ],
+        "weekend": [
+          "11:30",
+          "22:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "standard_dine_in",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_012",
+      "name": "合成候选·CocoPark烤肉社",
+      "area": "深圳福田",
+      "neighborhood": "CocoPark",
+      "scene": "朋友烤肉聚餐",
+      "environment": {
+        "space_type": "商场烤肉店",
+        "noise_level": "high",
+        "solo_friendly": false,
+        "chat_friendly": true,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "high",
+      "subway_walk_min": 10,
+      "opening_hours": {
+        "weekday": [
+          "11:30",
+          "22:30"
+        ],
+        "weekend": [
+          "11:30",
+          "23:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "standard_dine_in",
+      "reservation_mode": "recommended"
+    },
+    {
+      "merchant_id": "m_futian_013",
+      "name": "合成候选·福田中心椰子鸡",
+      "area": "深圳福田",
+      "neighborhood": "福田中心",
+      "scene": "清爽朋友正餐",
+      "environment": {
+        "space_type": "商场正餐",
+        "noise_level": "medium",
+        "solo_friendly": false,
+        "chat_friendly": true,
+        "comfort_level": "comfortable"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 8,
+      "opening_hours": {
+        "weekday": [
+          "11:00",
+          "22:00"
+        ],
+        "weekend": [
+          "11:00",
+          "22:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "popular_dine_in",
+      "reservation_mode": "recommended"
+    },
+    {
+      "merchant_id": "m_futian_014",
+      "name": "合成候选·福田中心川味小馆",
+      "area": "深圳福田",
+      "neighborhood": "福田中心",
+      "scene": "川味下饭小馆",
+      "environment": {
+        "space_type": "街区小馆",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 9,
+      "opening_hours": {
+        "weekday": [
+          "11:00",
+          "22:00"
+        ],
+        "weekend": [
+          "11:00",
+          "22:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "standard_dine_in",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_015",
+      "name": "合成候选·皇岗村湘菜小炒",
+      "area": "深圳福田",
+      "neighborhood": "皇岗村",
+      "scene": "接地气湘菜小炒",
+      "environment": {
+        "space_type": "社区小馆",
+        "noise_level": "high",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "low",
+      "subway_walk_min": 12,
+      "opening_hours": {
+        "weekday": [
+          "10:30",
+          "22:30"
+        ],
+        "weekend": [
+          "10:30",
+          "22:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "standard_dine_in",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_016",
+      "name": "合成候选·皇岗村冒菜铺",
+      "area": "深圳福田",
+      "neighborhood": "皇岗村",
+      "scene": "一人麻辣冒菜",
+      "environment": {
+        "space_type": "社区小吃店",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "low",
+      "subway_walk_min": 11,
+      "opening_hours": {
+        "weekday": [
+          "10:30",
+          "23:00"
+        ],
+        "weekend": [
+          "10:30",
+          "23:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "standard_dine_in",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_017",
+      "name": "合成候选·余百年-现烧烧腊",
+      "area": "深圳福田",
+      "neighborhood": "下沙",
+      "scene": "粤式烧腊快餐",
+      "environment": {
+        "space_type": "社区快餐",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 9,
+      "opening_hours": {
+        "weekday": [
+          "10:00",
+          "21:00"
+        ],
+        "weekend": [
+          "10:30",
+          "20:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "quick_meal",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_018",
+      "name": "合成候选·下沙茶餐厅",
+      "area": "深圳福田",
+      "neighborhood": "下沙",
+      "scene": "茶餐厅快餐",
+      "environment": {
+        "space_type": "社区茶餐厅",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": true,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 10,
+      "opening_hours": {
+        "weekday": [
+          "07:30",
+          "22:00"
+        ],
+        "weekend": [
+          "08:00",
+          "22:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "quick_meal",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_019",
+      "name": "合成候选·卓越中心精致餐室",
+      "area": "深圳福田",
+      "neighborhood": "卓越中心",
+      "scene": "重要聚会高端餐",
+      "environment": {
+        "space_type": "高端餐室",
+        "noise_level": "low",
+        "solo_friendly": false,
+        "chat_friendly": true,
+        "comfort_level": "premium"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 6,
+      "opening_hours": {
+        "weekday": [
+          "11:30",
+          "22:00"
+        ],
+        "weekend": [
+          "11:30",
+          "22:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "popular_dine_in",
+      "reservation_mode": "recommended"
+    },
+    {
+      "merchant_id": "m_futian_020",
+      "name": "合成候选·卓越中心轻食碗",
+      "area": "深圳福田",
+      "neighborhood": "卓越中心",
+      "scene": "写字楼轻食",
+      "environment": {
+        "space_type": "写字楼轻食店",
+        "noise_level": "low",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "low",
+      "subway_walk_min": 5,
+      "opening_hours": {
+        "weekday": [
+          "10:00",
+          "20:30"
+        ],
+        "weekend": [
+          "11:00",
+          "19:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "standard_dine_in",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_021",
+      "name": "合成候选·华强北烤鱼铺",
+      "area": "深圳福田",
+      "neighborhood": "华强北",
+      "scene": "朋友烤鱼正餐",
+      "environment": {
+        "space_type": "街区烤鱼店",
+        "noise_level": "high",
+        "solo_friendly": false,
+        "chat_friendly": true,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 8,
+      "opening_hours": {
+        "weekday": [
+          "11:00",
+          "23:00"
+        ],
+        "weekend": [
+          "11:00",
+          "23:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "popular_dine_in",
+      "reservation_mode": "recommended"
+    },
+    {
+      "merchant_id": "m_futian_022",
+      "name": "合成候选·华强北牛油火锅",
+      "area": "深圳福田",
+      "neighborhood": "华强北",
+      "scene": "重口味火锅聚餐",
+      "environment": {
+        "space_type": "热闹火锅店",
+        "noise_level": "high",
+        "solo_friendly": false,
+        "chat_friendly": true,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "high",
+      "subway_walk_min": 7,
+      "opening_hours": {
+        "weekday": [
+          "11:00",
+          "23:30"
+        ],
+        "weekend": [
+          "11:00",
+          "24:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "popular_dine_in",
+      "reservation_mode": "recommended"
+    },
+    {
+      "merchant_id": "m_futian_023",
+      "name": "合成候选·景田潮汕牛肉店",
+      "area": "深圳福田",
+      "neighborhood": "景田",
+      "scene": "潮汕牛肉火锅和便餐",
+      "environment": {
+        "space_type": "社区牛肉店",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": true,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 9,
+      "opening_hours": {
+        "weekday": [
+          "10:30",
+          "22:30"
+        ],
+        "weekend": [
+          "10:30",
+          "22:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "popular_dine_in",
+      "reservation_mode": "recommended"
+    },
+    {
+      "merchant_id": "m_futian_024",
+      "name": "合成候选·莲花村家常饭堂",
+      "area": "深圳福田",
+      "neighborhood": "莲花村",
+      "scene": "社区家常饭",
+      "environment": {
+        "space_type": "社区饭堂",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "low",
+      "subway_walk_min": 10,
+      "opening_hours": {
+        "weekday": [
+          "10:30",
+          "21:00"
+        ],
+        "weekend": [
+          "10:30",
+          "20:30"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "standard_dine_in",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_025",
+      "name": "合成候选·汪记豆花川菜馆",
+      "area": "深圳福田",
+      "neighborhood": "岗厦北城中村",
+      "scene": "城中村重口味川菜盐帮菜",
+      "environment": {
+        "space_type": "城中村苍蝇馆子",
+        "noise_level": "high",
+        "solo_friendly": true,
+        "chat_friendly": true,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 5,
+      "opening_hours": {
+        "weekday": [
+          "11:00",
+          "21:30"
+        ],
+        "weekend": [
+          "11:00",
+          "21:00"
+        ]
+      },
+      "synthetic": true,
+      "meal_service_type": "standard_dine_in",
+      "reservation_mode": "none"
+    },
+    {
+      "merchant_id": "m_futian_026",
+      "name": "合成候选·川香楼",
+      "area": "深圳福田",
+      "neighborhood": "华强北",
+      "scene": "四川驻深办大楼里的老牌四川馆子",
+      "environment": {
+        "space_type": "老牌四川馆子",
+        "noise_level": "high",
+        "solo_friendly": true,
+        "chat_friendly": true,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "high",
+      "subway_walk_min": 7,
+      "opening_hours": {
+        "weekday": [
+          "11:00",
+          "21:30"
+        ],
+        "weekend": [
+          "11:00",
+          "21:30"
+        ]
+      },
+      "source_type": "user_provided_demo",
+      "synthetic": true,
+      "meal_service_type": "popular_dine_in",
+      "reservation_mode": "recommended"
+    },
+    {
+      "merchant_id": "m_futian_027",
+      "name": "合成候选·荣川菜",
+      "area": "深圳福田",
+      "neighborhood": "平安金融中心",
+      "scene": "平安金融中心商圈里的高端川味创新精致馆子",
+      "environment": {
+        "space_type": "高端商圈精致川菜馆",
+        "noise_level": "medium",
+        "solo_friendly": false,
+        "chat_friendly": true,
+        "comfort_level": "comfortable"
+      },
+      "queue_risk": "high",
+      "subway_walk_min": 6,
+      "opening_hours": {
+        "weekday": [
+          "11:30",
+          "14:30",
+          "17:30",
+          "22:00"
+        ],
+        "weekend": [
+          "11:30",
+          "22:00"
+        ]
+      },
+      "source_type": "user_provided_demo",
+      "synthetic": true,
+      "meal_service_type": "reservation_destination",
+      "reservation_mode": "required"
+    },
+    {
+      "merchant_id": "m_futian_028",
+      "name": "合成候选·麺屋猪一",
+      "area": "深圳福田",
+      "neighborhood": "车公庙",
+      "scene": "下班后享受一餐的日式拉面小店",
+      "environment": {
+        "space_type": "日式拉面吧台小店",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 6,
+      "opening_hours": {
+        "weekday": [
+          "11:00",
+          "21:30"
+        ],
+        "weekend": [
+          "11:00",
+          "21:30"
+        ]
+      },
+      "source_type": "user_provided_demo",
+      "synthetic": true,
+      "meal_service_type": "standard_dine_in",
+      "reservation_mode": "none"
+    }
+  ]
+}
