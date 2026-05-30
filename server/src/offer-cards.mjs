@@ -4,12 +4,16 @@ import { REPO_ROOT } from "./config.mjs";
 import { callArkChat } from "./ai/ark-provider.mjs";
 import { buildOfferExplanationPrompt } from "./ai/prompts.mjs";
 import { parseJsonObjectFromText } from "./json-utils.mjs";
+import { readRecommendationMemoryContext } from "./memory-store.mjs";
+import { readMerchantFeedbackContext } from "./merchant-feedback-store.mjs";
 
 const DATA_ROOT = path.join(REPO_ROOT, "data/synthetic_food_futian");
+const DIRECTIONS_PATH = path.join(DATA_ROOT, "food_directions.json");
 const OFFERS_PATH = path.join(DATA_ROOT, "offers.json");
 const MERCHANTS_PATH = path.join(DATA_ROOT, "merchants.json");
 const DEFAULT_OFFER_LIMIT = 10;
 
+let cachedDirections = null;
 let cachedOffers = null;
 let cachedMerchants = null;
 
@@ -20,6 +24,14 @@ const QUEUE_LABELS = {low: "排队风险低", medium: "饭点可能有一点排�
 async function readOffers() {
   if (!cachedOffers) cachedOffers = JSON.parse(await readFile(OFFERS_PATH, "utf8")).offers || [];
   return cachedOffers;
+}
+
+async function readDirections() {
+  if (!cachedDirections) {
+    const rows = JSON.parse(await readFile(DIRECTIONS_PATH, "utf8")).directions || [];
+    cachedDirections = new Map(rows.map((item) => [item.direction_id, item]));
+  }
+  return cachedDirections;
 }
 
 async function readMerchants() {
@@ -35,6 +47,8 @@ function cleanMerchantName(name = "") {
 }
 
 function distanceKmFromMerchant(merchant = {}) {
+  const explicit = Number(merchant.distance_km || merchant.distanceKm || 0);
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
   const walkMin = Number(merchant.subway_walk_min || 0);
   if (!Number.isFinite(walkMin) || walkMin <= 0) return null;
   return Math.max(0.2, Math.round(walkMin * 0.08 * 10) / 10);
@@ -76,6 +90,18 @@ function dislikedDirectionIds(session = {}, body = {}) {
     .filter(Boolean));
 }
 
+function compactDirection(direction = {}) {
+  return {
+    direction_id: direction.direction_id || "",
+    title: direction.title || "",
+    hook: direction.hook || "",
+    tags: direction.tags || [],
+    fit: direction.fit || [],
+    avoid_for: direction.avoid_for || [],
+    budget_band: direction.budget_band || "",
+  };
+}
+
 function hasPreference(understanding = {}, facet, words = []) {
   const text = [
     ...(understanding.soft_preferences || []).filter((item) => !facet || item.facet === facet).map((item) => `${item.value} ${(item.evidence || []).join(" ")}`),
@@ -99,6 +125,20 @@ function hardConflicts(offer, merchant, context) {
   return reasons;
 }
 
+function userFeedbackForOffer(offer, merchant, context) {
+  const merchantFeedback = context.merchantFeedback || {};
+  const offerSummary = merchantFeedback.offer_summaries?.[offer.offer_id] || null;
+  const merchantSummary = merchantFeedback.merchant_summaries?.[merchant.merchant_id] || null;
+  return {
+    score: Number(offerSummary?.score ?? merchantSummary?.score ?? 0),
+    feedback_count: Number(offerSummary?.feedback_count ?? merchantSummary?.feedback_count ?? 0),
+    positive_tags: [...new Set([...(merchantSummary?.positive_tags || []), ...(offerSummary?.positive_tags || [])])].slice(0, 8),
+    negative_tags: [...new Set([...(merchantSummary?.negative_tags || []), ...(offerSummary?.negative_tags || [])])].slice(0, 8),
+    last_feedback_text: offerSummary?.last_feedback_text || merchantSummary?.last_feedback_text || "",
+    updated_at: offerSummary?.updated_at || merchantSummary?.updated_at || "",
+  };
+}
+
 function scoreOffer(offer, merchant, context) {
   let score = 0;
   const matched = [];
@@ -106,6 +146,7 @@ function scoreOffer(offer, merchant, context) {
   const conflicts = hardConflicts(offer, merchant, context);
   const understanding = context.understanding || {};
   const distanceKm = distanceKmFromMerchant(merchant);
+  const userFeedback = userFeedbackForOffer(offer, merchant, context);
 
   if (offer.direction_ids?.some((id) => context.keptDirections.has(id))) {
     score += 12;
@@ -194,6 +235,11 @@ function scoreOffer(offer, merchant, context) {
   if (conflicts.length) score -= conflicts.length * 8;
   if (merchant.queue_risk === "low") score += 1;
   if (offer.service_speed === "fast") score += 1;
+  if (userFeedback.score) {
+    score += userFeedback.score;
+    if (userFeedback.score > 0) matched.push("主人上次反馈不错");
+    if (userFeedback.score < 0) watchouts.push("主人之前对这家有过负反馈");
+  }
   if (!matched.length) matched.push(offer.hook || "有基础匹配点");
 
   return {
@@ -207,9 +253,10 @@ function scoreOffer(offer, merchant, context) {
   };
 }
 
-function normalizeOfferCard(offer, merchant, score, explanation) {
+function normalizeOfferCard(offer, merchant, score, explanation, context = {}) {
   const media = mediaForOffer(offer);
   const distanceKm = distanceKmFromMerchant(merchant);
+  const userFeedback = userFeedbackForOffer(offer, merchant, context);
   return {
     card_id: offer.offer_id,
     offer_id: offer.offer_id,
@@ -225,6 +272,8 @@ function normalizeOfferCard(offer, merchant, score, explanation) {
     facts: {
       price_per_person: offer.price_per_person,
       neighborhood: merchant.neighborhood,
+      address: merchant.address || "",
+      location: merchant.location || null,
       distance_km: distanceKm,
       distance_text: distanceText(distanceKm),
       queue_risk: merchant.queue_risk,
@@ -244,6 +293,14 @@ function normalizeOfferCard(offer, merchant, score, explanation) {
       decision_tags: offer.decision_tags || [],
       flavor_label: offer.flavor_label || "",
       parking_note: offer.parking_note || "",
+      user_feedback: userFeedback.feedback_count ? {
+        score: userFeedback.score,
+        feedback_count: userFeedback.feedback_count,
+        positive_tags: userFeedback.positive_tags,
+        negative_tags: userFeedback.negative_tags,
+        last_feedback_text: userFeedback.last_feedback_text,
+        updated_at: userFeedback.updated_at,
+      } : null,
     },
     explanation,
     synthetic_only: true,
@@ -251,25 +308,36 @@ function normalizeOfferCard(offer, merchant, score, explanation) {
 }
 
 export async function buildFoodOffers({session = {}, body = {}, limit = DEFAULT_OFFER_LIMIT} = {}) {
-  const [offers, merchants] = await Promise.all([readOffers(), readMerchants()]);
+  const [offers, merchants, directions] = await Promise.all([readOffers(), readMerchants(), readDirections()]);
+  const userId = session.user_id || body.user_id || body.userId || "demo_weiyingru";
   const context = {
     understanding: session.understanding || body.understanding || {},
     keptDirections: keptDirectionIds(session, body),
     dislikedDirections: dislikedDirectionIds(session, body),
+    merchantFeedback: await readMerchantFeedbackContext({userId}),
+  };
+  const directionContext = {
+    kept: [...context.keptDirections].map((id) => compactDirection(directions.get(id) || {direction_id: id})),
+    disliked: [...context.dislikedDirections].map((id) => compactDirection(directions.get(id) || {direction_id: id})),
   };
   const cards = [];
   for (const offer of offers) {
     const merchant = merchants.get(offer.merchant_id);
     if (!merchant) continue;
     const {score, explanation} = scoreOffer(offer, merchant, context);
-    cards.push(normalizeOfferCard(offer, merchant, score, explanation));
+    const card = normalizeOfferCard(offer, merchant, score, explanation, context);
+    card.matched_directions = (offer.direction_ids || [])
+      .map((id) => directions.get(id))
+      .filter(Boolean)
+      .map(compactDirection);
+    cards.push(card);
   }
   cards.sort((left, right) => {
     if (right.score !== left.score) return right.score - left.score;
     return Number(left.facts.price_per_person || 0) - Number(right.facts.price_per_person || 0);
   });
   let topCards = cards.slice(0, Number(limit || DEFAULT_OFFER_LIMIT));
-  const aiExplanations = await maybeApplyAiExplanations(topCards, session, body);
+  const aiExplanations = await maybeApplyAiExplanations(topCards, session, body, directionContext);
   topCards = aiExplanations.cards;
   return {
     cards: topCards,
@@ -280,6 +348,7 @@ export async function buildFoodOffers({session = {}, body = {}, limit = DEFAULT_
       limit: Number(limit || DEFAULT_OFFER_LIMIT),
       kept_direction_ids: [...context.keptDirections],
       disliked_direction_ids: [...context.dislikedDirections],
+      direction_context: directionContext,
     },
   };
 }
@@ -298,14 +367,35 @@ function normalizeAiExplanationPayload(parsed) {
   return result;
 }
 
-async function maybeApplyAiExplanations(cards, session, body) {
-  if (body.ai_explanations === false || body.aiExplanations === false) {
-    return {cards, meta: {mode: "disabled", fallback_used: false}};
-  }
-  const startedAt = Date.now();
+function firstNonEmpty(...values) {
+  return values.map((value) => String(value || "").trim()).find(Boolean) || "";
+}
+
+function normalizeAiExplanationPayloadForCards(parsed, cards = []) {
+  const byOffer = normalizeAiExplanationPayload(parsed);
+  if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.cards)) return byOffer;
+  const byIndex = new Map();
+  parsed.cards.forEach((item, index) => {
+    if (!item || typeof item !== "object") return;
+    const key = firstNonEmpty(item.offer_id, item.offerId, item.card_id, item.cardId, item.merchant_id, item.merchantId);
+    const target = key
+      ? cards.find((card) => [card.offer_id, card.card_id, card.merchant_id].includes(key))
+      : cards[index];
+    if (!target?.offer_id || byOffer.has(target.offer_id)) return;
+    byIndex.set(target.offer_id, {
+      matched: Array.isArray(item.matched) ? item.matched.map(String).filter(Boolean).slice(0, 3) : [],
+      watchouts: Array.isArray(item.watchouts) ? item.watchouts.map(String).filter(Boolean).slice(0, 2) : [],
+      conflicts: Array.isArray(item.conflicts) ? item.conflicts.map(String).filter(Boolean).slice(0, 2) : [],
+    });
+  });
+  for (const [offerId, explanation] of byIndex.entries()) byOffer.set(offerId, explanation);
+  return byOffer;
+}
+
+async function requestAiExplanationBatch(cards, session, body, directionContext, memoryContext) {
   const ai = await callArkChat({
     timeoutMs: body.offer_ai_timeout_ms || body.offerAiTimeoutMs || 8000,
-    maxTokens: 900,
+    maxTokens: Math.max(500, Math.min(1200, 240 + cards.length * 140)),
     responseFormat: {type: "json_object"},
     messages: [
       {role: "system", content: "你是饭点定了小程序里的小汪，只输出符合要求的 JSON。"},
@@ -313,33 +403,132 @@ async function maybeApplyAiExplanations(cards, session, body) {
         goal: session.goal || body.goal || "",
         directionSummary: session.direction_summary || body.direction_summary || {},
         understanding: session.understanding || body.understanding || {},
+        directionContext,
+        memoryContext,
         cards,
       })},
     ],
   });
   if (!ai.ok) {
     return {
+      ok: false,
+      reason: ai.error_code,
+      status: ai.status || null,
+      raw: ai.raw || null,
+      usage: null,
+      explanations: new Map(),
+    };
+  }
+  const explanations = normalizeAiExplanationPayloadForCards(parseJsonObjectFromText(ai.text), cards);
+  if (!explanations.size) {
+    return {
+      ok: false,
+      reason: "invalid_ai_json",
+      status: null,
+      raw: null,
+      usage: ai.usage || null,
+      explanations,
+    };
+  }
+  return {
+    ok: explanations.size >= cards.length,
+    reason: explanations.size >= cards.length ? null : "partial_ai_json",
+    status: null,
+    raw: null,
+    usage: ai.usage || null,
+    explanations,
+    explained_count: explanations.size,
+  };
+}
+
+function shouldSplitAiBatch(result) {
+  return result.status === 429 || ["provider_timeout", "provider_error", "invalid_ai_json", "partial_ai_json"].includes(result.reason);
+}
+
+async function explainCardsWithSplitFallback(cards, session, body, directionContext, memoryContext, meta, depth = 0) {
+  const result = await requestAiExplanationBatch(cards, session, body, directionContext, memoryContext);
+  meta.attempts.push({
+    card_count: cards.length,
+    depth,
+    ok: result.ok,
+    reason: result.reason,
+    status: result.status,
+  });
+  if (result.usage) meta.usage.push(result.usage);
+  if (result.ok) return result.explanations;
+  meta.fallback_reasons.push(result.status === 429 ? "provider_429" : result.reason);
+
+  if (cards.length <= 1 || !shouldSplitAiBatch(result)) return result.explanations || new Map();
+
+  const midpoint = Math.ceil(cards.length / 2);
+  const chunks = [cards.slice(0, midpoint), cards.slice(midpoint)].filter((chunk) => chunk.length);
+  const merged = new Map();
+  for (const [offerId, explanation] of (result.explanations || new Map()).entries()) {
+    merged.set(offerId, explanation);
+  }
+  for (const chunk of chunks) {
+    const missingChunk = chunk.filter((card) => !merged.has(card.offer_id));
+    if (!missingChunk.length) continue;
+    const partial = await explainCardsWithSplitFallback(missingChunk, session, body, directionContext, memoryContext, meta, depth + 1);
+    for (const [offerId, explanation] of partial.entries()) {
+      merged.set(offerId, explanation);
+    }
+  }
+  return merged;
+}
+
+async function maybeApplyAiExplanations(cards, session, body, directionContext = {kept: [], disliked: []}) {
+  const memoryContext = body.memory_context || body.memoryContext || (
+    session.memory_context || (session.user_id ? await readRecommendationMemoryContext({
+      userId: session.user_id,
+      query: [
+        session.goal || body.goal,
+        session.direction_summary?.summary_text,
+        ...(cards || []).slice(0, 8).map((card) => `${card.merchant_name || ""} ${card.title || ""} ${(card.tags || []).join(" ")}`.trim()),
+      ].filter(Boolean).join("；"),
+    }) : {confirmed_preferences: [], preference_count: 0, evermind_weak_memories: [], evermind_memory_count: 0})
+  );
+  if (body.ai_explanations === false || body.aiExplanations === false) {
+    return {
       cards,
       meta: {
-        mode: "local_fallback",
-        fallback_used: true,
-        fallback_reason: ai.error_code,
-        total_ms: Date.now() - startedAt,
+        mode: "disabled",
+        fallback_used: false,
+        memory_context: {
+          confirmed_preferences: memoryContext.preference_count || 0,
+          evermind_memories: memoryContext.evermind_memory_count || 0,
+          evermind_warning: memoryContext.evermind_warning || "",
+          policy: memoryContext.policy || "only_active_confirmed_preferences_are_recommendation_context",
+        },
       },
     };
   }
-  const explanations = normalizeAiExplanationPayload(parseJsonObjectFromText(ai.text));
+  const startedAt = Date.now();
+  const splitMeta = {
+    attempts: [],
+    fallback_reasons: [],
+    usage: [],
+  };
+  const explanations = await explainCardsWithSplitFallback(cards, session, body, directionContext, memoryContext, splitMeta);
   if (!explanations.size) {
     return {
       cards,
       meta: {
         mode: "local_fallback",
         fallback_used: true,
-        fallback_reason: "invalid_ai_json",
+        fallback_reason: splitMeta.fallback_reasons[0] || "invalid_ai_json",
         total_ms: Date.now() - startedAt,
+      attempts: splitMeta.attempts,
+      memory_context: {
+        confirmed_preferences: memoryContext.preference_count || 0,
+        evermind_memories: memoryContext.evermind_memory_count || 0,
+        evermind_warning: memoryContext.evermind_warning || "",
+        policy: memoryContext.policy || "only_active_confirmed_preferences_are_recommendation_context",
       },
-    };
-  }
+    },
+  };
+}
+  const explainedCount = cards.filter((card) => explanations.has(card.offer_id)).length;
   return {
     cards: cards.map((card) => {
       const explanation = explanations.get(card.offer_id);
@@ -357,9 +546,19 @@ async function maybeApplyAiExplanations(cards, session, body) {
     }),
     meta: {
       mode: "ark",
-      fallback_used: false,
+      fallback_used: explainedCount < cards.length,
+      fallback_reason: explainedCount < cards.length ? "partial_ai_explanations" : null,
       total_ms: Date.now() - startedAt,
-      usage: ai.usage || null,
+      explained_count: explainedCount,
+      requested_count: cards.length,
+      attempts: splitMeta.attempts,
+      memory_context: {
+        confirmed_preferences: memoryContext.preference_count || 0,
+        evermind_memories: memoryContext.evermind_memory_count || 0,
+        evermind_warning: memoryContext.evermind_warning || "",
+        policy: memoryContext.policy || "only_active_confirmed_preferences_are_recommendation_context",
+      },
+      usage: splitMeta.usage,
     },
   };
 }

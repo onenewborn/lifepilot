@@ -1,0 +1,265 @@
+<view class="page">
+  <view class="topbar">
+    <view>
+      <text class="brand">LifePilot</text>
+      <text class="stage">{{stageLabel}}</text>
+    </view>
+    <view class="status-pill">{{stageSubtitle}}</view>
+  </view>
+
+  <view wx:if="{{bootNotice}}" class="notice">{{bootNotice}}</view>
+  <view wx:if="{{errorText}}" class="error">{{errorText}}</view>
+
+  <view wx:if="{{stage === 'entry'}}" class="entry-panel">
+    <view class="section-title">今天这顿饭，先定个大概</view>
+    <view class="field-block">
+      <view class="field-label">人数</view>
+      <view class="option-row">
+        <button
+          wx:for="{{entryOptions.partySize}}"
+          wx:key="value"
+          class="option-pill {{entryForm.partySize === item.value ? 'active' : ''}}"
+          data-field="partySize"
+          data-value="{{item.value}}"
+          bindtap="selectEntryOption"
+        >{{item.label}}</button>
+      </view>
+    </view>
+
+    <view class="field-block">
+      <view class="field-label">预算</view>
+      <view class="option-row">
+        <button
+          wx:for="{{entryOptions.budget}}"
+          wx:key="value"
+          class="option-pill {{entryForm.budget === item.value ? 'active' : ''}}"
+          data-field="budget"
+          data-value="{{item.value}}"
+          bindtap="selectEntryOption"
+        >{{item.label}}</button>
+      </view>
+    </view>
+
+    <view class="field-block">
+      <view class="field-label">距离</view>
+      <view class="option-row">
+        <button
+          wx:for="{{entryOptions.radius}}"
+          wx:key="value"
+          class="option-pill {{entryForm.radius === item.value ? 'active' : ''}}"
+          data-field="radius"
+          data-value="{{item.value}}"
+          bindtap="selectEntryOption"
+        >{{item.label}}</button>
+      </view>
+    </view>
+
+    <view class="field-block">
+      <view class="field-label">口味</view>
+      <view class="option-row">
+        <button
+          wx:for="{{entryOptions.flavor}}"
+          wx:key="value"
+          class="option-pill {{entryForm.flavor === item.value ? 'active' : ''}}"
+          data-field="flavor"
+          data-value="{{item.value}}"
+          bindtap="selectEntryOption"
+        >{{item.label}}</button>
+      </view>
+    </view>
+
+    <view class="field-block">
+      <view class="field-label">今天想怎么吃</view>
+      <textarea
+        class="entry-textarea"
+        value="{{entryForm.text}}"
+        maxlength="160"
+        bindinput="onEntryTextInput"
+        placeholder="比如：今天下班有点累，想吃点热乎下饭的。"
+      />
+    </view>
+
+    <view class="location-row">
+      <view>
+        <view class="field-label">当前位置</view>
+        <view class="location-text">{{locationText}}</view>
+      </view>
+      <button class="ghost-button" bindtap="getLocation">定位</button>
+    </view>
+
+    <button class="primary-button" loading="{{isLoading}}" bindtap="startMealFlow">开始滑卡</button>
+  </view>
+
+  <view wx:elif="{{stage === 'direction' || stage === 'offer'}}" class="flow">
+    <view class="session-strip">
+      <text>{{stage === 'direction' ? '方向卡' : '商户卡'}}</text>
+      <text>{{index + 1}} / {{cards.length}}</text>
+    </view>
+
+    <view wx:if="{{currentCard}}" class="deck">
+      <view wx:if="{{nextCard}}" class="food-card next-card">
+        <image class="media" src="{{nextCard.imageUrl}}" mode="aspectFill" />
+      </view>
+
+      <view
+        class="food-card current-card"
+        style="{{cardStyle}}"
+        catchtouchstart="onTouchStart"
+        catchtouchmove="onTouchMove"
+        catchtouchend="onTouchEnd"
+      >
+        <view class="swipe-mark keep-mark" style="{{keepFeedbackStyle}}">保留</view>
+        <view class="swipe-mark dislike-mark" style="{{dislikeFeedbackStyle}}">放弃</view>
+
+        <image
+          wx:if="{{videoDisabled || !currentCard.videoUrl}}"
+          class="media"
+          src="{{currentImageUrl}}"
+          mode="aspectFill"
+          binderror="onImageError"
+        />
+        <video
+          wx:else
+          class="media"
+          src="{{currentCard.videoUrl}}"
+          poster="{{currentPosterUrl}}"
+          autoplay
+          loop
+          muted="{{videoMuted}}"
+          object-fit="cover"
+          show-center-play-btn="{{false}}"
+          show-fullscreen-btn="{{false}}"
+          show-play-btn="{{false}}"
+          controls="{{false}}"
+          bindloadedmetadata="onVideoReady"
+          binderror="onVideoError"
+        />
+
+        <view class="media-shade"></view>
+        <button wx:if="{{currentCard.videoUrl}}" class="sound-button" bindtap="toggleVideoMuted">{{videoMuted ? '静音' : '有声'}}</button>
+
+        <view class="card-body">
+          <view class="badge">{{currentCard.badge}}</view>
+          <view class="card-title">{{currentCard.title}}</view>
+          <view wx:if="{{currentCard.cardType === 'offer'}}" class="dish-title">{{currentCard.dishTitle}}</view>
+          <view class="card-subtitle">{{currentCard.subtitle}}</view>
+
+          <view class="tag-row">
+            <text wx:for="{{currentCard.tags}}" wx:key="*this" class="tag">{{item}}</text>
+          </view>
+
+          <view wx:if="{{currentCard.cardType === 'offer'}}" class="offer-detail">
+            <view wx:for="{{currentCard.facts}}" wx:key="*this" class="fact-line">{{item}}</view>
+            <view wx:if="{{currentCard.matched.length}}" class="reason-block">
+              <view class="mini-title">小汪觉得适合</view>
+              <view wx:for="{{currentCard.matched}}" wx:key="*this" class="reason-line">{{item}}</view>
+            </view>
+            <view wx:if="{{currentCard.watchouts.length}}" class="reason-block muted-block">
+              <view class="mini-title">需要留意</view>
+              <view wx:for="{{currentCard.watchouts}}" wx:key="*this" class="reason-line">{{item}}</view>
+            </view>
+          </view>
+
+          <view wx:else class="direction-detail">
+            <view wx:if="{{currentCard.fit.length}}" class="mini-title">适合现在</view>
+            <view wx:for="{{currentCard.fit}}" wx:key="*this" class="reason-line">{{item}}</view>
+            <view wx:if="{{currentCard.avoidFor.length}}" class="mini-title muted-title">可能不适合</view>
+            <view wx:for="{{currentCard.avoidFor}}" wx:key="*this" class="reason-line muted-line">{{item}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="empty-state">
+      <view class="section-title">{{stage === 'direction' ? '方向已经滑完了' : '商户已经看完了'}}</view>
+      <view class="empty-text">{{stage === 'direction' ? '可以让小汪总结一下刚刚保留和放弃的区别。' : '可以直接进入最终确认。'}}</view>
+    </view>
+
+    <view class="action-bar">
+      <button class="round-button dislike-button" bindtap="onDislike" disabled="{{!currentCard || isLoading}}">×</button>
+      <button
+        wx:if="{{stage === 'direction'}}"
+        class="middle-button"
+        bindtap="loadDirectionSummary"
+        loading="{{isLoading}}"
+        disabled="{{isLoading || !sessionId}}"
+      >看小结</button>
+      <button
+        wx:else
+        class="middle-button"
+        bindtap="chooseCurrentOffer"
+        loading="{{isLoading}}"
+        disabled="{{!currentCard || isLoading}}"
+      >就这家</button>
+      <button class="round-button keep-button" bindtap="onKeep" disabled="{{!currentCard || isLoading}}">✓</button>
+    </view>
+  </view>
+
+  <view wx:elif="{{stage === 'direction_summary' || stage === 'direction_summary_loading'}}" class="summary-panel">
+    <view class="section-title">小汪先帮主人收窄一下</view>
+    <view wx:if="{{directionSummary}}" class="summary-text">{{directionSummary.text}}</view>
+    <view wx:else class="summary-text">{{loadingText || '正在整理这轮选择...'}}</view>
+    <view class="summary-actions">
+      <button class="secondary-button" bindtap="resetFlow">重新开始</button>
+      <button class="primary-button inline-button" loading="{{isLoading}}" bindtap="continueToOffers">看具体商家</button>
+    </view>
+  </view>
+
+  <view wx:elif="{{stage === 'final'}}" class="final-panel">
+    <view wx:if="{{result.hasSelection}}">
+      <view class="section-title">小汪建议这一家</view>
+      <view class="result-card">
+        <image class="result-image" src="{{result.primary.imageUrl}}" mode="aspectFill" />
+        <view class="result-content">
+          <view class="card-title dark-title">{{result.primary.title}}</view>
+          <view class="dish-title dark-dish">{{result.primary.dishTitle}}</view>
+          <view class="summary-text compact">{{result.summaryText}}</view>
+          <view class="tag-row fixed-tags">
+            <text wx:for="{{result.primary.tags}}" wx:key="*this" class="tag dark-tag">{{item}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{result.alternatives.length}}" class="alt-list">
+        <view class="mini-title">备选</view>
+        <view wx:for="{{result.alternatives}}" wx:key="cardId" class="alt-item">
+          <text>{{item.title}}</text>
+          <text>{{item.dishTitle}}</text>
+        </view>
+      </view>
+
+      <view class="feedback-panel">
+        <view class="field-label">吃完以后告诉小汪真实感受</view>
+        <textarea
+          class="feedback-textarea"
+          value="{{postMealFeedbackText}}"
+          maxlength="180"
+          bindinput="onFeedbackInput"
+          placeholder="比如：这家面很好吃，但环境有点吵。"
+        />
+        <button class="primary-button" loading="{{isLoading}}" bindtap="submitPostMealFeedback">提交反馈</button>
+        <view wx:if="{{postMealResponse}}" class="notice feedback-notice">
+          已记录反馈，生成 {{postMealResponse.createdCount}} 条待确认记忆。
+        </view>
+      </view>
+    </view>
+    <view wx:else class="empty-state">
+      <view class="section-title">这轮还没选出明确商家</view>
+      <view class="empty-text">可以重新开始，或者多保留几张商户卡。</view>
+    </view>
+    <button class="secondary-button full-button" bindtap="resetFlow">再来一轮</button>
+  </view>
+
+  <view wx:if="{{isLoading}}" class="loading-mask">
+    <view class="loading-box">
+      <view class="loader"></view>
+      <view>{{loadingText}}</view>
+    </view>
+  </view>
+
+  <view class="debug-strip">
+    <text>API {{sessionDebug.api}}</text>
+    <text>{{sessionDebug.mode}}</text>
+    <text>{{sessionDebug.memory}}</text>
+  </view>
+</view>

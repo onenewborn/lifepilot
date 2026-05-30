@@ -1,5 +1,8 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadLocalEnv } from "./env.mjs";
+
+loadLocalEnv();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -17,5 +20,22 @@ export const config = {
     timeoutMs: Number(process.env.ARK_TIMEOUT_MS || 5000),
     maxTokens: Number(process.env.ARK_MAX_TOKENS || 256),
     temperature: Number(process.env.ARK_TEMPERATURE || 0.2),
+  },
+  context: {
+    weatherProvider: process.env.LIFEPILOT_WEATHER_PROVIDER || "amap",
+    mapProvider: process.env.LIFEPILOT_MAP_PROVIDER || "amap",
+    amapApiKey: process.env.LIFEPILOT_AMAP_KEY || process.env.AMAP_API_KEY || "",
+    amapBaseUrl: process.env.LIFEPILOT_AMAP_BASE_URL || "https://restapi.amap.com",
+    timeoutMs: Number(process.env.LIFEPILOT_CONTEXT_TIMEOUT_MS || 2500),
+    defaultLocation: {
+      label: "深圳福田 CBD 默认位置",
+      latitude: 22.5431,
+      longitude: 114.0579,
+      coordinate_type: "gcj02",
+      defaulted: true,
+    },
+  },
+  storage: {
+    runtimeRoot: process.env.LIFEPILOT_RUNTIME_ROOT || path.join(REPO_ROOT, "data", "runtime"),
   },
 };

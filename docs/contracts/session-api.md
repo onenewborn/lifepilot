@@ -8,9 +8,50 @@
 
 它是产品状态，不是 OpenClaw agent session。
 
+一次 `meal_session` 对应一顿饭，不对应一天，也不对应一次 OpenClaw 运行。
+
+```text
+meal_session = 入口需求 + 位置 + 方向滑卡 + 商家滑卡 + 最终选择 + 餐后反馈
+day_context  = 同一天的多个 meal_session + 小汪互动 + 推送互动 + 后台任务结果
+```
+
+OpenClaw dreaming 后续按 `day_context` 做后台复盘，但实时推荐主链路只操作当前 `meal_session`。
+
 ## 归属
 
 产品后端负责创建、修改、持久化和校验 meal session。
+
+前端刷新后不应重新开始一顿饭；应从本地 storage 取回 `session_id`，调用：
+
+```text
+GET /api/session/:session_id
+```
+
+如果后端返回 200，继续当前饭点流程；如果返回 `session_not_found`、`expired` 或 `finalized`，前端再创建新的 meal session。
+
+## 持久化
+
+P5 第一刀使用 JSON 文件持久化 meal session：
+
+```text
+data/runtime/meal_sessions/<session_id>.json
+data/runtime/day_contexts/<day_id>.json
+```
+
+`data/runtime/` 是运行时目录，不提交 git。生产环境可通过：
+
+```text
+LIFEPILOT_RUNTIME_ROOT=/path/to/runtime
+```
+
+指定持久化目录。
+
+当前实现是“内存缓存 + JSON 落盘”：
+
+- 读取：优先内存，内存没有时读 JSON 文件。
+- 写入：start、swipe、advance、finalize 都会落盘。
+- 每次 meal session 写入后，同步更新当天 `day_context` 的 session 摘要索引。
+- 后续如果并发写入变多，再迁移 SQLite。
 
 ## 核心路由
 
@@ -20,14 +61,19 @@ POST /api/session/swipe
 POST /api/session/advance
 POST /api/session/finalize
 GET  /api/session/:session_id
+GET  /api/day-context/:day_id
 ```
 
 ## 最小 Session 结构
 
 ```json
 {
+  "schema_version": "lifepilot.meal_session.v1",
   "session_id": "sess_...",
   "user_id": "demo_weiyingru",
+  "day_id": "day_20260530_demo_weiyingru",
+  "meal_slot": "dinner",
+  "status": "active",
   "stage": "direction",
   "next_step": "swipe_food_directions",
   "goal": "今晚想找一顿合适的饭",
@@ -51,6 +97,64 @@ GET  /api/session/:session_id
   "updated_at": "2026-05-30T00:00:00.000Z"
 }
 ```
+
+`status` 合法值：
+
+```text
+active
+finalized
+abandoned
+expired
+```
+
+P5 第一刀只自动写 `active` 和 `finalized`；`abandoned/expired` 后续再补。
+
+## Day Context
+
+`day_context` 是 OpenClaw dreaming 后续读取的日级索引，不是实时推荐状态机。
+
+它只保存当天各类活动的索引和摘要，不复制完整 session，避免状态双写不一致。
+
+```json
+{
+  "schema_version": "lifepilot.day_context.v1",
+  "day_id": "day_20260530_demo_weiyingru",
+  "user_id": "demo_weiyingru",
+  "date": "20260530",
+  "timezone": "Asia/Shanghai",
+  "meal_sessions": [
+    {
+      "session_id": "meal_...",
+      "meal_slot": "dinner",
+      "status": "finalized",
+      "stage": "final",
+      "goal": "今晚想找一顿合适的饭",
+      "direction_event_count": 4,
+      "offer_event_count": 3,
+      "final_offer_id": "off_...",
+      "final_merchant_id": "m_...",
+      "final_merchant_name": "福田口岸云吞面",
+      "created_at": "",
+      "updated_at": "",
+      "finalized_at": ""
+    }
+  ],
+  "xiaowang_chat_sessions": [],
+  "push_interactions": [],
+  "background_jobs": [],
+  "memory_candidate_ids": []
+}
+```
+
+查询：
+
+```text
+GET /api/day-context/:day_id
+```
+
+如果不存在，返回 `day_context_not_found`。
+
+后续 OpenClaw dreaming 只能读取 `day_context` 和相关 session，输出 memory candidate 或 job result，不能直接修改 meal session。
 
 ## 滑卡事件结构
 

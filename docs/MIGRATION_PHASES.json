@@ -141,10 +141,30 @@
     },
     {
       "id": "P4",
-      "name": "memory_authority",
-      "status": "pending",
-      "goal": "迁移 memory CRUD 和候选记忆确认，让后端拥有权威状态。",
+      "name": "location_weather_route_context",
+      "status": "in_progress",
+      "goal": "接入小程序位置上下文，并让 weather/route 支持真实 provider 与 mock fallback；queue 继续 mock。",
       "routes": [
+        "POST /api/session/start",
+        "POST /api/map/route",
+        "GET/POST /api/weather/forecast",
+        "GET/POST /api/queue/status"
+      ],
+      "implementation_notes": [
+        "session/start 保存小程序传来的 gcj02 location。",
+        "商户数据补 address/location/distance_km，location 先用 synthetic_neighborhood_estimate。",
+        "weather/route 支持 amap provider；没有 key、缺坐标、超时或 provider 错误时 fallback mock。",
+        "queue 仍是 mock provider，只读静态 queue_risk。"
+      ]
+    },
+    {
+      "id": "P5",
+      "name": "session_persistence_and_memory_authority",
+      "status": "in_progress",
+      "goal": "先把 meal_session 持久化，再迁移 memory CRUD 和候选记忆确认，让后端拥有权威状态。",
+      "routes": [
+        "POST /api/session/start",
+        "GET /api/session/:id",
         "GET /api/memory/ledger",
         "GET /api/memory/preferences",
         "POST /api/memory/preferences",
@@ -152,10 +172,23 @@
         "DELETE /api/memory/preferences/:id",
         "POST /api/memory/candidates/:id/confirm",
         "POST /api/memory/candidates/:id/reject"
+      ],
+      "implementation_notes": [
+        "P5 第一刀已将 meal_session 从内存 Map 扩展为内存缓存 + JSON 持久化。",
+        "session_id 使用 meal_* 前缀；session 增加 schema_version、day_id、meal_slot、status。",
+        "start/swipe/advance/finalize 都会写入 data/runtime/meal_sessions。",
+        "每次 meal_session 写入后会同步更新 data/runtime/day_contexts/<day_id>.json。",
+        "新增 GET /api/day-context/:day_id，供前端调试和未来 OpenClaw dreaming 读取日级索引。",
+        "P5 第三刀新增 memory candidates / confirmed preferences JSON store。",
+        "POST /api/memory/post-meal-feedback 先用 deterministic rules 生成 pending candidates，不直接写长期记忆。",
+        "确认 candidate 后才创建 active confirmed preference；candidate id 会回挂到 day_context.memory_candidate_ids。",
+        "P5 第四刀已将 active confirmed preferences 接回 P2 方向小结和 P3 商户解释；pending candidates 不参与推荐上下文。",
+        "前端刷新后应通过 GET /api/session/:id 恢复当前饭点流程。",
+        "day_context 和 OpenClaw dreaming 后续再接，不混入实时滑卡主链路。"
       ]
     },
     {
-      "id": "P5",
+      "id": "P6",
       "name": "openclaw_bridge",
       "status": "pending",
       "goal": "暴露明确 API，让 OpenClaw skills 读取上下文并提交任务结果或候选记忆。",
@@ -167,7 +200,7 @@
       ]
     },
     {
-      "id": "P6",
+      "id": "P7",
       "name": "miniapp_modularization",
       "status": "pending",
       "goal": "把小程序从单个大页面文件拆成 API、资产、session-flow、card-swipe、小汪和 memory 模块。"

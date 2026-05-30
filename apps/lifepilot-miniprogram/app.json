@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "pages/meal/meal"
+  ],
+  "window": {
+    "navigationBarTitleText": "饭点定了",
+    "navigationBarBackgroundColor": "#fff2dc",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#fff2dc"
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json"
+}

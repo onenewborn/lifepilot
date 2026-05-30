@@ -30,7 +30,15 @@
       },
       "synthetic": true,
       "meal_service_type": "quick_snack",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区车公庙附近",
+      "location": {
+        "latitude": 22.5338,
+        "longitude": 114.02716,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.4
     },
     {
       "merchant_id": "m_futian_002",
@@ -59,7 +67,15 @@
       },
       "synthetic": true,
       "meal_service_type": "quick_meal",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区车公庙附近",
+      "location": {
+        "latitude": 22.53415,
+        "longitude": 114.02744,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.6
     },
     {
       "merchant_id": "m_futian_003",
@@ -88,7 +104,15 @@
       },
       "synthetic": true,
       "meal_service_type": "quick_meal",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区岗厦北附近",
+      "location": {
+        "latitude": 22.5416,
+        "longitude": 114.06402,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.3
     },
     {
       "merchant_id": "m_futian_004",
@@ -117,7 +141,15 @@
       },
       "synthetic": true,
       "meal_service_type": "quick_meal",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区岗厦北附近",
+      "location": {
+        "latitude": 22.54195,
+        "longitude": 114.0643,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.5
     },
     {
       "merchant_id": "m_futian_005",
@@ -146,7 +178,15 @@
       },
       "synthetic": true,
       "meal_service_type": "quick_meal",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区福田口岸附近",
+      "location": {
+        "latitude": 22.5176,
+        "longitude": 114.06638,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.6
     },
     {
       "merchant_id": "m_futian_006",
@@ -175,7 +215,15 @@
       },
       "synthetic": true,
       "meal_service_type": "quick_meal",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区福田口岸附近",
+      "location": {
+        "latitude": 22.5162,
+        "longitude": 114.06666,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.5
     },
     {
       "merchant_id": "m_futian_007",
@@ -204,7 +252,15 @@
       },
       "synthetic": true,
       "meal_service_type": "quick_meal",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区会展中心附近",
+      "location": {
+        "latitude": 22.52815,
+        "longitude": 114.05984,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.5
     },
     {
       "merchant_id": "m_futian_008",
@@ -233,7 +289,15 @@
       },
       "synthetic": true,
       "meal_service_type": "quick_meal",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区会展中心附近",
+      "location": {
+        "latitude": 22.5285,
+        "longitude": 114.05816,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.4
     },
     {
       "merchant_id": "m_futian_009",
@@ -262,7 +326,15 @@
       },
       "synthetic": true,
       "meal_service_type": "popular_dine_in",
-      "reservation_mode": "recommended"
+      "reservation_mode": "recommended",
+      "address": "深圳市福田区购物公园附近",
+      "location": {
+        "latitude": 22.53355,
+        "longitude": 114.05144,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.6
     },
     {
       "merchant_id": "m_futian_010",
@@ -291,7 +363,15 @@
       },
       "synthetic": true,
       "meal_service_type": "popular_dine_in",
-      "reservation_mode": "recommended"
+      "reservation_mode": "recommended",
+      "address": "深圳市福田区购物公园附近",
+      "location": {
+        "latitude": 22.5339,
+        "longitude": 114.05172,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 4
     },
     {
       "merchant_id": "m_futian_011",
@@ -320,7 +400,15 @@
       },
       "synthetic": true,
       "meal_service_type": "standard_dine_in",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区CocoPark附近",
+      "location": {
+        "latitude": 22.5327,
+        "longitude": 114.0508,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.7
     },
     {
       "merchant_id": "m_futian_012",
@@ -349,7 +437,15 @@
       },
       "synthetic": true,
       "meal_service_type": "standard_dine_in",
-      "reservation_mode": "recommended"
+      "reservation_mode": "recommended",
+      "address": "深圳市福田区CocoPark附近",
+      "location": {
+        "latitude": 22.53305,
+        "longitude": 114.05108,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.8
     },
     {
       "merchant_id": "m_futian_013",
@@ -378,7 +474,15 @@
       },
       "synthetic": true,
       "meal_service_type": "popular_dine_in",
-      "reservation_mode": "recommended"
+      "reservation_mode": "recommended",
+      "address": "深圳市福田区福田中心附近",
+      "location": {
+        "latitude": 22.5298,
+        "longitude": 114.05596,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.6
     },
     {
       "merchant_id": "m_futian_014",
@@ -407,7 +511,15 @@
       },
       "synthetic": true,
       "meal_service_type": "standard_dine_in",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区福田中心附近",
+      "location": {
+        "latitude": 22.53015,
+        "longitude": 114.05624,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.7
     },
     {
       "merchant_id": "m_futian_015",
@@ -436,7 +548,15 @@
       },
       "synthetic": true,
       "meal_service_type": "standard_dine_in",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区皇岗村附近",
+      "location": {
+        "latitude": 22.5242,
+        "longitude": 114.06936,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 1
     },
     {
       "merchant_id": "m_futian_016",
@@ -465,7 +585,15 @@
       },
       "synthetic": true,
       "meal_service_type": "standard_dine_in",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区皇岗村附近",
+      "location": {
+        "latitude": 22.5228,
+        "longitude": 114.06964,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.9
     },
     {
       "merchant_id": "m_futian_017",
@@ -494,7 +622,15 @@
       },
       "synthetic": true,
       "meal_service_type": "quick_meal",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区下沙附近",
+      "location": {
+        "latitude": 22.52865,
+        "longitude": 114.01422,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.7
     },
     {
       "merchant_id": "m_futian_018",
@@ -523,7 +659,15 @@
       },
       "synthetic": true,
       "meal_service_type": "quick_meal",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区下沙附近",
+      "location": {
+        "latitude": 22.529,
+        "longitude": 114.0145,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.8
     },
     {
       "merchant_id": "m_futian_019",
@@ -552,7 +696,15 @@
       },
       "synthetic": true,
       "meal_service_type": "popular_dine_in",
-      "reservation_mode": "recommended"
+      "reservation_mode": "recommended",
+      "address": "深圳市福田区卓越中心附近",
+      "location": {
+        "latitude": 22.53595,
+        "longitude": 114.05818,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.5
     },
     {
       "merchant_id": "m_futian_020",
@@ -581,7 +733,15 @@
       },
       "synthetic": true,
       "meal_service_type": "standard_dine_in",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区卓越中心附近",
+      "location": {
+        "latitude": 22.5363,
+        "longitude": 114.05846,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.4
     },
     {
       "merchant_id": "m_futian_021",
@@ -610,7 +770,15 @@
       },
       "synthetic": true,
       "meal_service_type": "popular_dine_in",
-      "reservation_mode": "recommended"
+      "reservation_mode": "recommended",
+      "address": "深圳市福田区华强北附近",
+      "location": {
+        "latitude": 22.5477,
+        "longitude": 114.08674,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.6
     },
     {
       "merchant_id": "m_futian_022",
@@ -639,7 +807,15 @@
       },
       "synthetic": true,
       "meal_service_type": "popular_dine_in",
-      "reservation_mode": "recommended"
+      "reservation_mode": "recommended",
+      "address": "深圳市福田区华强北附近",
+      "location": {
+        "latitude": 22.54805,
+        "longitude": 114.08506,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.6
     },
     {
       "merchant_id": "m_futian_023",
@@ -668,7 +844,15 @@
       },
       "synthetic": true,
       "meal_service_type": "popular_dine_in",
-      "reservation_mode": "recommended"
+      "reservation_mode": "recommended",
+      "address": "深圳市福田区景田附近",
+      "location": {
+        "latitude": 22.5584,
+        "longitude": 114.03994,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.7
     },
     {
       "merchant_id": "m_futian_024",
@@ -697,7 +881,15 @@
       },
       "synthetic": true,
       "meal_service_type": "standard_dine_in",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区莲花村附近",
+      "location": {
+        "latitude": 22.55645,
+        "longitude": 114.06192,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.8
     },
     {
       "merchant_id": "m_futian_025",
@@ -726,7 +918,15 @@
       },
       "synthetic": true,
       "meal_service_type": "standard_dine_in",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区岗厦北城中村附近",
+      "location": {
+        "latitude": 22.5394,
+        "longitude": 114.067,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.4
     },
     {
       "merchant_id": "m_futian_026",
@@ -756,7 +956,15 @@
       "source_type": "user_provided_demo",
       "synthetic": true,
       "meal_service_type": "popular_dine_in",
-      "reservation_mode": "recommended"
+      "reservation_mode": "recommended",
+      "address": "深圳市福田区华强北附近",
+      "location": {
+        "latitude": 22.5477,
+        "longitude": 114.08618,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.6
     },
     {
       "merchant_id": "m_futian_027",
@@ -788,7 +996,15 @@
       "source_type": "user_provided_demo",
       "synthetic": true,
       "meal_service_type": "reservation_destination",
-      "reservation_mode": "required"
+      "reservation_mode": "required",
+      "address": "深圳市福田区平安金融中心附近",
+      "location": {
+        "latitude": 22.53565,
+        "longitude": 114.05076,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.5
     },
     {
       "merchant_id": "m_futian_028",
@@ -818,7 +1034,15 @@
       "source_type": "user_provided_demo",
       "synthetic": true,
       "meal_service_type": "standard_dine_in",
-      "reservation_mode": "none"
+      "reservation_mode": "none",
+      "address": "深圳市福田区车公庙附近",
+      "location": {
+        "latitude": 22.5345,
+        "longitude": 114.02884,
+        "coordinate_type": "gcj02",
+        "source": "synthetic_neighborhood_estimate"
+      },
+      "distance_km": 0.5
     }
   ]
 }

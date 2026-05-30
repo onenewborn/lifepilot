@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "node server/src/index.mjs",
     "start": "node server/src/index.mjs",
     "check": "node --check server/src/index.mjs && node --check tests/smoke-session.mjs",
     "smoke:session": "node tests/smoke-session.mjs"

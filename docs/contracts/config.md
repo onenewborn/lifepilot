@@ -8,6 +8,7 @@
 HOST=127.0.0.1
 PORT=4331
 NODE_ENV=development
+LIFEPILOT_RUNTIME_ROOT=/Users/mona/Documents/lifepilot/data/runtime
 ```
 
 旧后端默认端口：
@@ -17,6 +18,14 @@ PORT=4321
 ```
 
 迁移期间新后端使用 `4331`，避免打扰旧小程序流程。
+
+`LIFEPILOT_RUNTIME_ROOT` 用于保存运行时状态，例如 P5 的 meal session JSON 文件。默认值是：
+
+```text
+data/runtime
+```
+
+该目录不进入 git。
 
 ## P1 双跑验证
 
@@ -61,9 +70,65 @@ P1 不依赖 `ARK_API_KEY`。如果 provider 不可用，AI 路由必须走本�
 ```text
 OPENCLAW_API_BASE=http://127.0.0.1:4331
 OPENCLAW_JOB_SHARED_SECRET=
+LIFEPILOT_OPENCLAW_API_BASE=http://127.0.0.1:4331
+LIFEPILOT_OPENCLAW_LOCAL=false
 ```
 
-P5 再细化认证和 job 提交流程。
+`/api/openclaw/run-dream` 是本机实验触发接口：
+
+- `LIFEPILOT_OPENCLAW_LOCAL=false`：走默认 OpenClaw Gateway/sandbox，适合模拟真实 OpenClaw 隔离环境，但可能无法访问宿主机后端。
+- `LIFEPILOT_OPENCLAW_LOCAL=true`：走 `openclaw agent --local`。注意这不一定关闭工具 sandbox；如果 OpenClaw 配置仍是 `agents.defaults.sandbox.mode=all` 且网络为 `none`，skill 仍访问不到 `127.0.0.1`。
+- `LIFEPILOT_OPENCLAW_API_BASE` 是传给 OpenClaw skill 的 LifePilot 后端地址。`local=true` 时通常写 `http://127.0.0.1:4331`。
+
+完整本机闭环验收时，可以临时执行：
+
+```bash
+openclaw config set agents.defaults.sandbox.mode off
+openclaw gateway restart
+```
+
+跑完必须恢复：
+
+```bash
+openclaw config set agents.defaults.sandbox.mode all
+openclaw gateway restart
+```
+
+## 位置、天气和路线
+
+小程序前端应把 `wx.getLocation({ type: "gcj02" })` 的结果传给后端：
+
+```json
+{
+  "location": {
+    "label": "当前位置",
+    "latitude": 22.52291,
+    "longitude": 114.05454,
+    "coordinate_type": "gcj02",
+    "source": "wx.getLocation"
+  }
+}
+```
+
+`/api/session/start` 会把这个位置存进 session。`/api/weather/forecast` 和 `/api/map/route` 可以通过 `session_id` 复用这个位置。
+
+真实 provider 使用高德 Web 服务；没有 key 时自动回退 mock，不打断主流程。
+
+```text
+LIFEPILOT_WEATHER_PROVIDER=amap
+LIFEPILOT_MAP_PROVIDER=amap
+LIFEPILOT_AMAP_KEY=
+LIFEPILOT_AMAP_BASE_URL=https://restapi.amap.com
+LIFEPILOT_CONTEXT_TIMEOUT_MS=2500
+```
+
+当前规则：
+
+- queue 继续 mock，只读商家静态 `queue_risk`。
+- weather 有 key 时用当前位置逆地理得到 adcode，再查实时天气。
+- route 有 key 且起终点都有经纬度时查步行路线。
+- 缺 key、缺坐标、超时、provider 报错时回退 mock，并写 `fallback_used` / `fallback_reason`。
+- 商户坐标目前是合成估算，字段来源为 `synthetic_neighborhood_estimate`，后续换真实店铺时直接替换。
 
 ## 资产分发
 

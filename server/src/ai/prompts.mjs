@@ -113,6 +113,14 @@ function compactEntryContext(entryContext = {}) {
   };
 }
 
+function compactMemoryContext(memoryContext = {}) {
+  return {
+    local_active_confirmed_preferences: memoryContext.confirmed_preferences || [],
+    evermind_weak_memories: (memoryContext.evermind_weak_memories || []).slice(0, 8),
+    policy: memoryContext.policy || "local_active_confirmed_preferences_are_strong; evermind_memories_are_weak_context",
+  };
+}
+
 export function buildDirectionSummaryPrompt({goal, events = [], entryContext = null, memoryContext = null}) {
   const kept = events.filter((event) => event.action === "keep");
   const disliked = events.filter((event) => event.action === "dislike");
@@ -142,7 +150,10 @@ export function buildDirectionSummaryPrompt({goal, events = [], entryContext = n
     "- 只有在没有保留方向、信号很少或选择明显矛盾时，才可以轻微抱歉但不卑微。",
     "- 称呼用户为主人。",
     "- summary_text 写 1 到 2 句中文，不要列表，不要换行。",
-    "- 如果存在 confirmed memory，可结合长期口味偏好解释本次选择；pending memory 不能当作已确认偏好。",
+    "- 如果存在 confirmed memory，只有在它和本次 keep/dislike、入口需求高度相关时，才自然带一句“我记得主人喜欢……”来帮助解释本次选择。",
+    "- Evermind 外部记忆只能作为弱上下文，不能当作用户已确认偏好；只有和本次选择高度相关时才自然参考。",
+    "- 面向用户时不要写“长期喜欢”“长期偏好”“confirmed memory”“记忆上下文”这类系统化表述。",
+    "- pending memory 不能当作已确认偏好。",
     "",
     `用户今日目标：${goal || "今天想找一顿合适的饭"}`,
     `入口上下文：${JSON.stringify(compactEntryContext(entryContext || {}), null, 2)}`,
@@ -150,11 +161,11 @@ export function buildDirectionSummaryPrompt({goal, events = [], entryContext = n
     `放弃方向数量：${disliked.length}`,
     `保留方向：${JSON.stringify(kept.map(compactEvent), null, 2)}`,
     `放弃方向：${JSON.stringify(disliked.map(compactEvent), null, 2)}`,
-    `长期记忆上下文：${JSON.stringify(memoryContext || {confirmed_preferences: []})}`,
+    `记忆上下文：${JSON.stringify(compactMemoryContext(memoryContext || {}), null, 2)}`,
   ].join("\n");
 }
 
-export function buildOfferExplanationPrompt({goal, directionSummary = {}, understanding = {}, cards = []} = {}) {
+export function buildOfferExplanationPrompt({goal, directionSummary = {}, understanding = {}, directionContext = {}, memoryContext = null, cards = []} = {}) {
   const compactUnderstanding = {
     constraints: understanding.constraints || {},
     dimensions: understanding.dimensions || {},
@@ -170,13 +181,31 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     "你不能改变卡片顺序，不能新增或删除商家，只能基于事实改写每张卡的解释文案。",
     "只返回一个 JSON 对象，不要 markdown，不要解释。",
     "",
+    "当前产品逻辑：",
+    "- 第一阶段用户通过左右滑选择餐饮方向；keep 表示主人愿意继续看这个方向，dislike 表示主人暂时不想看这个方向。",
+    "- 第二阶段展示具体商家时，要让主人感觉这家店是从刚刚的方向选择自然收束出来的，而不是凭空出现。",
+    "- 如果商家命中了主人刚刚保留的方向，要点名这个方向或用自然口语解释它，例如“你刚刚保留了热汤粉面这一类，所以这家更贴近今天想要的热乎感”。",
+    "- 不要把主人刚刚放弃的方向写成偏好；如果商家和放弃方向有关，只能在明确事实冲突时写进 conflicts。",
+    "",
     "要求：",
     "- 每张输入卡都要返回一项。",
-    "- matched 写 1-3 条，说明为什么适合主人当前需求。",
-    "- watchouts 写 0-2 条，说明到店前需要注意什么。",
+    "- matched 写 1-3 条，说明为什么选这家店：优先连接“主人第一阶段保留的方向”，再结合入口需求，最后突出这家店自己的特点。",
+    "- matched 要亲近、具体、像小汪在帮主人做决定；可以写“小汪觉得这家……”“主人不用太担心……”“这家刚好……”。",
+    "- 不要写成生硬规则，例如不要只写“命中方向”“符合预算”“适合一个人吃”。",
+    "- 预算、距离、排队这类事实要转成自然口语，例如“主人不用太担心钱包”“离得不远”“不用把时间耗在排队上”。",
+    "- watchouts 写 0-2 条，说明到店前需要注意什么；语气轻一点，不要像风险报告。",
     "- conflicts 只在事实明确冲突时填写。",
+    "- 如果用户最初需求里有疲惫、下班、想省心、想犒劳、想下饭、预算、距离、人数、聊天等信息，要自然体现在 matched 或 watchouts 里。",
+    "- 要突出这家店相对其他店的具体特点，例如近、热乎、下饭、独食友好、适合聊天、排队少、价格稳、招牌菜明确。",
+    "- 只能引用当前商家卡 matched_directions 里的方向；不要引用用户保留过但这张卡没有命中的方向。",
+    "- 可以称呼用户为主人，但不要每条都重复称呼。",
     "- 不要编造真实美团、大众点评、订单、支付、营业、实时排队或真实路线。",
+    "- 不要说“实时情况”“走过去就能到”这类暗示已经查过真实路线或实时数据的话；可以说“距离不远”“出发前再确认一下”。",
     "- 距离使用 facts.distance_text，例如 0.9km，不要写 subway_walk_min。",
+    "- 如果存在记忆上下文，本地 confirmed preferences 是强依据；Evermind 外部记忆只能作为弱上下文，pending candidates 不是已确认偏好，不能当作推荐依据。",
+    "- 只有当 confirmed_preferences 和当前商家卡事实高度相关时，才自然带一句“我记得主人喜欢……”；不要为了展示记忆而强行提。",
+    "- Evermind 外部记忆如果和当前商家卡高度相关，可以辅助理解用户最近场景，但不要说成小汪已经确认记住。",
+    "- 面向用户时不要写“长期喜欢”“长期偏好”“confirmed memory”“记忆上下文”这类系统化表述。",
     "- 文案短，适合卡片展示。",
     "",
     "输出 JSON schema：",
@@ -191,14 +220,19 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     "",
     `用户目标：${goal || ""}`,
     `入口理解：${JSON.stringify(compactUnderstanding, null, 2)}`,
+    `第一阶段方向选择：${JSON.stringify({
+      kept: directionContext.kept || [],
+      disliked: directionContext.disliked || [],
+    }, null, 2)}`,
     `方向小结：${JSON.stringify(directionSummary || {}, null, 2)}`,
+    `记忆上下文：${JSON.stringify(compactMemoryContext(memoryContext || {}), null, 2)}`,
     `商家卡事实：${JSON.stringify(cards.map((card) => ({
       offer_id: card.offer_id,
       merchant_name: card.merchant_name,
       title: card.title,
+      matched_directions: card.matched_directions || [],
       tags: card.tags,
       facts: card.facts,
-      local_explanation: card.explanation,
     })), null, 2)}`,
   ].join("\n");
 }
