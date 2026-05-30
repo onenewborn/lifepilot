@@ -115,6 +115,7 @@
         "dimension 和 soft_preferences 置信度至少 0.8 且有 evidence 才保留。",
         "hard_constraints 置信度至少 0.9 且有 evidence 才能进入硬筛选。",
         "低置信度字段置空，不交给 AI 或规则继续猜；raw_entry_text 只作为用户原文保留，选择权通过后续滑卡或显式选择交还给用户。",
+        "高置信度维度必须落成可执行排序信号；后端会把 energy/emotional_reward 等维度派生为省心、少走路、少排队、热乎、下饭等 soft_preferences。",
         "session/start 默认调用入口解析；AI 不可用时回退 localParseEntry。"
       ]
     },
