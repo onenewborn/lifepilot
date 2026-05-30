@@ -81,3 +81,22 @@ OpenClaw 必须通过产品后端 API 获取产品上下文。
 ## Fallback 规则
 
 如果 AI 失败、超时或返回无效 JSON，产品流程必须继续使用本地确定性 fallback。
+
+## P2 方向总结输出
+
+方向总结 AI 只需要返回：
+
+```json
+{
+  "summary_text": "..."
+}
+```
+
+`confidence` 不是 P2 必需字段，不进入核心合同。
+
+方向总结 prompt 必须强调：
+
+- 分析 `keep` 和 `dislike` 之间的食物/口味/场景差异，而不是简单复述。
+- 正常情况下不道歉；只有没有保留方向、信号太少或选择矛盾时，才可以轻微抱歉但不卑微。
+- 如果后续接入 confirmed memory，可以结合长期口味偏好解释本次选择。
+- P2 实现先预留 `memoryContext`，暂不接完整 memory 系统。

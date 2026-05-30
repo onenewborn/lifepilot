@@ -1,8 +1,9 @@
 import { createServer } from "node:http";
 import { buildFoodDirectionCards, filterFoodDirectionCards, localParseEntry } from "./cards.mjs";
 import { config } from "./config.mjs";
+import { buildDirectionSummary } from "./direction-summary.mjs";
 import { fail, ok, readBody } from "./http.mjs";
-import { appendSwipeEvent, createSession, getSession, normalizeSwipeEvent } from "./session-store.mjs";
+import { appendSwipeEvent, applyDirectionSummary, createSession, getSession, normalizeSwipeEvent } from "./session-store.mjs";
 
 function publicSession(session) {
   return session;
@@ -75,6 +76,34 @@ async function handleSessionView(res, sessionId) {
   ok(res, {session: publicSession(session)});
 }
 
+async function handleSessionAdvance(req, res) {
+  const body = await readBody(req);
+  const session = getSession(body.session_id || body.sessionId);
+  if (!session) {
+    fail(res, 404, "session_not_found", "Session not found.");
+    return;
+  }
+  if (session.stage !== "direction") {
+    fail(res, 409, "invalid_session_transition", "Session can only advance from direction in P2.", {
+      stage: session.stage,
+      supported_transition: "direction -> direction_summary",
+    });
+    return;
+  }
+  const summaryPayload = await buildDirectionSummary({
+    goal: session.goal,
+    events: session.direction_events,
+    timeoutMs: body.timeout_ms || body.timeoutMs,
+    forceLocal: body.local_only === true || body.localOnly === true,
+    memoryContext: null,
+  });
+  applyDirectionSummary(session, summaryPayload);
+  ok(res, {
+    session: publicSession(session),
+    meta: summaryPayload.meta || {fallback_used: false},
+  });
+}
+
 async function route(req, res) {
   const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
 
@@ -93,6 +122,10 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/session/swipe") {
       await handleSessionSwipe(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/session/advance") {
+      await handleSessionAdvance(req, res);
       return;
     }
     if (req.method === "GET" && url.pathname.startsWith("/api/session/")) {

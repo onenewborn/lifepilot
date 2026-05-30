@@ -90,6 +90,7 @@ try {
   assert.ok(started.payload.session.current_cards.length > 0);
 
   const swipeCard = started.payload.session.current_cards[0];
+  const dislikeCard = started.payload.session.current_cards[1];
   const swiped = await request("/api/session/swipe", {
     method: "POST",
     body: {
@@ -105,10 +106,23 @@ try {
   assert.equal(swiped.payload.event.direction_id, swipeCard.direction_id);
   assert.equal(swiped.payload.session.direction_events.length, 1);
 
+  const disliked = await request("/api/session/swipe", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+      action: "dislike",
+      card_id: dislikeCard.card_id,
+      dwell_ms: 820,
+    },
+  });
+  assert.equal(disliked.status, 200);
+  assert.equal(disliked.payload.event.action, "dislike");
+  assert.equal(disliked.payload.session.direction_events.length, 2);
+
   const viewed = await request("/api/session/smoke_p1_session");
   assert.equal(viewed.status, 200);
   assert.equal(viewed.payload.ok, true);
-  assert.equal(viewed.payload.session.direction_events.length, 1);
+  assert.equal(viewed.payload.session.direction_events.length, 2);
 
   const invalidAction = await request("/api/session/swipe", {
     method: "POST",
@@ -121,7 +135,7 @@ try {
   assert.equal(invalidAction.status, 422);
   assert.equal(invalidAction.payload.ok, false);
   assert.equal(invalidAction.payload.error.code, "invalid_payload");
-  assert.equal(viewed.payload.session.direction_events.length, 1);
+  assert.equal(viewed.payload.session.direction_events.length, 2);
 
   const missingCard = await request("/api/session/swipe", {
     method: "POST",
@@ -137,7 +151,34 @@ try {
 
   const afterMissingCard = await request("/api/session/smoke_p1_session");
   assert.equal(afterMissingCard.status, 200);
-  assert.equal(afterMissingCard.payload.session.direction_events.length, 1);
+  assert.equal(afterMissingCard.payload.session.direction_events.length, 2);
+
+  const advanced = await request("/api/session/advance", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+      local_only: true,
+    },
+  });
+  assert.equal(advanced.status, 200);
+  assert.equal(advanced.payload.ok, true);
+  assert.equal(advanced.payload.session.stage, "direction_summary");
+  assert.equal(advanced.payload.session.next_step, "confirm_direction_summary");
+  assert.equal(advanced.payload.session.current_cards.length, 0);
+  assert.ok(advanced.payload.session.direction_summary.summary_text);
+  assert.equal(advanced.payload.session.direction_summary.mode, "local_fallback");
+  assert.equal(advanced.payload.meta.fallback_used, true);
+
+  const secondAdvance = await request("/api/session/advance", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+      local_only: true,
+    },
+  });
+  assert.equal(secondAdvance.status, 409);
+  assert.equal(secondAdvance.payload.ok, false);
+  assert.equal(secondAdvance.payload.error.code, "invalid_session_transition");
 
   const missing = await request("/api/session/missing_session");
   assert.equal(missing.status, 404);
@@ -146,7 +187,7 @@ try {
 
   console.log(JSON.stringify({
     ok: true,
-    assertions: 28,
+    assertions: 42,
     cards: directions.payload.cards.length,
     marker: health.marker,
   }, null, 2));

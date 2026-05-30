@@ -144,15 +144,38 @@ dislike  左滑放弃
 
 `skip` 和 `super_like` 不再作为用户滑卡事件进入 `direction_events`。用户非常喜欢某个方向时，应走“看这个方向的店”这类推进意图，而不是写成特殊 swipe action。
 
-## 下一步
-
-P2 增加 Ark/Doubao realtime AI provider，并迁移方向总结：
+P2 方向总结已完成：
 
 ```text
 POST /api/session/advance
 ```
 
-当 session 处于 `stage=direction` 时，第一次 `advance` 应生成 `direction_summary`，把 session 推进到 `stage=direction_summary`，并把确定性本地 fallback 当成一等路径。
+当前只支持：
+
+```text
+direction -> direction_summary
+```
+
+P2 行为：
+
+```text
+用 keep / dislike 的差异生成方向总结
+AI 输出只要求 summary_text
+Ark/Doubao 不可用或 local_only=true 时走本地 fallback
+不接完整 memory，只预留 memoryContext
+重复 advance 返回 invalid_session_transition
+```
+
+## 下一步
+
+P3 迁移 Offer 卡和最终推荐：
+
+```text
+POST /api/food-offers
+POST /api/session/finalize
+```
+
+`direction_summary -> offer` 的第二段 `advance` 也放到 P3。
 
 ## 硬规则
 

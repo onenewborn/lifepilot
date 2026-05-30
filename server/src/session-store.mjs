@@ -112,3 +112,17 @@ export function appendSwipeEvent(session, event) {
   touchSession(session);
   return session;
 }
+
+export function applyDirectionSummary(session, summaryPayload) {
+  session.stage = "direction_summary";
+  session.next_step = "confirm_direction_summary";
+  session.direction_summary = {
+    summary_text: summaryPayload.summary.summary_text,
+    mode: summaryPayload.mode,
+    timing: summaryPayload.timing || null,
+    warning: summaryPayload.warning || null,
+  };
+  session.current_cards = [];
+  touchSession(session);
+  return session;
+}

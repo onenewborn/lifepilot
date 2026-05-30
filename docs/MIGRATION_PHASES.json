@@ -79,14 +79,26 @@
     {
       "id": "P2",
       "name": "ark_direction_summary",
-      "status": "pending",
+      "status": "completed",
       "goal": "新增 Ark/Doubao provider，把方向总结迁到低延迟 API 调用，并保留本地 fallback。",
       "routes": [
         "POST /api/session/advance"
       ],
       "validation": [
         "node tests/smoke-session.mjs",
-        "记录 provider、latency、prompt_tokens、completion_tokens"
+        "记录 provider、latency、prompt_tokens、completion_tokens",
+        "AI 未配置或 local_only=true 时走 local_fallback",
+        "direction 阶段 advance 后进入 direction_summary",
+        "重复 advance 返回 invalid_session_transition"
+      ],
+      "completed_at": "2026-05-30",
+      "implementation": [
+        "新增 server/src/ai/ark-provider.mjs，支持 Ark chat completions，thinking disabled。",
+        "新增 server/src/ai/prompts.mjs，方向总结 prompt 只要求 summary_text。",
+        "新增 server/src/direction-summary.mjs，包含本地 fallback、AI 调用、JSON 解析和 fallback 标记。",
+        "新增 POST /api/session/advance 的 P2 状态机，只支持 direction -> direction_summary。",
+        "P2 预留 memoryContext 参数，但暂不接完整 memory 系统。",
+        "smoke 覆盖 keep/dislike、local fallback、状态推进、重复 advance 非法转移。"
       ]
     },
     {

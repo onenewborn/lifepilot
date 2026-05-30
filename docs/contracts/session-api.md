@@ -110,3 +110,39 @@ OpenClaw 不能直接修改 meal session 状态。
 ```text
 这张卡已更新，已为你刷新
 ```
+
+## P2 Advance 状态机
+
+P2 只实现这一段状态转移：
+
+```text
+direction -> direction_summary
+```
+
+请求：
+
+```text
+POST /api/session/advance
+```
+
+成功后：
+
+```text
+session.stage = "direction_summary"
+session.next_step = "confirm_direction_summary"
+session.direction_summary.summary_text 存在
+session.current_cards = []
+```
+
+如果 session 不在 `direction` 阶段，返回：
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "invalid_session_transition"
+  }
+}
+```
+
+`direction_summary -> offer` 放到 P3。

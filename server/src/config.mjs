@@ -9,4 +9,13 @@ export const config = {
   port: Number(process.env.PORT || 4331),
   runtimeName: "lifepilot-next",
   assetBaseUrl: process.env.LIFEPILOT_ASSET_BASE_URL || "https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com",
+  ai: {
+    provider: process.env.LIFEPILOT_AI_PROVIDER || "ark",
+    arkApiKey: process.env.ARK_API_KEY || "",
+    arkBaseUrl: process.env.ARK_BASE_URL || "https://ark.cn-beijing.volces.com/api/v3",
+    arkModel: process.env.ARK_MODEL || "doubao-seed-1-6-flash-250828",
+    timeoutMs: Number(process.env.ARK_TIMEOUT_MS || 5000),
+    maxTokens: Number(process.env.ARK_MAX_TOKENS || 256),
+    temperature: Number(process.env.ARK_TEMPERATURE || 0.2),
+  },
 };
