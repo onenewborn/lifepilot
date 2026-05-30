@@ -141,7 +141,10 @@
 
     <view class="session-strip">
       <text>{{stage === 'direction' ? '方向卡' : '商家卡'}}</text>
-      <text>{{index + 1}} / {{cards.length}}</text>
+      <view class="session-strip-right">
+        <button wx:if="{{currentCard.videoUrl && !videoDisabled}}" class="sound-toggle-button" bindtap="toggleVideoMuted">{{videoMuted ? '开声音' : '静音'}}</button>
+        <text>{{index + 1}} / {{cards.length}}</text>
+      </view>
     </view>
 
     <view wx:if="{{currentCard}}" class="deck">
@@ -187,7 +190,6 @@
         />
 
         <view class="media-shade" catchtap="toggleVideoPlay"></view>
-        <cover-view wx:if="{{currentCard.videoUrl && !videoDisabled}}" class="sound-button" catchtap="toggleVideoMuted">{{videoMuted ? '开声音' : '静音'}}</cover-view>
         <cover-view wx:if="{{videoPaused}}" class="pause-badge" catchtap="toggleVideoPlay">⏸</cover-view>
 
         <view class="card-body">
