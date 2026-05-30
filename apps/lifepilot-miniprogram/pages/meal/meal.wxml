@@ -168,6 +168,7 @@
         />
         <video
           wx:else
+          id="currentFoodVideo"
           class="media"
           src="{{currentCard.videoUrl}}"
           poster="{{currentPosterUrl}}"
@@ -179,12 +180,14 @@
           show-fullscreen-btn="{{false}}"
           show-play-btn="{{false}}"
           controls="{{false}}"
+          bindtap="toggleVideoPlay"
           bindloadedmetadata="onVideoReady"
           binderror="onVideoError"
         />
 
-        <view class="media-shade"></view>
-        <button wx:if="{{currentCard.videoUrl}}" class="sound-button" bindtap="toggleVideoMuted">{{videoMuted ? '静音' : '有声'}}</button>
+        <view class="media-shade" catchtap="toggleVideoPlay"></view>
+        <button wx:if="{{currentCard.videoUrl}}" class="sound-button" catchtap="toggleVideoMuted">{{videoMuted ? '开声音' : '静音'}}</button>
+        <view wx:if="{{videoPaused}}" class="pause-badge" catchtap="toggleVideoPlay">继续播放</view>
 
         <view class="card-body">
           <view class="badge">{{currentCard.badge}}</view>

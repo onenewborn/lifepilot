@@ -68,6 +68,7 @@ Page({
     videoDisabled: true,
     videoReady: false,
     videoMuted: true,
+    videoPaused: false,
     xiaowangMascotUrl: "https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com/assets/mascot/xiaowang-idle-v1.png?v=20260521b",
     xiaowangHeadUrl: "https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com/assets/mascot/xiaowang-head-v1.png?v=20260521a",
     xiaowangSummaryUrl: "https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com/assets/mascot/xiaowang-summary-v1.png?v=20260521a",
@@ -343,6 +344,7 @@ Page({
       dislikeFeedbackStyle: "",
       videoDisabled: true,
       videoReady: false,
+      videoPaused: false,
       videoMuted: this.data.stage === "offer" ? false : this.data.videoMuted
     }, () => {
       this.enableVideoSoon();
@@ -428,13 +430,14 @@ Page({
     this.videoTimer = setTimeout(() => {
       this.videoTimer = null;
       if (this.data.currentCard && this.data.currentCard.videoUrl === card.videoUrl) {
-        this.setData({ videoDisabled: false });
+        this.setData({ videoDisabled: false, videoPaused: false });
       }
     }, this.data.stage === "offer" ? 900 : 700);
   },
 
   onVideoReady() {
     this.setData({ videoReady: true });
+    this.videoContext().play();
   },
 
   onVideoError() {
@@ -442,7 +445,28 @@ Page({
   },
 
   toggleVideoMuted() {
-    this.setData({ videoMuted: !this.data.videoMuted });
+    const muted = !this.data.videoMuted;
+    const context = this.videoContext();
+    if (muted && context.mute) context.mute();
+    if (!muted && context.play) context.play();
+    this.setData({ videoMuted: muted, videoPaused: false });
+  },
+
+  videoContext() {
+    if (!this._videoContext) this._videoContext = wx.createVideoContext("currentFoodVideo", this);
+    return this._videoContext;
+  },
+
+  toggleVideoPlay() {
+    if (this.data.videoDisabled || !this.data.currentCard || !this.data.currentCard.videoUrl) return;
+    const paused = !this.data.videoPaused;
+    const context = this.videoContext();
+    if (paused) {
+      context.pause();
+    } else {
+      context.play();
+    }
+    this.setData({ videoPaused: paused });
   },
 
   onImageError() {
