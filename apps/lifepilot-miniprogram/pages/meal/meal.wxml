@@ -12,6 +12,13 @@
 
   <view wx:if="{{stage === 'entry'}}" class="entry-panel">
     <view class="section-title">今天这顿饭，先定个大概</view>
+    <view class="xiaowang-card">
+      <image class="xiaowang-mascot" src="{{xiaowangMascotUrl}}" mode="aspectFit" />
+      <view class="xiaowang-copy">
+        <view class="xiaowang-name">小汪</view>
+        <view class="xiaowang-line">我先闻闻主人的饭点需求</view>
+      </view>
+    </view>
     <view class="field-block">
       <view class="field-label">人数</view>
       <view class="option-row">
@@ -196,6 +203,7 @@
   </view>
 
   <view wx:elif="{{stage === 'direction_summary' || stage === 'direction_summary_loading'}}" class="summary-panel">
+    <image class="summary-mascot" src="{{xiaowangSummaryUrl}}" mode="aspectFit" />
     <view class="section-title">小汪先帮主人收窄一下</view>
     <view wx:if="{{directionSummary}}" class="summary-text">{{directionSummary.text}}</view>
     <view wx:else class="summary-text">{{loadingText || '正在整理这轮选择...'}}</view>
@@ -208,6 +216,10 @@
   <view wx:elif="{{stage === 'final'}}" class="final-panel">
     <view wx:if="{{result.hasSelection}}">
       <view class="section-title">小汪建议这一家</view>
+      <view class="result-ai-row">
+        <image class="result-ai-avatar" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
+        <view class="result-ai-copy">我会按主人刚刚保留的方向来判断，不只是看评分。</view>
+      </view>
       <view class="result-card">
         <image class="result-image" src="{{result.primary.imageUrl}}" mode="aspectFill" />
         <view class="result-content">
