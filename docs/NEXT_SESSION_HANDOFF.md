@@ -50,6 +50,8 @@ apps/lifepilot-miniprogram/pages/meal/meal.wxss
 用户补充会传给下一阶段商户解释 prompt
 ```
 
+阶段表也已同步：`docs/MIGRATION_PHASES.json` 里的 P6 是 `in_progress`，不是空白待办。OpenClaw memory bridge、dreaming skill 设计和 Evermind 读写已经有最小实现，后续主要补原生消息渠道、trace 展示和问小汪入口。
+
 最新关键提交：
 
 ```text
