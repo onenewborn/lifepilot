@@ -5,6 +5,12 @@ const swipeGesture = require("../../utils/swipe-gesture");
 
 const STORAGE_SESSION_ID = "lifepilot.activeSessionId";
 const DEFAULT_USER_ID = "demo_weiyingru";
+const LOCATION_LANDMARKS = [
+  { label: "福田区 · 景田地铁站附近", latitude: 22.52291, longitude: 114.05454 },
+  { label: "福田区 · 购物公园附近", latitude: 22.535, longitude: 114.049 },
+  { label: "福田区 · 会展中心附近", latitude: 22.533, longitude: 114.061 },
+  { label: "福田区 · 车公庙附近", latitude: 22.536, longitude: 114.028 },
+];
 
 Page({
   data: {
@@ -26,7 +32,7 @@ Page({
       text: "今天有点累，想吃热乎下饭的"
     },
     location: null,
-    locationText: "还没有获取位置",
+    locationText: "定位中",
     entryOptions: {
       partySize: [
         { value: "one", label: "一个人", text: "一个人" },
@@ -177,8 +183,27 @@ Page({
     };
   },
 
+  distanceMeters(left, right) {
+    const rad = Math.PI / 180;
+    const lat1 = Number(left.latitude) * rad;
+    const lat2 = Number(right.latitude) * rad;
+    const dLat = (Number(right.latitude) - Number(left.latitude)) * rad;
+    const dLng = (Number(right.longitude) - Number(left.longitude)) * rad;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  },
+
+  locationLabel(location) {
+    if (!location) return "定位中";
+    const nearest = LOCATION_LANDMARKS
+      .map((item) => ({...item, distance: this.distanceMeters(location, item)}))
+      .sort((left, right) => left.distance - right.distance)[0];
+    if (nearest && nearest.distance <= 2500) return nearest.label;
+    return "福田区附近";
+  },
+
   async getLocation(options = {}) {
-    this.setData({ locationText: options.silent ? "正在自动定位..." : "正在获取位置..." });
+    this.setData({ locationText: options.silent ? "定位中" : "正在定位" });
     wx.getLocation({
       type: "gcj02",
       success: (res) => {
@@ -192,13 +217,13 @@ Page({
         };
         this.setData({
           location,
-          locationText: `${Number(res.latitude).toFixed(5)}, ${Number(res.longitude).toFixed(5)}`
+          locationText: this.locationLabel(location)
         });
       },
       fail: (error) => {
         console.warn("[LifePilot] getLocation failed", error);
         const message = error && error.errMsg ? error.errMsg.replace(/^getLocation:fail\s*/i, "") : "未获取到位置";
-        this.setData({ locationText: `${message}，会先用默认位置` });
+        this.setData({ locationText: message.includes("auth") || message.includes("authorize") ? "未授权定位" : "福田区 · 默认位置" });
       }
     });
   },

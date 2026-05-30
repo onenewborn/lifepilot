@@ -10,21 +10,16 @@
   <view wx:if="{{errorText}}" class="error">{{errorText}}</view>
 
   <view wx:if="{{stage === 'entry'}}" class="entry-panel">
-    <view class="section-title">今天想怎么吃？</view>
+    <view class="entry-title-row">
+      <view class="section-title entry-title">今天想怎么吃？</view>
+      <button class="location-chip" bindtap="getLocation">{{locationText}}</button>
+    </view>
     <view class="xiaowang-card">
       <image class="xiaowang-mascot" src="{{xiaowangMascotUrl}}" mode="aspectFit" />
       <view class="xiaowang-copy">
         <view class="xiaowang-name">小汪</view>
         <view class="xiaowang-line">先选几项，也可以直接把今天的想法告诉我。</view>
       </view>
-    </view>
-
-    <view class="location-row compact-location top-location">
-      <view>
-        <view class="field-label">位置</view>
-        <view class="location-text">{{locationText}}</view>
-      </view>
-      <button class="ghost-button" bindtap="getLocation">重新定位</button>
     </view>
 
     <view class="field-block">

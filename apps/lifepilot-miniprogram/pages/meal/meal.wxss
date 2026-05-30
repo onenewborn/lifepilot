@@ -98,6 +98,37 @@ button::after {
   color: #2d2118;
 }
 
+.entry-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 22rpx;
+}
+
+.entry-title {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.location-chip {
+  flex-shrink: 0;
+  max-width: 270rpx;
+  height: 58rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.82);
+  color: #ff6334;
+  font-size: 22rpx;
+  font-weight: 900;
+  line-height: 58rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: inset 0 0 0 2rpx rgba(125, 78, 44, 0.08);
+}
+
 .xiaowang-card {
   display: flex;
   align-items: center;
