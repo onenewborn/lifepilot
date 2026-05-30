@@ -326,6 +326,10 @@ button::after {
   min-height: 900rpx;
 }
 
+.offer-flow {
+  min-height: 1060rpx;
+}
+
 .direction-brief {
   display: flex;
   align-items: center;
@@ -418,6 +422,52 @@ button::after {
   font-weight: 700;
 }
 
+.offer-context-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin: 4rpx 0 16rpx;
+  padding: 16rpx 18rpx 16rpx 22rpx;
+  border-radius: 8rpx;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 0 0 2rpx rgba(125, 78, 44, 0.08);
+}
+
+.offer-context-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.offer-context-label {
+  color: rgba(75, 50, 31, 0.54);
+  font-size: 20rpx;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.offer-context-title {
+  margin-top: 6rpx;
+  overflow: hidden;
+  color: rgba(45, 33, 24, 0.92);
+  font-size: 25rpx;
+  font-weight: 900;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.offer-context-count {
+  flex-shrink: 0;
+  color: #667078;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.offer-session-strip {
+  margin-bottom: 14rpx;
+}
+
 .session-strip-right {
   display: flex;
   align-items: center;
@@ -443,6 +493,10 @@ button::after {
   height: 930rpx;
 }
 
+.offer-flow .deck {
+  height: 1000rpx;
+}
+
 .food-card {
   position: absolute;
   left: 0;
@@ -455,6 +509,13 @@ button::after {
   box-shadow: 0 26rpx 56rpx rgba(31, 36, 40, 0.18);
 }
 
+.offer-flow .food-card {
+  height: 970rpx;
+  border-radius: 26rpx;
+  background: #fffaf0;
+  box-shadow: 0 22rpx 54rpx rgba(126, 74, 34, 0.2);
+}
+
 .next-card {
   top: 24rpx;
   transform: scale(0.95);
@@ -464,6 +525,12 @@ button::after {
 .current-card {
   top: 0;
   z-index: 2;
+}
+
+.offer-card {
+  display: flex;
+  flex-direction: column;
+  color: #2d2118;
 }
 
 .media {
@@ -495,6 +562,10 @@ button::after {
   color: #ffffff;
   font-size: 58rpx;
   font-weight: 900;
+}
+
+.offer-pause-badge {
+  top: 42%;
 }
 
 .card-body {
@@ -578,6 +649,202 @@ button::after {
 .muted-line,
 .muted-block .reason-line {
   color: rgba(255, 255, 255, 0.68);
+}
+
+.offer-media {
+  position: relative;
+  flex-shrink: 0;
+  width: 100%;
+  height: 500rpx;
+  overflow: hidden;
+  background: #201914;
+}
+
+.offer-media-asset {
+  width: 100%;
+  height: 100%;
+}
+
+.offer-media-gradient {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42%;
+  background: linear-gradient(180deg, rgba(31, 36, 40, 0) 0%, rgba(31, 36, 40, 0.24) 48%, rgba(31, 36, 40, 0.58) 100%);
+}
+
+.offer-info {
+  flex: 1;
+  min-height: 0;
+  padding: 22rpx 24rpx 28rpx;
+  background: #fffaf0;
+  color: #2d2118;
+  box-sizing: border-box;
+}
+
+.offer-title-row {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+}
+
+.offer-thumb {
+  flex-shrink: 0;
+  width: 82rpx;
+  height: 82rpx;
+  margin-right: 18rpx;
+  border-radius: 8rpx;
+  background: #f2dec0;
+  box-shadow: inset 0 0 0 2rpx rgba(125, 78, 44, 0.12);
+}
+
+.offer-title-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.offer-merchant {
+  overflow: hidden;
+  color: #2d2118;
+  font-size: 32rpx;
+  font-weight: 900;
+  line-height: 1.18;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.offer-dish {
+  margin-top: 6rpx;
+  overflow: hidden;
+  color: rgba(87, 51, 30, 0.74);
+  font-size: 25rpx;
+  font-weight: 800;
+  line-height: 1.24;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.offer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 14rpx;
+}
+
+.offer-tag {
+  max-width: 100%;
+  padding: 7rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(236, 96, 50, 0.11);
+  color: #6b3b22;
+  font-size: 21rpx;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.offer-hook {
+  margin-top: 12rpx;
+  color: rgba(45, 33, 24, 0.9);
+  font-size: 26rpx;
+  font-weight: 800;
+  line-height: 1.42;
+}
+
+.store-facts {
+  margin-top: 12rpx;
+}
+
+.store-fact {
+  margin-top: 6rpx;
+  color: rgba(45, 33, 24, 0.68);
+  font-size: 23rpx;
+  font-weight: 700;
+  line-height: 1.36;
+}
+
+.offer-reason-block {
+  margin-top: 16rpx;
+}
+
+.offer-mini-title {
+  color: #8a4a28;
+  font-size: 23rpx;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.offer-reason-line {
+  margin-top: 7rpx;
+  color: rgba(45, 33, 24, 0.78);
+  font-size: 23rpx;
+  font-weight: 700;
+  line-height: 1.38;
+}
+
+.offer-decision-block {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 16rpx;
+  padding: 16rpx 16rpx 18rpx 12rpx;
+  border-radius: 8rpx;
+  background: rgba(87, 51, 30, 0.08);
+}
+
+.offer-decision-mascot {
+  flex: 0 0 74rpx;
+  width: 74rpx;
+  height: 74rpx;
+}
+
+.offer-decision-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.decision-section + .decision-section {
+  margin-top: 14rpx;
+}
+
+.decision-title {
+  color: #8a4a28;
+  font-size: 23rpx;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.decision-line {
+  margin-top: 7rpx;
+  color: rgba(45, 33, 24, 0.76);
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 1.38;
+}
+
+.muted-decision-section .decision-title,
+.muted-decision-section .decision-line {
+  color: rgba(45, 33, 24, 0.58);
+}
+
+.offer-action-bar {
+  gap: 22rpx;
+  margin-top: 14rpx;
+}
+
+.offer-action-bar .round-button {
+  width: 132rpx;
+  height: 100rpx;
+  border-radius: 50rpx;
+  font-size: 52rpx;
+}
+
+.offer-action-bar .middle-button {
+  width: 220rpx;
+  height: 86rpx;
+  border-radius: 18rpx;
+  background: #2d2118;
+  color: #fff4df;
+  line-height: 86rpx;
 }
 
 .swipe-mark {

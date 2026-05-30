@@ -111,7 +111,7 @@
     </view>
   </view>
 
-  <view wx:elif="{{stage === 'direction' || stage === 'offer'}}" class="flow">
+  <view wx:elif="{{stage === 'direction' || stage === 'offer'}}" class="flow {{stage === 'offer' ? 'offer-flow' : ''}}">
     <view wx:if="{{stage === 'direction'}}" class="direction-brief">
       <image class="direction-brief-avatar" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
       <view class="direction-brief-copy">先滑几张方向卡，喜欢的留下，不喜欢的划走，后面再看具体店。</view>
@@ -139,7 +139,15 @@
       </view>
     </view>
 
-    <view class="session-strip">
+    <view wx:if="{{stage === 'offer'}}" class="offer-context-bar">
+      <view class="offer-context-copy">
+        <view class="offer-context-label">正在看</view>
+        <view class="offer-context-title">{{directionSummary && directionSummary.keptText ? directionSummary.keptText : '保留下来的方向'}} · 具体店铺</view>
+      </view>
+      <view class="offer-context-count">{{index + 1}} / {{cards.length}}</view>
+    </view>
+
+    <view class="session-strip {{stage === 'offer' ? 'offer-session-strip' : ''}}">
       <text>{{stage === 'direction' ? '方向卡' : '商家卡'}}</text>
       <view class="session-strip-right">
         <button wx:if="{{currentCard.videoUrl && !videoDisabled}}" class="sound-toggle-button" bindtap="toggleVideoMuted">{{videoMuted ? '开声音' : '静音'}}</button>
@@ -153,7 +161,7 @@
       </view>
 
       <view
-        class="food-card current-card"
+        class="food-card current-card {{currentCard.cardType === 'offer' ? 'offer-card' : ''}}"
         style="{{cardStyle}}"
         catchtouchstart="onTouchStart"
         catchtouchmove="onTouchMove"
@@ -162,64 +170,114 @@
         <view class="swipe-mark keep-mark" style="{{keepFeedbackStyle}}">保留</view>
         <view class="swipe-mark dislike-mark" style="{{dislikeFeedbackStyle}}">放弃</view>
 
-        <image
-          wx:if="{{videoDisabled || !currentCard.videoUrl}}"
-          class="media"
-          src="{{currentImageUrl}}"
-          mode="aspectFill"
-          binderror="onImageError"
-        />
-        <video
-          wx:else
-          id="currentFoodVideo"
-          class="media"
-          src="{{currentCard.videoUrl}}"
-          poster="{{currentPosterUrl}}"
-          autoplay
-          loop
-          muted="{{videoMuted}}"
-          object-fit="cover"
-          enable-play-gesture="{{true}}"
-          show-center-play-btn="{{false}}"
-          show-fullscreen-btn="{{false}}"
-          show-play-btn="{{false}}"
-          controls="{{false}}"
-          bindtap="toggleVideoPlay"
-          bindloadedmetadata="onVideoReady"
-          binderror="onVideoError"
-        />
-
-        <view class="media-shade" catchtap="toggleVideoPlay"></view>
-        <cover-view wx:if="{{videoPaused}}" class="pause-badge" catchtap="toggleVideoPlay">⏸</cover-view>
-
-        <view class="card-body">
-          <view class="badge">{{currentCard.badge}}</view>
-          <view class="card-title">{{currentCard.title}}</view>
-          <view wx:if="{{currentCard.cardType === 'offer'}}" class="dish-title">{{currentCard.dishTitle}}</view>
-          <view class="card-subtitle">{{currentCard.subtitle}}</view>
-
-          <view class="tag-row">
-            <text wx:for="{{currentCard.tags}}" wx:key="*this" class="tag">{{item}}</text>
+        <block wx:if="{{currentCard.cardType === 'offer'}}">
+          <view class="offer-media">
+            <image
+              wx:if="{{videoDisabled || !currentCard.videoUrl}}"
+              class="offer-media-asset"
+              src="{{currentImageUrl}}"
+              mode="aspectFill"
+              binderror="onImageError"
+            />
+            <video
+              wx:else
+              id="currentFoodVideo"
+              class="offer-media-asset"
+              src="{{currentCard.videoUrl}}"
+              poster="{{currentPosterUrl}}"
+              autoplay
+              loop
+              muted="{{videoMuted}}"
+              object-fit="cover"
+              enable-play-gesture="{{true}}"
+              show-center-play-btn="{{false}}"
+              show-fullscreen-btn="{{false}}"
+              show-play-btn="{{false}}"
+              controls="{{false}}"
+              bindtap="toggleVideoPlay"
+              bindloadedmetadata="onVideoReady"
+              binderror="onVideoError"
+            />
+            <view class="offer-media-gradient" catchtap="toggleVideoPlay"></view>
+            <cover-view wx:if="{{videoPaused}}" class="pause-badge offer-pause-badge" catchtap="toggleVideoPlay">⏸</cover-view>
           </view>
 
-          <view wx:if="{{currentCard.cardType === 'offer'}}" class="offer-detail">
-            <view wx:for="{{currentCard.facts}}" wx:key="*this" class="fact-line">{{item}}</view>
-            <view wx:if="{{currentCard.recommendedItems.length}}" class="reason-block">
-              <view class="mini-title">这家可以这样吃</view>
-              <view wx:for="{{currentCard.recommendedItems}}" wx:key="*this" class="reason-line">{{item}}</view>
+          <scroll-view class="offer-info" scroll-y enhanced show-scrollbar="{{false}}">
+            <view class="offer-title-row">
+              <image class="offer-thumb" src="{{currentCard.coverThumbUrl}}" mode="aspectFill" binderror="onImageError" />
+              <view class="offer-title-copy">
+                <view class="offer-merchant">{{currentCard.title}}</view>
+                <view class="offer-dish">{{currentCard.dishTitle}}</view>
+              </view>
             </view>
-            <view wx:if="{{currentCard.matched.length}}" class="reason-block">
-              <view class="mini-title">小汪觉得适合</view>
-              <view wx:for="{{currentCard.matched}}" wx:key="*this" class="reason-line">{{item}}</view>
+            <view class="offer-tags">
+              <text wx:for="{{currentCard.displayTags}}" wx:key="*this" class="offer-tag">{{item}}</text>
             </view>
-            <view wx:if="{{currentCard.watchouts.length}}" class="reason-block muted-block">
-              <view class="mini-title">需要留意</view>
-              <view wx:for="{{currentCard.watchouts}}" wx:key="*this" class="reason-line">{{item}}</view>
+            <view class="offer-hook">{{currentCard.subtitle}}</view>
+            <view wx:if="{{currentCard.storeFacts.length}}" class="store-facts">
+              <view wx:for="{{currentCard.storeFacts}}" wx:key="*this" class="store-fact">{{item}}</view>
+            </view>
+            <view wx:if="{{currentCard.recommendedItems.length}}" class="offer-reason-block">
+              <view class="offer-mini-title">这家可以这样吃</view>
+              <view wx:for="{{currentCard.recommendedItems}}" wx:key="*this" class="offer-reason-line">{{item}}</view>
+            </view>
+            <view wx:if="{{currentCard.matched.length || currentCard.issueLines.length}}" class="offer-decision-block">
+              <image class="offer-decision-mascot" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
+              <view class="offer-decision-copy">
+                <view wx:if="{{currentCard.matched.length}}" class="decision-section">
+                  <view class="decision-title">小汪觉得适合主人</view>
+                  <view wx:for="{{currentCard.matched}}" wx:key="*this" class="decision-line">{{item}}</view>
+                </view>
+                <view wx:if="{{currentCard.issueLines.length}}" class="decision-section muted-decision-section">
+                  <view class="decision-title">{{currentCard.issueTitle}}</view>
+                  <view wx:for="{{currentCard.issueLines}}" wx:key="*this" class="decision-line">{{item}}</view>
+                </view>
+              </view>
+            </view>
+          </scroll-view>
+        </block>
+
+        <block wx:else>
+          <image
+            wx:if="{{videoDisabled || !currentCard.videoUrl}}"
+            class="media"
+            src="{{currentImageUrl}}"
+            mode="aspectFill"
+            binderror="onImageError"
+          />
+          <video
+            wx:else
+            id="currentFoodVideo"
+            class="media"
+            src="{{currentCard.videoUrl}}"
+            poster="{{currentPosterUrl}}"
+            autoplay
+            loop
+            muted="{{videoMuted}}"
+            object-fit="cover"
+            enable-play-gesture="{{true}}"
+            show-center-play-btn="{{false}}"
+            show-fullscreen-btn="{{false}}"
+            show-play-btn="{{false}}"
+            controls="{{false}}"
+            bindtap="toggleVideoPlay"
+            bindloadedmetadata="onVideoReady"
+            binderror="onVideoError"
+          />
+
+          <view class="media-shade" catchtap="toggleVideoPlay"></view>
+          <cover-view wx:if="{{videoPaused}}" class="pause-badge" catchtap="toggleVideoPlay">⏸</cover-view>
+
+          <view class="card-body">
+            <view class="badge">{{currentCard.badge}}</view>
+            <view class="card-title">{{currentCard.title}}</view>
+            <view class="card-subtitle">{{currentCard.subtitle}}</view>
+
+            <view class="tag-row">
+              <text wx:for="{{currentCard.tags}}" wx:key="*this" class="tag">{{item}}</text>
             </view>
           </view>
-
-          <view wx:else></view>
-        </view>
+        </block>
       </view>
     </view>
 
@@ -228,7 +286,7 @@
       <view class="empty-text">{{stage === 'direction' ? '可以让小汪总结一下刚刚保留和放弃的区别。' : '可以直接进入最终确认。'}}</view>
     </view>
 
-    <view class="action-bar">
+    <view class="action-bar {{stage === 'offer' ? 'offer-action-bar' : ''}}">
       <button class="round-button dislike-button" bindtap="onDislike" disabled="{{!currentCard || isLoading}}">×</button>
       <button
         wx:if="{{stage === 'direction'}}"

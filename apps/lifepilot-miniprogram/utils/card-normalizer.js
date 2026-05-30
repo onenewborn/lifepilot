@@ -42,6 +42,20 @@ function normalizeOfferCard(card = {}, order = 0) {
   const matched = explanation.matched || card.matched || [];
   const watchouts = explanation.watchouts || card.watchouts || [];
   const conflicts = explanation.conflicts || card.conflicts || [];
+  const tags = joinTags([
+    moneyText(facts.price_per_person),
+    facts.distance_text,
+    facts.queue_risk ? `排队 ${facts.queue_risk}` : "",
+    ...(card.tags || [])
+  ], 6);
+  const storeFacts = [
+    facts.address,
+    facts.distance_text,
+    moneyText(facts.price_per_person),
+    facts.queue_risk ? `排队风险 ${facts.queue_risk}` : "",
+    facts.service_speed ? `速度 ${facts.service_speed}` : ""
+  ].filter(Boolean);
+  const issueLines = joinTags(watchouts.length ? watchouts : conflicts, 3);
   return {
     raw: card,
     order,
@@ -54,26 +68,21 @@ function normalizeOfferCard(card = {}, order = 0) {
     subtitle: compactText(card.hook || card.description || facts.address, "小汪会按刚刚的选择继续收束到这家店"),
     badge: compactText(card.badge, "深圳福田 · 商家卡"),
     imageUrl,
+    coverThumbUrl: assetUrl(card.cover_thumb_url || card.coverThumbUrl || facts.cover_thumb_url || facts.coverThumbUrl || card.image_url || card.imageUrl || ""),
     posterUrl: assetUrl(card.poster_url || card.posterUrl || card.image_url || card.imageUrl || ""),
     videoUrl,
     hasSound: Boolean(card.has_sound || card.hasSound),
-    tags: joinTags([
-      moneyText(facts.price_per_person),
-      facts.distance_text,
-      facts.queue_risk ? `排队 ${facts.queue_risk}` : "",
-      ...(card.tags || [])
-    ], 6),
-    facts: [
-      facts.address,
-      facts.distance_text,
-      moneyText(facts.price_per_person),
-      facts.queue_risk ? `排队风险 ${facts.queue_risk}` : "",
-      facts.service_speed ? `速度 ${facts.service_speed}` : ""
-    ].filter(Boolean),
+    tags,
+    displayTags: tags,
+    facts: storeFacts,
+    storeFacts,
     recommendedItems: joinTags(facts.recommended_items || [], 4),
     matched: joinTags(matched, 3),
     watchouts: joinTags(watchouts, 2),
     conflicts: joinTags(conflicts, 2),
+    issueTitle: watchouts.length ? "需要留意" : "可能不合适",
+    issueLines,
+    hasConflict: Boolean(conflicts.length),
     aiExplanationMode: card.ai_explanation_mode || card.aiExplanationMode || ""
   };
 }
