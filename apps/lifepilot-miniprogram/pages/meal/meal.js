@@ -435,7 +435,8 @@ Page({
       const payload = await sessionApi.advanceSession({
         session_id: this.data.sessionId,
         ai_explanations: true,
-        offer_ai_timeout_ms: 45000,
+        offer_ai_timeout_ms: 7000,
+        offer_ai_max_attempts: 1,
         limit: 10
       });
       this.applySession(payload.session);

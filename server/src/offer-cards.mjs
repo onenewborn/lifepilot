@@ -458,6 +458,9 @@ async function explainCardsWithSplitFallback(cards, session, body, directionCont
   if (result.ok) return result.explanations;
   meta.fallback_reasons.push(result.status === 429 ? "provider_429" : result.reason);
 
+  if (meta.max_attempts && meta.attempts.length >= meta.max_attempts) {
+    return result.explanations || new Map();
+  }
   if (cards.length <= 1 || !shouldSplitAiBatch(result)) return result.explanations || new Map();
 
   const midpoint = Math.ceil(cards.length / 2);
@@ -508,6 +511,7 @@ async function maybeApplyAiExplanations(cards, session, body, directionContext =
     attempts: [],
     fallback_reasons: [],
     usage: [],
+    max_attempts: Number(body.offer_ai_max_attempts || body.offerAiMaxAttempts || 0),
   };
   const explanations = await explainCardsWithSplitFallback(cards, session, body, directionContext, memoryContext, splitMeta);
   if (!explanations.size) {
