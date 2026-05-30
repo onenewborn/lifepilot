@@ -18,6 +18,15 @@
         <view class="xiaowang-line">先选几项，也可以直接把今天的想法告诉我。</view>
       </view>
     </view>
+
+    <view class="location-row compact-location top-location">
+      <view>
+        <view class="field-label">位置</view>
+        <view class="location-text">{{locationText}}</view>
+      </view>
+      <button class="ghost-button" bindtap="getLocation">重新定位</button>
+    </view>
+
     <view class="field-block">
       <view class="field-label">人数</view>
       <view class="option-row">
@@ -94,14 +103,6 @@
         bindinput="onEntryTextInput"
         placeholder="比如：今天下班有点累，想吃点热乎下饭的。"
       />
-    </view>
-
-    <view class="location-row compact-location">
-      <view>
-        <view class="field-label">位置</view>
-        <view class="location-text">{{locationText}}</view>
-      </view>
-      <button class="ghost-button" bindtap="getLocation">定位</button>
     </view>
 
     <view class="entry-actions">

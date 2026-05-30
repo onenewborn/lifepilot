@@ -86,6 +86,7 @@ Page({
     this.offerExplanationRequests = {};
     this.currentStartedAt = Date.now();
     this.prepareSessionRestore();
+    this.autoLocateOnce();
   },
 
   onUnload() {
@@ -99,6 +100,11 @@ Page({
     this.setData({
       resumableSessionId: sessionId
     });
+  },
+
+  autoLocateOnce() {
+    if (this.data.location) return;
+    this.getLocation({ silent: true });
   },
 
   async restoreSession() {
@@ -169,8 +175,8 @@ Page({
     };
   },
 
-  async getLocation() {
-    this.setData({ locationText: "正在获取位置..." });
+  async getLocation(options = {}) {
+    this.setData({ locationText: options.silent ? "正在自动定位..." : "正在获取位置..." });
     wx.getLocation({
       type: "gcj02",
       success: (res) => {
@@ -188,7 +194,7 @@ Page({
         });
       },
       fail: () => {
-        this.setData({ locationText: "定位失败，会用默认位置继续" });
+        this.setData({ locationText: "未获取到位置，会先用默认位置" });
       }
     });
   },

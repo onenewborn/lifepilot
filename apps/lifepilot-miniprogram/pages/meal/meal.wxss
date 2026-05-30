@@ -231,6 +231,10 @@ button::after {
   padding: 16rpx 18rpx;
 }
 
+.top-location {
+  margin-top: 18rpx;
+}
+
 .location-text {
   color: rgba(45, 33, 24, 0.84);
   font-size: 24rpx;
