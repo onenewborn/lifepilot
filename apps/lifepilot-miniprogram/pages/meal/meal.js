@@ -59,9 +59,9 @@ Page({
     videoDisabled: true,
     videoReady: false,
     videoMuted: true,
-    xiaowangMascotUrl: "https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com/mascot/xiaowang-idle-v1.png?v=20260521b",
-    xiaowangHeadUrl: "https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com/mascot/xiaowang-head-v1.png?v=20260521a",
-    xiaowangSummaryUrl: "https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com/mascot/xiaowang-summary-v1.png?v=20260521a",
+    xiaowangMascotUrl: "https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com/assets/mascot/xiaowang-idle-v1.png?v=20260521b",
+    xiaowangHeadUrl: "https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com/assets/mascot/xiaowang-head-v1.png?v=20260521a",
+    xiaowangSummaryUrl: "https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com/assets/mascot/xiaowang-summary-v1.png?v=20260521a",
     cardStyle: "",
     keepFeedbackStyle: "",
     dislikeFeedbackStyle: "",
@@ -125,6 +125,16 @@ Page({
     });
   },
 
+  onBudgetChange(event) {
+    const value = Number(event.detail.value || 0);
+    this.setData({
+      entryForm: {
+        ...this.data.entryForm,
+        budget: String(value)
+      }
+    });
+  },
+
   optionText(field, value) {
     const option = (this.data.entryOptions[field] || []).find((item) => item.value === value);
     return option ? option.text : "";
@@ -132,11 +142,11 @@ Page({
 
   buildEntryFormForApi() {
     const { entryForm } = this.data;
-    const budgetMap = { "60": 60, "100": 100, open: null };
     const radiusMap = { near_1km: 1, near_3km: 3, futian: 8 };
+    const budgetValue = Number(entryForm.budget);
     return {
       party_size: entryForm.partySize === "two" ? 2 : (entryForm.partySize === "group" ? 4 : 1),
-      budget_per_person_max: budgetMap[entryForm.budget],
+      budget_per_person_max: Number.isFinite(budgetValue) && budgetValue > 0 ? budgetValue : null,
       radius_km: radiusMap[entryForm.radius],
       flavor_preference: this.optionText("flavor", entryForm.flavor),
       raw_query: entryForm.text,

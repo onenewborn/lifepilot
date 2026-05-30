@@ -146,19 +146,21 @@ button::after {
 
 .option-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 14rpx;
 }
 
 .option-pill {
-  min-width: 154rpx;
+  flex: 1;
+  min-width: 0;
   height: 66rpx;
-  padding: 0 22rpx;
+  padding: 0 10rpx;
   border-radius: 999rpx;
   background: rgba(255, 255, 255, 0.82);
   color: rgba(45, 33, 24, 0.84);
   font-size: 25rpx;
   box-shadow: inset 0 0 0 2rpx rgba(125, 78, 44, 0.08);
+  white-space: nowrap;
 }
 
 .option-pill.active {
@@ -166,6 +168,33 @@ button::after {
   color: #ffffff;
   font-weight: 800;
   box-shadow: 0 10rpx 22rpx rgba(255, 99, 52, 0.24);
+}
+
+.budget-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.budget-value {
+  flex-shrink: 0;
+  color: #ff6334;
+  font-size: 25rpx;
+  font-weight: 900;
+}
+
+.budget-slider {
+  margin: 4rpx 0 0;
+}
+
+.budget-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -8rpx;
+  color: rgba(75, 50, 31, 0.48);
+  font-size: 20rpx;
+  font-weight: 800;
 }
 
 .entry-textarea,

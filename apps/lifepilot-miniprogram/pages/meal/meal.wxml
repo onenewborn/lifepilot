@@ -34,16 +34,27 @@
     </view>
 
     <view class="field-block">
-      <view class="field-label">预算</view>
-      <view class="option-row">
-        <button
-          wx:for="{{entryOptions.budget}}"
-          wx:key="value"
-          class="option-pill {{entryForm.budget === item.value ? 'active' : ''}}"
-          data-field="budget"
-          data-value="{{item.value}}"
-          bindtap="selectEntryOption"
-        >{{item.label}}</button>
+      <view class="budget-head">
+        <view class="field-label">预算</view>
+        <view class="budget-value">{{entryForm.budget === '0' ? '先不限制' : entryForm.budget + ' 元以内'}}</view>
+      </view>
+      <slider
+        class="budget-slider"
+        min="0"
+        max="500"
+        step="10"
+        value="{{entryForm.budget}}"
+        activeColor="#ff6334"
+        backgroundColor="rgba(125, 78, 44, 0.14)"
+        block-color="#ff6334"
+        block-size="24"
+        bindchanging="onBudgetChange"
+        bindchange="onBudgetChange"
+      />
+      <view class="budget-scale">
+        <text>不限</text>
+        <text>250</text>
+        <text>500</text>
       </view>
     </view>
 
