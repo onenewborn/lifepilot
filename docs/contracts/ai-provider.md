@@ -100,4 +100,5 @@ OpenClaw 必须通过产品后端 API 获取产品上下文。
 - 正常情况下不道歉；只有没有保留方向、信号太少或选择矛盾时，才可以轻微抱歉但不卑微。
 - 如果后续接入 confirmed memory，可以结合长期口味偏好解释本次选择。
 - P2 实现先预留 `memoryContext`，暂不接完整 memory 系统。
-- 本地 fallback 文案只用于后端兜底，不作为 AI prompt 输入；prompt 只传用户目标、keep/dislike 结构化事件和可选 memoryContext。
+- 入口阶段的预算、人数、距离、区域、口味选择和聊天框自定义输入必须作为强上下文传入 prompt；如果用户表达疲惫、下班、压力、想被犒劳、想省心等情绪或场景，小结开头要给出简短情绪确认。
+- 本地 fallback 文案只用于后端兜底，不作为 AI prompt 输入；prompt 只传用户目标、入口上下文、keep/dislike 结构化事件和可选 memoryContext。

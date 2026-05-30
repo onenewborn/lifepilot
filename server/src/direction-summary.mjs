@@ -41,7 +41,36 @@ function tasteSignals(kept = [], disliked = []) {
   return signals.slice(0, 2);
 }
 
-export function localDirectionSummary({goal, events = []} = {}) {
+function entryText(entryContext = {}) {
+  const entryForm = entryContext.entry_form || entryContext.entryForm || {};
+  return [
+    goalFromEntry(entryForm),
+    JSON.stringify(entryContext.understanding?.constraints || {}),
+    JSON.stringify(entryContext.understanding?.requirements || []),
+  ].filter(Boolean).join(" ");
+}
+
+function goalFromEntry(entryForm = {}) {
+  return String(
+    entryForm.raw_query
+    || entryForm.rawQuery
+    || entryForm.free_text
+    || entryForm.freeText
+    || entryForm.text
+    || entryForm.goal
+    || "",
+  );
+}
+
+function openingForEntry(goal, entryContext) {
+  const text = [goal, entryText(entryContext)].join(" ");
+  if (includesAny(text, ["累", "下班", "加班", "辛苦", "疲惫", "犒劳", "省心"])) {
+    return "我明白啦，主人今天需要一顿省心又有满足感的饭。";
+  }
+  return "我明白啦！";
+}
+
+export function localDirectionSummary({goal, events = [], entryContext = {}} = {}) {
   const kept = events.filter((event) => event.action === "keep");
   const disliked = events.filter((event) => event.action === "dislike");
   const keptNames = names(kept).slice(0, 4);
@@ -49,14 +78,15 @@ export function localDirectionSummary({goal, events = []} = {}) {
   const signals = tasteSignals(kept, disliked);
   const keptText = keptNames.length ? `保留了「${keptNames.join("、")}」` : "还没有明确保留方向";
   const dislikedText = dislikedNames.length ? `，排除了「${dislikedNames.join("、")}」` : "";
+  const opening = openingForEntry(goal, entryContext);
   if (!keptNames.length) {
     return {
-      summary_text: `小汪还没抓到特别明确的保留方向，但已经知道主人${dislikedText ? `先不想看「${dislikedNames.join("、")}」` : "还在试探口味边界"}，我会根据入口需求继续帮主人缩小下一轮商家。`,
+      summary_text: `${opening} 小汪还没抓到特别明确的保留方向，但已经知道主人${dislikedText ? `先不想看「${dislikedNames.join("、")}」` : "还在试探口味边界"}，我会根据入口需求继续帮主人缩小下一轮商家。`,
     };
   }
   const signalText = signals.length ? `，这说明主人今天${signals.join("，")}` : "";
   return {
-    summary_text: `主人刚刚${keptText}${dislikedText}${signalText}。小汪会基于这个口味边界，继续给主人推荐更合适的具体商家。`,
+    summary_text: `${opening} 主人刚刚${keptText}${dislikedText}${signalText}。小汪会基于入口需求和这个口味边界，继续给主人推荐更合适的具体商家。`,
   };
 }
 
@@ -66,9 +96,9 @@ function normalizeDirectionSummary(parsed, fallback) {
   return {summary_text: text.replace(/\s+/g, " ").slice(0, 220)};
 }
 
-export async function buildDirectionSummary({goal, events, timeoutMs, forceLocal = false, memoryContext = null} = {}) {
+export async function buildDirectionSummary({goal, events, entryContext = null, timeoutMs, forceLocal = false, memoryContext = null} = {}) {
   const startedAt = Date.now();
-  const fallback = localDirectionSummary({goal, events});
+  const fallback = localDirectionSummary({goal, events, entryContext});
   if (forceLocal || config.ai.provider === "local") {
     return {
       ok: true,
@@ -82,6 +112,7 @@ export async function buildDirectionSummary({goal, events, timeoutMs, forceLocal
   const prompt = buildDirectionSummaryPrompt({
     goal,
     events,
+    entryContext,
     memoryContext,
   });
   const ai = await callArkChat({

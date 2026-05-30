@@ -11,7 +11,29 @@ function compactEvent(event = {}) {
   };
 }
 
-export function buildDirectionSummaryPrompt({goal, events = [], memoryContext = null}) {
+function compactEntryContext(entryContext = {}) {
+  const entryForm = entryContext.entry_form || entryContext.entryForm || {};
+  const understanding = entryContext.understanding || {};
+  return {
+    entry_form: {
+      raw_query: entryForm.raw_query || entryForm.rawQuery || entryForm.free_text || entryForm.freeText || entryForm.text || entryForm.goal || "",
+      party_size: entryForm.party_size || entryForm.partySize || null,
+      budget_per_person_max: entryForm.budget_per_person_max || entryForm.budget || null,
+      area: entryForm.area || "",
+      radius_km: entryForm.radius_km || entryForm.radiusKm || null,
+      meal_time: entryForm.meal_time || entryForm.mealTime || "",
+      flavor: entryForm.flavor || entryForm.flavor_preference || entryForm.flavorPreference || "",
+    },
+    parsed: {
+      constraints: understanding.constraints || {},
+      requirements: understanding.requirements || [],
+      assistant_text: understanding.assistant_text || "",
+      confidence: understanding.confidence || null,
+    },
+  };
+}
+
+export function buildDirectionSummaryPrompt({goal, events = [], entryContext = null, memoryContext = null}) {
   const kept = events.filter((event) => event.action === "keep");
   const disliked = events.filter((event) => event.action === "dislike");
   return [
@@ -27,6 +49,8 @@ export function buildDirectionSummaryPrompt({goal, events = [], memoryContext = 
     "要求：",
     "- 保留方向就是主人愿意继续看的方向，不能写成应该避开。",
     "- 放弃方向就是主人暂时不想看的方向，不能写成主人偏好。",
+    "- 入口阶段的预算、人数、距离、区域、口味选择和聊天框自定义输入都是强上下文，要和滑卡结果一起理解。",
+    "- 如果聊天框自定义输入表达了疲惫、下班、压力、想被犒劳、想省心等情绪或场景，开头的情绪确认要顺势回应，但不要把小结写成心理安慰长文。",
     "- 要比较 keep 和 dislike 的差异，重点观察重口/清淡、辣味/鲜甜、低油/厚重、粉面/米饭、快吃/久坐、独食/聚餐、预算压力、锅物/炒菜等维度。",
     "- 不要把今天的选择写成长期偏好。",
     "- 不要声称查询了真实美团、大众点评、订单、支付、营业状态或真实排队。",
@@ -41,6 +65,7 @@ export function buildDirectionSummaryPrompt({goal, events = [], memoryContext = 
     "- 如果存在 confirmed memory，可结合长期口味偏好解释本次选择；pending memory 不能当作已确认偏好。",
     "",
     `用户今日目标：${goal || "今天想找一顿合适的饭"}`,
+    `入口上下文：${JSON.stringify(compactEntryContext(entryContext || {}), null, 2)}`,
     `保留方向数量：${kept.length}`,
     `放弃方向数量：${disliked.length}`,
     `保留方向：${JSON.stringify(kept.map(compactEvent), null, 2)}`,

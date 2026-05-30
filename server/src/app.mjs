@@ -93,6 +93,10 @@ async function handleSessionAdvance(req, res) {
   const summaryPayload = await buildDirectionSummary({
     goal: session.goal,
     events: session.direction_events,
+    entryContext: {
+      entry_form: session.entry_form,
+      understanding: session.understanding,
+    },
     timeoutMs: body.timeout_ms || body.timeoutMs,
     forceLocal: body.local_only === true || body.localOnly === true,
     memoryContext: null,
