@@ -88,6 +88,7 @@ try {
   assert.equal(started.payload.session.session_id, "smoke_p1_session");
   assert.equal(started.payload.session.stage, "direction");
   assert.ok(started.payload.session.current_cards.length > 0);
+  assert.ok(started.payload.session.current_cards.length <= 10);
 
   const swipeCard = started.payload.session.current_cards[0];
   const dislikeCard = started.payload.session.current_cards[1];
