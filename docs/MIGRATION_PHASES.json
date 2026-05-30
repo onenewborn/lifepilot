@@ -58,6 +58,7 @@
         "POST /api/session/start 返回 stage=direction 且包含 current_cards 的 session",
         "POST /api/session/swipe 能写入 direction event",
         "POST /api/session/swipe 拒绝 skip/super_like 等非 canonical action",
+        "POST /api/session/swipe 找不到 card 时返回 card_not_found 且不写入事件",
         "GET /api/session/:id 返回更新后的 session",
         "无效 session id 返回 ok=false error.code=session_not_found"
       ],
@@ -71,6 +72,7 @@
         "从旧 workspace 复制 data/synthetic_food_futian/food_directions.json。",
         "新增 tests/smoke-session.mjs，包含具体 P1 断言。",
         "校正 swipe action 模型：只接受 keep/dislike，拒绝 skip/super_like/like。",
+        "校正 swipe card lookup：找不到当前卡片时返回 card_not_found，不写入事件。",
         "smoke 使用随机空闲端口，避免误测到残留服务。"
       ]
     },

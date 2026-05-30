@@ -167,3 +167,4 @@ explanation
 - 小程序可能传入 `timeout_ms`，后端应在合理范围内尊重。
 - Session 的 `current_cards` 驱动滑卡事件里的卡片查找，所以 session 响应里必须保留 cards。
 - canonical swipe action 只有 `keep` 和 `dislike`；新产品后端不应把旧的 `skip`、`like`、`super_like` 写入用户滑卡事件。
+- 找不到当前卡片时返回 `card_not_found`，不能写入空 card swipe event；前端应刷新 session/card stack。

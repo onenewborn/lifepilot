@@ -45,7 +45,16 @@ async function handleSessionSwipe(req, res) {
     fail(res, 404, "session_not_found", "Session not found.");
     return;
   }
-  const event = normalizeSwipeEvent(session, body);
+  let event;
+  try {
+    event = normalizeSwipeEvent(session, body);
+  } catch (error) {
+    if (error?.code === "card_not_found") {
+      fail(res, 404, "card_not_found", "Card not found in current session stack.");
+      return;
+    }
+    throw error;
+  }
   if (!event) {
     fail(res, 422, "invalid_payload", "action must be keep or dislike.");
     return;

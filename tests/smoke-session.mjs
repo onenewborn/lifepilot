@@ -123,6 +123,22 @@ try {
   assert.equal(invalidAction.payload.error.code, "invalid_payload");
   assert.equal(viewed.payload.session.direction_events.length, 1);
 
+  const missingCard = await request("/api/session/swipe", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+      action: "keep",
+      card_id: "dir_missing_card",
+    },
+  });
+  assert.equal(missingCard.status, 404);
+  assert.equal(missingCard.payload.ok, false);
+  assert.equal(missingCard.payload.error.code, "card_not_found");
+
+  const afterMissingCard = await request("/api/session/smoke_p1_session");
+  assert.equal(afterMissingCard.status, 200);
+  assert.equal(afterMissingCard.payload.session.direction_events.length, 1);
+
   const missing = await request("/api/session/missing_session");
   assert.equal(missing.status, 404);
   assert.equal(missing.payload.ok, false);
@@ -130,7 +146,7 @@ try {
 
   console.log(JSON.stringify({
     ok: true,
-    assertions: 22,
+    assertions: 28,
     cards: directions.payload.cards.length,
     marker: health.marker,
   }, null, 2));

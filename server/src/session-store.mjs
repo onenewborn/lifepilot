@@ -62,7 +62,7 @@ function findCardForEvent(session, body) {
     || (directionId && card.direction_id === directionId)
     || (offerId && card.offer_id === offerId)
     || (merchantId && card.merchant_id === merchantId)
-  )) || {};
+  )) || null;
 }
 
 function normalizeSwipeAction(action) {
@@ -76,6 +76,11 @@ export function normalizeSwipeEvent(session, body) {
   const card = findCardForEvent(session, body);
   const action = normalizeSwipeAction(raw.action);
   if (!action) return null;
+  if (!card) {
+    const error = new Error("Card not found in current session stack.");
+    error.code = "card_not_found";
+    throw error;
+  }
   const round = raw.round || body.round || (session.stage === "offer" ? "offer" : "direction");
   return {
     event_id: raw.event_id || raw.eventId || `evt_${Date.now()}_${randomUUID().slice(0, 6)}`,

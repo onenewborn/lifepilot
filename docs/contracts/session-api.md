@@ -89,3 +89,24 @@ dislike  左滑放弃
 OpenClaw 可以通过 OpenClaw bridge API 读取 session 摘要。
 
 OpenClaw 不能直接修改 meal session 状态。
+
+## 卡片不存在
+
+如果 `/api/session/swipe` 找不到请求里的 `card_id` / `direction_id` / `offer_id` / `merchant_id` 对应的当前卡片，后端必须返回：
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "card_not_found"
+  }
+}
+```
+
+后端不能写入 swipe event。
+
+前端收到 `card_not_found` 时不应中断饭点流程；应静默刷新当前 session/card stack，必要时给轻提示，例如：
+
+```text
+这张卡已更新，已为你刷新
+```
