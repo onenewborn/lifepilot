@@ -246,6 +246,19 @@ button::after {
   box-shadow: 0 14rpx 28rpx rgba(255, 99, 52, 0.24);
 }
 
+.entry-actions {
+  display: flex;
+  gap: 14rpx;
+}
+
+.entry-secondary {
+  flex: 0 0 220rpx;
+}
+
+.entry-primary {
+  flex: 1;
+}
+
 .secondary-button {
   width: 220rpx;
   background: rgba(255, 255, 255, 0.8);

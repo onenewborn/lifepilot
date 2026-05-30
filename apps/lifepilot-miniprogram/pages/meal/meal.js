@@ -74,6 +74,7 @@ Page({
     isLoading: false,
     loadingText: "",
     bootNotice: "",
+    resumableSessionId: "",
     errorText: ""
   },
 
@@ -84,7 +85,7 @@ Page({
     this.isCommittingSwipe = false;
     this.offerExplanationRequests = {};
     this.currentStartedAt = Date.now();
-    this.restoreSession();
+    this.prepareSessionRestore();
   },
 
   onUnload() {
@@ -92,16 +93,29 @@ Page({
     if (this.videoTimer) clearTimeout(this.videoTimer);
   },
 
+  prepareSessionRestore() {
+    const sessionId = wx.getStorageSync(STORAGE_SESSION_ID);
+    if (!sessionId) return;
+    this.setData({
+      resumableSessionId: sessionId,
+      bootNotice: "有一轮未完成的饭点 session，可以继续，也可以直接开始新一轮。"
+    });
+  },
+
   async restoreSession() {
     const sessionId = wx.getStorageSync(STORAGE_SESSION_ID);
     if (!sessionId) return;
+    this.setData({ isLoading: true, loadingText: "正在恢复上次饭点..." });
     try {
       const payload = await sessionApi.getSession(sessionId);
       if (payload.session && payload.session.status !== "finalized") {
-        this.applySession(payload.session, { notice: "已恢复上次未完成的饭点 session" });
+        this.applySession(payload.session, { notice: "已继续上次未完成的饭点 session" });
       }
     } catch (error) {
       wx.removeStorageSync(STORAGE_SESSION_ID);
+      this.setData({ resumableSessionId: "", bootNotice: "" });
+    } finally {
+      this.setData({ isLoading: false, loadingText: "" });
     }
   },
 
@@ -561,7 +575,8 @@ Page({
       directionSummary: null,
       result: null,
       errorText: "",
-      bootNotice: ""
+      bootNotice: "",
+      resumableSessionId: ""
     });
   }
 });

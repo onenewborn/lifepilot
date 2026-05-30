@@ -105,7 +105,15 @@
       <button class="ghost-button" bindtap="getLocation">定位</button>
     </view>
 
-    <button class="primary-button" loading="{{isLoading}}" bindtap="startMealFlow">开始滑卡</button>
+    <view class="entry-actions">
+      <button
+        wx:if="{{resumableSessionId}}"
+        class="secondary-button entry-secondary"
+        loading="{{isLoading}}"
+        bindtap="restoreSession"
+      >继续上次</button>
+      <button class="primary-button entry-primary" loading="{{isLoading}}" bindtap="startMealFlow">开始新一轮</button>
+    </view>
   </view>
 
   <view wx:elif="{{stage === 'direction' || stage === 'offer'}}" class="flow">
