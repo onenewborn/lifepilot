@@ -159,6 +159,8 @@ special_signals confidence >= 0.8 且有 evidence 才保留。
 
 后端会从高置信度维度派生 `soft_preferences`，例如 `energy` 里的“下班累”会转成 `convenience=省心、低决策成本`、`distance=附近、省心、少走路`、`queue=少排队`、`temperature=热乎舒服`，再进入方向卡和商家卡排序。
 
+`certainty` 只表示风险偏好，例如想稳、不踩雷、熟悉、愿意尝鲜、想试新店。预算紧、月底省钱不属于 `certainty`，应进入 `budget` 或 `special_signals`。
+
 ## P2 方向总结输出
 
 方向总结 AI 只需要返回：

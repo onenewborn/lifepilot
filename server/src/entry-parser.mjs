@@ -38,6 +38,14 @@ function normalizeStrength(value) {
   return ["low", "medium", "high"].includes(raw) ? raw : "medium";
 }
 
+function dimensionIntentAllowed(key, intent, evidence) {
+  const text = [intent, ...evidence].join(" ");
+  if (key === "certainty") {
+    return /稳|不踩雷|熟悉|固定|靠谱|保险|尝鲜|新店|惊喜|冒险|风险/.test(text);
+  }
+  return true;
+}
+
 function normalizeDimensions(dimensions = {}) {
   const result = {};
   for (const key of ENTRY_DIMENSIONS) {
@@ -45,7 +53,7 @@ function normalizeDimensions(dimensions = {}) {
     const confidence = confidenceOf(item?.confidence);
     const evidence = evidenceList(item?.evidence);
     const intent = String(item?.intent || "").trim();
-    if (!item || confidence < DIMENSION_THRESHOLD || !evidence.length || !intent) {
+    if (!item || confidence < DIMENSION_THRESHOLD || !evidence.length || !intent || !dimensionIntentAllowed(key, intent, evidence)) {
       result[key] = null;
       continue;
     }
