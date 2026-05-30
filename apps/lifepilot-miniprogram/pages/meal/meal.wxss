@@ -751,37 +751,6 @@ button::after {
   line-height: 1.42;
 }
 
-.store-facts {
-  margin-top: 12rpx;
-}
-
-.store-fact {
-  margin-top: 6rpx;
-  color: rgba(45, 33, 24, 0.68);
-  font-size: 23rpx;
-  font-weight: 700;
-  line-height: 1.36;
-}
-
-.offer-reason-block {
-  margin-top: 16rpx;
-}
-
-.offer-mini-title {
-  color: #8a4a28;
-  font-size: 23rpx;
-  font-weight: 900;
-  line-height: 1.25;
-}
-
-.offer-reason-line {
-  margin-top: 7rpx;
-  color: rgba(45, 33, 24, 0.78);
-  font-size: 23rpx;
-  font-weight: 700;
-  line-height: 1.38;
-}
-
 .offer-decision-block {
   display: flex;
   gap: 14rpx;

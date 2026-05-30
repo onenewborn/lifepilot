@@ -214,13 +214,6 @@
               <text wx:for="{{currentCard.displayTags}}" wx:key="*this" class="offer-tag">{{item}}</text>
             </view>
             <view class="offer-hook">{{currentCard.subtitle}}</view>
-            <view wx:if="{{currentCard.storeFacts.length}}" class="store-facts">
-              <view wx:for="{{currentCard.storeFacts}}" wx:key="*this" class="store-fact">{{item}}</view>
-            </view>
-            <view wx:if="{{currentCard.recommendedItems.length}}" class="offer-reason-block">
-              <view class="offer-mini-title">这家可以这样吃</view>
-              <view wx:for="{{currentCard.recommendedItems}}" wx:key="*this" class="offer-reason-line">{{item}}</view>
-            </view>
             <view wx:if="{{currentCard.matched.length || currentCard.issueLines.length}}" class="offer-decision-block">
               <image class="offer-decision-mascot" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
               <view class="offer-decision-copy">
