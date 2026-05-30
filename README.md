@@ -17,8 +17,11 @@ Start every work session by reading:
 - [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md)
 - [docs/MIGRATION_PHASES.json](docs/MIGRATION_PHASES.json)
 - [docs/contracts/session-api.md](docs/contracts/session-api.md)
+- [docs/contracts/api-errors.md](docs/contracts/api-errors.md)
+- [docs/contracts/food-cards.md](docs/contracts/food-cards.md)
 - [docs/contracts/memory.md](docs/contracts/memory.md)
 - [docs/contracts/ai-provider.md](docs/contracts/ai-provider.md)
+- [docs/contracts/config.md](docs/contracts/config.md)
 - [docs/contracts/assets.md](docs/contracts/assets.md)
+- [docs/contracts/legacy-api-map.md](docs/contracts/legacy-api-map.md)
 - [docs/contracts/openclaw-jobs.md](docs/contracts/openclaw-jobs.md)
-

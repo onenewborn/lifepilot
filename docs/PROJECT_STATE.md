@@ -97,6 +97,15 @@ LLMs and OpenClaw can propose memory candidates. Only backend memory service can
 
 ## Immediate Next Step
 
+Phase 0.5 implementation contracts are complete:
+
+```text
+docs/contracts/api-errors.md
+docs/contracts/food-cards.md
+docs/contracts/config.md
+docs/contracts/legacy-api-map.md
+```
+
 Phase 1 should create the smallest runnable new backend without touching the old workspace:
 
 ```text
@@ -128,4 +137,3 @@ Every implementation phase must answer:
 2. Which new route/module now carries real behavior?
 3. Which smoke test proves the old user experience was not broken?
 ```
-

@@ -31,6 +31,10 @@
       "name": "minimal_backend_session_shell",
       "status": "pending",
       "goal": "Create a runnable backend that supports health, food directions, session start/swipe/view.",
+      "storage": {
+        "session_store": "in_memory_for_P1",
+        "reason": "P1 validates API compatibility and card flow without taking on persistence risk. Store abstraction should allow JSON or SQLite later."
+      },
       "routes": [
         "GET /api/health",
         "GET /api/food-directions",
@@ -38,9 +42,22 @@
         "POST /api/session/swipe",
         "GET /api/session/:id"
       ],
+      "contracts": [
+        "docs/contracts/api-errors.md",
+        "docs/contracts/session-api.md",
+        "docs/contracts/food-cards.md",
+        "docs/contracts/config.md",
+        "docs/contracts/legacy-api-map.md"
+      ],
       "validation": [
         "node --check server/src/index.mjs",
-        "node tests/smoke-session.mjs"
+        "node tests/smoke-session.mjs",
+        "GET /api/health returns ok=true",
+        "GET /api/food-directions returns at least one card with image_url and direction_id",
+        "POST /api/session/start returns a session with stage=direction and current_cards",
+        "POST /api/session/swipe appends a direction event",
+        "GET /api/session/:id returns the updated session",
+        "invalid session id returns ok=false error.code=session_not_found"
       ]
     },
     {
