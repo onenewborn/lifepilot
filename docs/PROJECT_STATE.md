@@ -1,24 +1,28 @@
 # 项目驾驶舱
 
-更新时间：2026-05-30
+更新时间：2026-05-30 23:35
 
 ## 一句话
 
-LifePilot 正在从 `~/.openclaw/workspace` 中拆出，重建为一个干净的产品 runtime；OpenClaw 继续作为小汪的 agent runtime，负责 skills、后台智能、记忆复盘和互动生成。
+LifePilot 已经从 `~/.openclaw/workspace` 中拆出，形成独立产品仓库 `/Users/mona/Documents/lifepilot`。当前主线是：用低延迟 API 承接饭点滑卡实时链路，用 OpenClaw 承接后台 dreaming、skills、小汪互动和更重的 agent 工作。
 
-## 当前核心决策
-
-采用双 runtime 架构：
+## 当前架构边界
 
 ```text
 小程序 / 产品后端
-  负责 meal session、chat thread、memory CRUD、推荐规则、数据合同、COS 资产解析、低延迟 Ark/Doubao AI 调用
+  负责 meal session、推荐卡流、入口解析、商户排序、天气/路线/排队上下文、
+  权威 memory CRUD、饭后反馈、低延迟 Ark/Doubao 调用、COS 资产解析。
 
 OpenClaw Runtime
-  负责 AGENTS/SOUL/skills、后台任务、小汪互动内容、视频/内容生成、候选记忆复盘
+  负责 AGENTS/SOUL/skills、dreaming、后台任务、小汪互动内容、
+  候选记忆复盘、需要工具调用和更长思考的 agent 能力。
+
+Evermind
+  作为长期记忆增强服务接入。当前用于写入/读取部分长期记忆，
+  但产品后端仍是推荐链路读取记忆的权威入口。
 ```
 
-OpenClaw 必须通过产品后端 API 访问产品状态，不能直接读取或修改产品 runtime 文件。
+硬边界：OpenClaw 不直接读写产品 runtime 文件；它通过产品后端 API 读 session、day context、memory，并提交候选结果。
 
 ## 旧 Workspace 安全状态
 
@@ -41,148 +45,243 @@ commit: d741a9e chore: checkpoint before lifepilot rebuild
 tag: lifepilot-rebuild-base-20260530
 ```
 
-checkpoint 后旧 workspace 仍有两个未跟踪目录：
+## 当前产品状态
+
+新小程序目录：
 
 ```text
-?? memory/users/smoke_test_evermind_1780043397065/
-?? memory/users/smoke_test_evermind_ipv4_1780044939954/
+/Users/mona/Documents/lifepilot/apps/lifepilot-miniprogram
 ```
 
-它们看起来是 smoke test 残留，没有进入 checkpoint commit。
-
-## 产品范围
-
-当前主产品：
-
-```text
-饭点定了小程序
-```
-
-主流程：
+当前只开放饭点主链路：
 
 ```text
 入口表单
-→ 餐饮方向卡
 → 方向卡左右滑
-→ 低延迟 AI 方向总结
-→ Offer 卡
-→ Offer 卡左右滑
+→ 方向小结
+→ 商家卡左右滑
 → 最终推荐
-→ 天气 / 排队 / 路线上下文
-→ 反馈 / 候选记忆
-→ 小汪互动
+→ 饭后反馈 / 候选记忆
 ```
 
-## AI 边界
-
-实时卡流：
+暂时隐藏：
 
 ```text
-Ark Doubao Seed 1.6 Flash API
+问小汪
+汪记本
+OpenClaw 过程展示
+完整 IM / tool trace 展示
 ```
 
-后台 / agentic intelligence：
+## 已完成进展
+
+### 后端
+
+已完成的核心能力：
 
 ```text
-OpenClaw skills
-```
-
-权威记忆：
-
-```text
-产品后端 memory service
-```
-
-LLM 和 OpenClaw 可以提出候选记忆。只有产品后端 memory service 可以创建、更新、暂停、删除、确认或拒绝权威 memory 记录。
-
-## 当前进展
-
-P0.5 实施合同已完成：
-
-```text
-docs/contracts/api-errors.md
-docs/contracts/food-cards.md
-docs/contracts/config.md
-docs/contracts/legacy-api-map.md
-```
-
-P1 最小后端已完成：
-
-```text
-GET /api/health
-GET /api/food-directions
+GET  /api/health
+GET  /api/food-directions
 POST /api/session/start
 POST /api/session/swipe
-GET /api/session/:id
+POST /api/session/entry
+POST /api/session/advance
+POST /api/session/finalize
+POST /api/session/offer-explanation
+GET  /api/session/:id
+GET  /api/day-context/:id
+GET/POST /api/weather/forecast
+GET/POST /api/queue/status
+POST /api/map/route
+POST /api/memory/post-meal-feedback
+memory candidates / confirmed preferences CRUD
+OpenClaw memory bridge / dreaming skill 测试链路
+Evermind 读写接入
 ```
 
-已完成验证：
+后端饭点主链路已经不是纯内存：meal session 会写入 `data/runtime/meal_sessions`，day context 会写入 `data/runtime/day_contexts`。
+
+### AI 链路
+
+实时链路使用 Ark/Doubao API：
 
 ```text
-npm run check
-npm run smoke:session
+入口需求解析
+方向小结
+商户卡解释
+最终确认解释
 ```
 
-Smoke 结果：
+OpenClaw 用在后台 agent 能力：
 
 ```text
-18 张方向卡
-marker: lifepilot-next-p1
-session start/swipe/view 通过
-缺失 session 返回 error.code=session_not_found
-skip 等非 canonical action 被拒绝
+memory dreaming
+候选记忆整理
+未来小汪互动 skills
 ```
 
-## 产品语义校正
+Evermind 当前已经接入测试过：
 
-饭点卡流只有两个 canonical swipe action：
+```text
+可以写入长期记忆
+可以读取长期记忆
+通用长期记忆更适合在 session 启动时读取一次并缓存
+```
+
+### 前端
+
+新小程序已经从旧 `pages/index` 巨型页面拆出，当前主要文件：
+
+```text
+apps/lifepilot-miniprogram/pages/meal/
+apps/lifepilot-miniprogram/services/
+apps/lifepilot-miniprogram/utils/
+apps/lifepilot-miniprogram/config/
+apps/lifepilot-miniprogram/data/video-manifest.js
+```
+
+近期前端已完成：
+
+```text
+入口页改成接近旧版视觉
+小汪狗头/形象接入
+预算改为 0 到不限的 slider
+自动获取定位，并显示大概区域，例如“福田区 · 景田地铁站附近”
+方向卡接入 COS 视频 manifest
+视频有声音
+点击视频可暂停/继续
+静音按钮移到视频外，避免微信 video 原生层吃点击
+方向卡顶部可以修改需求，确认后重新解析并更新卡流
+方向小结展示用户保留/排除的方向、AI 总结、用户反馈入口
+用户在方向小结补充的一句话会带到下一阶段商户解释
+第二阶段明确为“商家卡”，不是 offer 卡
+商户解释改为一张一张预取，避免一次批量请求慢和 429
+```
+
+最近提交：
+
+```text
+b3c2adb feat: enrich direction summary feedback
+23a24eb fix: move mute control outside video
+62933a6 fix: make video overlay controls tappable
+01567f0 fix: restore direction video sound controls
+ccd8b90 fix: lighten video overlay and controls
+ccace26 fix: summarize full entry demand
+40dadc7 fix: show approximate entry location
+3e81fd3 fix: declare miniprogram location permission
+91baa0f feat: allow editing direction demand
+```
+
+## 重要产品决策
+
+### Swipe action
+
+饭点滑卡只有两个 canonical action：
 
 ```text
 keep     右滑保留
 dislike  左滑放弃
 ```
 
-`skip` 和 `super_like` 不再作为用户滑卡事件进入 `direction_events`。用户非常喜欢某个方向时，应走“看这个方向的店”这类推进意图，而不是写成特殊 swipe action。
+不要再引入 `skip`、`like`、`super_like` 作为滑卡事件。
 
-P2 方向总结已完成：
+### Session 定义
+
+产品后端的核心 session 是 meal session：
 
 ```text
-POST /api/session/advance
+一次饭点决策 = 一个 meal session
 ```
 
-当前只支持：
+OpenClaw dreaming 更适合以 day context 为输入：
 
 ```text
-direction -> direction_summary
+一天内的 meal session / 小汪聊天 / 推送互动 / 反馈
+→ 日级复盘
+→ 候选长期记忆
 ```
 
-P2 行为：
+### Memory 边界
+
+权威记忆由产品后端管理：
 
 ```text
-用 keep / dislike 的差异生成方向总结
-AI 输出只要求 summary_text
-Ark/Doubao 不可用或 local_only=true 时走本地 fallback
-不接完整 memory，只预留 memoryContext
-重复 advance 返回 invalid_session_transition
+confirmed preferences
+pending candidates
+paused / rejected memory
+merchant feedback weight
 ```
 
-## 下一步
+Doubao/Ark 不直接做工具型 memory CRUD。OpenClaw/Evermind 可以生成候选或增强理解，但最终推荐链路应通过后端统一读取。
 
-P3 迁移 Offer 卡和最终推荐：
+### 前端选择
+
+当前继续优先做微信小程序，而不是独立 app：
 
 ```text
-POST /api/food-offers
-POST /api/session/finalize
+比赛/demo 环境更容易展示
+滑卡、视频流、定位、后端接口都已经跑通
+OpenClaw trace / 长连接 / 流式过程展示后续可以用 web 控制台或独立调试页补
 ```
 
-`direction_summary -> offer` 的第二段 `advance` 也放到 P3。
-
-## 硬规则
-
-每个实施阶段结束时必须回答：
+## 当前已知问题
 
 ```text
-1. 哪个旧职责已经迁入新产品仓库？
-2. 哪个新路由/模块开始承接真实行为？
-3. 哪个 smoke test 证明旧用户体验没有被悄悄打断？
+1. 视觉还没有完全恢复旧版质感，需要继续对齐旧小程序。
+2. 方向小结页刚补完，需要在开发者工具里人工测一轮。
+3. 商户卡解释仍依赖 Ark/Doubao 单卡预取，首张卡可能有等待。
+4. Evermind 通用长期记忆不应该每张卡都请求，后续要在 session 启动时读一次并缓存。
+5. 问小汪、汪记本、OpenClaw tool trace 展示尚未迁入新小程序。
+6. 根目录有一个未跟踪的临时 project.config.json，暂时不要提交。
+```
+
+## 下一步建议
+
+优先级从高到低：
+
+```text
+1. 在微信开发者工具里完整跑一轮饭点流程，重点检查方向小结反馈、新静音按钮、商家卡预取。
+2. 继续对齐旧版方向卡/商家卡视觉，减少新前端“工程味”。
+3. 把 session 启动时的长期记忆读取做成一次性缓存，避免 Evermind 每轮请求拖慢。
+4. 给商户饭后反馈接入 merchant weight：好吃加权，难吃降权，环境差等字段进入商户历史标签。
+5. 继续迁移/设计“问小汪”入口，但第一版仍可隐藏。
+6. 设计 OpenClaw trace 展示方案：小程序内简化展示，web 控制台展示完整工具调用过程。
+```
+
+## 新会话启动提示
+
+新会话建议先读：
+
+```text
+docs/PROJECT_STATE.md
+docs/NEXT_SESSION_HANDOFF.md
+apps/lifepilot-miniprogram/README.md
+docs/MIGRATION_PHASES.json
+```
+
+然后执行：
+
+```bash
+cd /Users/mona/Documents/lifepilot
+git status --short
+npm run check
+```
+
+如果要继续前端，重点打开：
+
+```text
+apps/lifepilot-miniprogram/pages/meal/meal.wxml
+apps/lifepilot-miniprogram/pages/meal/meal.wxss
+apps/lifepilot-miniprogram/pages/meal/meal.js
+```
+
+如果要继续后端/记忆，重点打开：
+
+```text
+server/src/app.mjs
+server/src/session-store.mjs
+server/src/offer-cards.mjs
+server/src/memory-store.mjs
+server/src/evermind-memory.mjs
+server/src/openclaw-store.mjs
 ```
