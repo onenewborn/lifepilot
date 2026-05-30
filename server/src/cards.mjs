@@ -96,7 +96,19 @@ export function localParseEntry(entryForm = {}) {
 
 function rulesFromParsed(parsed = {}) {
   const constraints = parsed.constraints || {};
-  const goal = String(parsed.normalized_goal || "");
+  const dimensionText = Object.values(parsed.dimensions || {})
+    .filter(Boolean)
+    .map((item) => [item.intent, ...(item.evidence || [])].join(" "))
+    .join(" ");
+  const constraintText = (parsed.hard_constraints || [])
+    .map((item) => [item.facet, item.operator, item.value, ...(item.evidence || [])].join(" "))
+    .join(" ");
+  const preferenceText = (parsed.soft_preferences || [])
+    .map((item) => [item.facet, item.value, ...(item.evidence || [])].join(" "))
+    .join(" ");
+  const goal = parsed.parse_mode === "ark"
+    ? [dimensionText, constraintText, preferenceText].filter(Boolean).join(" ")
+    : [parsed.normalized_goal, parsed.raw_entry_text, dimensionText, constraintText, preferenceText].filter(Boolean).join(" ");
   const budgetMatch = goal.match(/(?:人均|预算|不超过|以内|以下)?\s*(\d{2,4})/);
   return {
     budgetMax: Number(constraints.budget_per_person_max || budgetMatch?.[1] || 0),

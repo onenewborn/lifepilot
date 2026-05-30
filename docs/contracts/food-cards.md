@@ -89,6 +89,8 @@ P1 规则：
 预算匹配程度
 ```
 
+P2.5 入口解析接入后，软排序优先读取 `session.understanding.dimensions` 和 `soft_preferences`；低置信度字段会被后端置空，不能进入排序规则。
+
 软排序不能直接删除方向，只能影响 `match_score` 和展示顺序。
 
 ## Offer 卡

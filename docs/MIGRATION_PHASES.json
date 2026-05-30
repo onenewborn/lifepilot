@@ -103,6 +103,22 @@
       ]
     },
     {
+      "id": "P2.5",
+      "name": "entry_understanding",
+      "status": "completed",
+      "goal": "把入口按钮和聊天框原文解析成固定维度，供方向卡软排序和后续 AI 文案使用。",
+      "routes": [
+        "POST /api/agent/parse-entry"
+      ],
+      "implementation_notes": [
+        "AI 只做固定维度解释，不直接决定卡片或最终推荐。",
+        "dimension 和 soft_preferences 置信度至少 0.8 且有 evidence 才保留。",
+        "hard_constraints 置信度至少 0.9 且有 evidence 才能进入硬筛选。",
+        "低置信度字段置空，不交给 AI 或规则继续猜；raw_entry_text 只作为用户原文保留，选择权通过后续滑卡或显式选择交还给用户。",
+        "session/start 默认调用入口解析；AI 不可用时回退 localParseEntry。"
+      ]
+    },
+    {
       "id": "P3",
       "name": "offer_cards_and_finalize",
       "status": "pending",

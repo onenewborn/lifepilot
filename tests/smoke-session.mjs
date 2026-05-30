@@ -71,6 +71,24 @@ try {
   assert.equal(firstCard.service_id, firstCard.direction_id);
   assert.equal(firstCard.card_id, firstCard.direction_id);
 
+  const parsedEntry = await request("/api/agent/parse-entry", {
+    method: "POST",
+    body: {
+      local_only: true,
+      entry_form: {
+        raw_query: "今天下班有点累，想吃点下饭的。",
+        party_size: 1,
+        budget_per_person_max: 90,
+      },
+    },
+  });
+  assert.equal(parsedEntry.status, 200);
+  assert.equal(parsedEntry.payload.ok, true);
+  assert.equal(parsedEntry.payload.understanding.parse_mode, "local_fallback");
+  assert.equal(parsedEntry.payload.meta.fallback_used, true);
+  assert.equal(parsedEntry.payload.understanding.raw_entry_text, "今天下班有点累，想吃点下饭的。");
+  assert.ok(parsedEntry.payload.understanding.dimensions);
+
   const started = await request("/api/session/start", {
     method: "POST",
     body: {
@@ -89,6 +107,8 @@ try {
   assert.equal(started.payload.session.stage, "direction");
   assert.ok(started.payload.session.current_cards.length > 0);
   assert.ok(started.payload.session.current_cards.length <= 10);
+  assert.equal(started.payload.session.understanding.parse_mode, "local_fallback");
+  assert.ok(started.payload.session.understanding.raw_entry_text);
 
   const swipeCard = started.payload.session.current_cards[0];
   const dislikeCard = started.payload.session.current_cards[1];

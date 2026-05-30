@@ -82,6 +82,68 @@ OpenClaw 必须通过产品后端 API 获取产品上下文。
 
 如果 AI 失败、超时或返回无效 JSON，产品流程必须继续使用本地确定性 fallback。
 
+## P2.5 入口需求解析
+
+入口解析用于把按钮选择和聊天框原文解释成固定维度，但不能直接控制主链路。
+
+请求：
+
+```text
+POST /api/agent/parse-entry
+```
+
+输出会进入 `session.understanding`：
+
+```json
+{
+  "normalized_goal": "今天下班有点累，想吃一顿下饭、省心、距离不要太远的饭。",
+  "raw_entry_text": "今天下班有点累，想吃点下饭的",
+  "dimensions": {
+    "flavor": {
+      "intent": "想吃下饭、有满足感",
+      "strength": "medium",
+      "confidence": 0.86,
+      "evidence": ["想吃点下饭的"]
+    },
+    "energy": null
+  },
+  "hard_constraints": [],
+  "soft_preferences": [],
+  "special_signals": [],
+  "missing_info": [],
+  "confidence": 0.82,
+  "parse_mode": "ark"
+}
+```
+
+固定维度：
+
+```text
+flavor
+budget
+distance
+environment
+energy
+party
+time_pressure
+health_load
+novelty
+certainty
+emotional_reward
+social_friction
+```
+
+置信度规则：
+
+```text
+dimension confidence >= 0.8 且有 evidence 才保留，否则置为 null。
+soft_preferences confidence >= 0.8 且有 evidence 才保留。
+hard_constraints confidence >= 0.9 且有 evidence 才保留。
+special_signals confidence >= 0.8 且有 evidence 才保留。
+```
+
+低置信度信息不能进入硬筛选或软排序，也不能交给后续 AI 自行补全。`raw_entry_text` 继续保留为用户原始表达，用于展示、审计和让用户通过后续滑卡或显式选择继续表达；规则层只读取高置信度结构化字段。
+
 ## P2 方向总结输出
 
 方向总结 AI 只需要返回：

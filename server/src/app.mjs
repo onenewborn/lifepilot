@@ -1,7 +1,8 @@
 import { createServer } from "node:http";
-import { buildFoodDirectionCards, filterFoodDirectionCards, localParseEntry } from "./cards.mjs";
+import { buildFoodDirectionCards, filterFoodDirectionCards } from "./cards.mjs";
 import { config } from "./config.mjs";
 import { buildDirectionSummary } from "./direction-summary.mjs";
+import { parseEntry } from "./entry-parser.mjs";
 import { fail, ok, readBody } from "./http.mjs";
 import { appendSwipeEvent, applyDirectionSummary, createSession, getSession, normalizeSwipeEvent } from "./session-store.mjs";
 
@@ -26,7 +27,11 @@ async function handleFoodDirections(res) {
 async function handleSessionStart(req, res) {
   const body = await readBody(req);
   const entryForm = body.entry_form || body.entryForm || {};
-  const parsed = localParseEntry(entryForm);
+  const parsed = await parseEntry({
+    entryForm,
+    timeoutMs: body.timeout_ms || body.timeoutMs,
+    forceLocal: body.local_only === true || body.localOnly === true,
+  });
   const allCards = await buildFoodDirectionCards();
   const cards = filterFoodDirectionCards(allCards, parsed);
   const session = createSession({
@@ -37,6 +42,23 @@ async function handleSessionStart(req, res) {
     cards,
   });
   ok(res, {session: publicSession(session)});
+}
+
+async function handleParseEntry(req, res) {
+  const body = await readBody(req);
+  const entryForm = body.entry_form || body.entryForm || body;
+  const understanding = await parseEntry({
+    entryForm,
+    timeoutMs: body.timeout_ms || body.timeoutMs,
+    forceLocal: body.local_only === true || body.localOnly === true,
+  });
+  ok(res, {
+    understanding,
+    meta: {
+      fallback_used: understanding.parse_mode === "local_fallback",
+      fallback_reason: understanding.warning?.code || null,
+    },
+  });
 }
 
 async function handleSessionSwipe(req, res) {
@@ -122,6 +144,10 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/session/start") {
       await handleSessionStart(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/agent/parse-entry") {
+      await handleParseEntry(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/session/swipe") {

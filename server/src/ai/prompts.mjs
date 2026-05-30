@@ -11,6 +11,80 @@ function compactEvent(event = {}) {
   };
 }
 
+export const ENTRY_DIMENSIONS = [
+  "flavor",
+  "budget",
+  "distance",
+  "environment",
+  "energy",
+  "party",
+  "time_pressure",
+  "health_load",
+  "novelty",
+  "certainty",
+  "emotional_reward",
+  "social_friction",
+];
+
+export function buildParseEntryPrompt({entryForm = {}} = {}) {
+  return [
+    "请扮演饭点定了小程序的入口需求解析器。",
+    "只返回一个 JSON 对象，不要 markdown，不要解释。",
+    "",
+    "任务：",
+    "把用户入口阶段的按钮选择和聊天框原文，解析成固定维度的用餐需求。",
+    "你不能直接决定推荐哪些卡，也不能调用工具；只负责解释用户需求。",
+    "",
+    "重要规则：",
+    "- 不要为了填满 schema 乱猜。",
+    "- 某个维度只有在 confidence >= 0.8 且有 evidence 时才填写，否则返回 null。",
+    "- hard_constraints 只有在用户明确表达、confidence >= 0.9 且有 evidence 时才填写。",
+    "- soft_preferences 只有在 confidence >= 0.8 且有 evidence 时才填写。",
+    "- 低于置信度门槛的信息不要交给 AI 或规则继续猜；保持为空，必要时写入 missing_info，让用户通过后续滑卡或显式选择表达。",
+    "- 用户没有说的位置、预算、禁忌、偏好，不要编。",
+    "- 如果用户表达疲惫、下班、压力、想被犒劳、想省心等情绪，可以放进 energy 或 emotional_reward。",
+    "- 如果用户表达约会、朋友、同事、不熟的人、怕尴尬、吃相、身上有味等社交顾虑，可以放进 social_friction。",
+    "- 输出里的 evidence 必须是字符串数组，来自用户输入或按钮值，不能来自你的常识脑补。",
+    "",
+    "固定维度：",
+    ENTRY_DIMENSIONS.join(", "),
+    "",
+    "输出 JSON schema：",
+    JSON.stringify({
+      normalized_goal: "",
+      dimensions: Object.fromEntries(ENTRY_DIMENSIONS.map((key) => [key, {
+        intent: "",
+        strength: "low|medium|high",
+        confidence: 0.0,
+        evidence: [],
+      }])),
+      hard_constraints: [{
+        facet: "",
+        operator: "",
+        value: "",
+        confidence: 0.0,
+        evidence: [],
+      }],
+      soft_preferences: [{
+        facet: "",
+        value: "",
+        weight: "low|medium|high",
+        confidence: 0.0,
+        evidence: [],
+      }],
+      special_signals: [{
+        signal: "",
+        confidence: 0.0,
+        evidence: [],
+      }],
+      missing_info: [],
+      confidence: 0.0,
+    }, null, 2),
+    "",
+    `入口表单：${JSON.stringify(entryForm, null, 2)}`,
+  ].join("\n");
+}
+
 function compactEntryContext(entryContext = {}) {
   const entryForm = entryContext.entry_form || entryContext.entryForm || {};
   const understanding = entryContext.understanding || {};
