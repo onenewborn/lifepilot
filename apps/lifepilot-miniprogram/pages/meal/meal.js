@@ -97,8 +97,7 @@ Page({
     const sessionId = wx.getStorageSync(STORAGE_SESSION_ID);
     if (!sessionId) return;
     this.setData({
-      resumableSessionId: sessionId,
-      bootNotice: "可以继续上次没选完的店。"
+      resumableSessionId: sessionId
     });
   },
 
