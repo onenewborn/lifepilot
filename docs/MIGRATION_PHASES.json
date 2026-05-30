@@ -98,6 +98,7 @@
         "新增 server/src/direction-summary.mjs，包含本地 fallback、AI 调用、JSON 解析和 fallback 标记。",
         "新增 POST /api/session/advance 的 P2 状态机，只支持 direction -> direction_summary。",
         "P2 预留 memoryContext 参数，但暂不接完整 memory 系统。",
+        "AI prompt 不传本地 fallback 文案，只传 keep/dislike 结构化事件；fallback 仅作为后端兜底。",
         "smoke 覆盖 keep/dislike、local fallback、状态推进、重复 advance 非法转移。"
       ]
     },

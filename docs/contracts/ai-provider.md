@@ -100,3 +100,4 @@ OpenClaw 必须通过产品后端 API 获取产品上下文。
 - 正常情况下不道歉；只有没有保留方向、信号太少或选择矛盾时，才可以轻微抱歉但不卑微。
 - 如果后续接入 confirmed memory，可以结合长期口味偏好解释本次选择。
 - P2 实现先预留 `memoryContext`，暂不接完整 memory 系统。
+- 本地 fallback 文案只用于后端兜底，不作为 AI prompt 输入；prompt 只传用户目标、keep/dislike 结构化事件和可选 memoryContext。

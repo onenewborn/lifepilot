@@ -11,7 +11,7 @@ function compactEvent(event = {}) {
   };
 }
 
-export function buildDirectionSummaryPrompt({goal, events = [], fallbackSummary = {}, memoryContext = null}) {
+export function buildDirectionSummaryPrompt({goal, events = [], memoryContext = null}) {
   const kept = events.filter((event) => event.action === "keep");
   const disliked = events.filter((event) => event.action === "dislike");
   return [
@@ -42,7 +42,6 @@ export function buildDirectionSummaryPrompt({goal, events = [], fallbackSummary 
     `放弃方向数量：${disliked.length}`,
     `保留方向：${JSON.stringify(kept.map(compactEvent), null, 2)}`,
     `放弃方向：${JSON.stringify(disliked.map(compactEvent), null, 2)}`,
-    `本地 fallback 总结：${JSON.stringify(fallbackSummary)}`,
     `长期记忆上下文：${JSON.stringify(memoryContext || {confirmed_preferences: []})}`,
   ].join("\n");
 }

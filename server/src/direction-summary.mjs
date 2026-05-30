@@ -82,7 +82,6 @@ export async function buildDirectionSummary({goal, events, timeoutMs, forceLocal
   const prompt = buildDirectionSummaryPrompt({
     goal,
     events,
-    fallbackSummary: fallback,
     memoryContext,
   });
   const ai = await callArkChat({
