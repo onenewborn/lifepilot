@@ -6,7 +6,7 @@ import { parseEntry } from "./entry-parser.mjs";
 import { buildFoodOffers, explainOneOfferCard, selectFinalDecision } from "./offer-cards.mjs";
 import { queuePayload, routePayload, weatherPayload } from "./context-providers.mjs";
 import { fail, ok, readBody } from "./http.mjs";
-import { appendMemoryCandidatesToDayContext, appendSwipeEvent, applyDirectionSummary, applyFinalDecision, applyOfferCards, createSession, getDayContext, getSession, normalizeSwipeEvent, setSessionMemoryContext, updateCurrentOfferCard } from "./session-store.mjs";
+import { appendMemoryCandidatesToDayContext, appendSwipeEvent, applyDirectionSummary, applyFinalDecision, applyOfferCards, createSession, getDayContext, getSession, normalizeSwipeEvent, setSessionMemoryContext, updateCurrentOfferCard, updateSessionEntry } from "./session-store.mjs";
 import {
   confirmMemoryCandidate,
   createConfirmedPreference,
@@ -138,6 +138,56 @@ async function handleSessionSwipe(req, res) {
   ok(res, {
     event,
     session: publicSession(session),
+  });
+}
+
+async function handleSessionEntryUpdate(req, res) {
+  const body = await readBody(req);
+  const session = await getSession(body.session_id || body.sessionId);
+  if (!session) {
+    fail(res, 404, "session_not_found", "Session not found.");
+    return;
+  }
+  if (!["direction", "direction_summary"].includes(session.stage)) {
+    fail(res, 409, "invalid_session_stage", "Entry can only be updated before merchant selection.", {stage: session.stage});
+    return;
+  }
+  const entryForm = {
+    ...(session.entry_form || {}),
+    ...(body.entry_form || body.entryForm || {}),
+  };
+  if (body.location || body.user_location || body.userLocation) {
+    entryForm.location = body.location || body.user_location || body.userLocation;
+  }
+  const parsed = await parseEntry({
+    entryForm,
+    timeoutMs: body.timeout_ms || body.timeoutMs,
+    forceLocal: body.local_only === true || body.localOnly === true,
+  });
+  const allCards = await buildFoodDirectionCards();
+  const cards = filterFoodDirectionCards(allCards, parsed);
+  const memoryContext = await readRecommendationMemoryContext({
+    userId: session.user_id,
+    query: [
+      parsed.normalized_goal,
+      entryForm.raw_query || entryForm.rawQuery || entryForm.free_text || entryForm.freeText || entryForm.text || entryForm.goal,
+      ...(parsed.soft_preferences || []).map((item) => item.value || item.intent || "").filter(Boolean),
+    ].filter(Boolean).join("；"),
+  });
+  await updateSessionEntry({session, entryForm, parsed, cards, memoryContext});
+  ok(res, {
+    session: publicSession(session),
+    meta: {
+      fallback_used: parsed.parse_mode === "local_fallback",
+      fallback_reason: parsed.warning?.code || null,
+      memory_context: {
+        source: "session_entry_update",
+        confirmed_preferences: memoryContext.preference_count || 0,
+        evermind_memories: memoryContext.evermind_memory_count || 0,
+        evermind_warning: memoryContext.evermind_warning || "",
+        policy: memoryContext.policy,
+      },
+    },
   });
 }
 
@@ -590,6 +640,10 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/session/swipe") {
       await handleSessionSwipe(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/session/entry") {
+      await handleSessionEntryUpdate(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/session/advance") {

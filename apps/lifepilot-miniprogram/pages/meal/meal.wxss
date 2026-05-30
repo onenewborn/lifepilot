@@ -295,6 +295,88 @@ button::after {
   min-height: 900rpx;
 }
 
+.direction-brief {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  margin: 4rpx 0 14rpx;
+  color: rgba(75, 50, 31, 0.64);
+  font-size: 25rpx;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.direction-brief-avatar {
+  flex-shrink: 0;
+  width: 70rpx;
+  height: 70rpx;
+}
+
+.direction-brief-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.goal-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: inset 0 0 0 2rpx rgba(125, 78, 44, 0.08);
+}
+
+.goal-strip-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: #2d2118;
+  font-size: 26rpx;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-edit-button {
+  flex-shrink: 0;
+  color: #ff6334;
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.goal-editor {
+  margin-bottom: 16rpx;
+  padding: 18rpx;
+  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: inset 0 0 0 2rpx rgba(125, 78, 44, 0.08);
+}
+
+.goal-editor-input {
+  width: 100%;
+  min-height: 112rpx;
+  color: #2d2118;
+  font-size: 26rpx;
+  line-height: 1.45;
+}
+
+.goal-editor-actions {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 14rpx;
+}
+
+.goal-editor-button {
+  flex: 1;
+  height: 68rpx;
+  line-height: 68rpx;
+  font-size: 25rpx;
+}
+
 .session-strip {
   display: flex;
   justify-content: space-between;

@@ -117,6 +117,33 @@
   </view>
 
   <view wx:elif="{{stage === 'direction' || stage === 'offer'}}" class="flow">
+    <view wx:if="{{stage === 'direction'}}" class="direction-brief">
+      <image class="direction-brief-avatar" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
+      <view class="direction-brief-copy">先滑几张方向卡，喜欢的留下，不喜欢的划走，后面再看具体店。</view>
+    </view>
+    <view wx:if="{{stage === 'direction' && !isEditingGoal}}" class="goal-strip">
+      <text class="goal-strip-text">{{editableGoal}}</text>
+      <button class="goal-edit-button" bindtap="startGoalEdit">需求修改</button>
+    </view>
+    <view wx:if="{{stage === 'direction' && isEditingGoal}}" class="goal-editor">
+      <textarea
+        class="goal-editor-input"
+        value="{{editableGoal}}"
+        maxlength="160"
+        auto-height
+        focus
+        bindinput="onEditableGoalInput"
+      />
+      <view class="goal-editor-actions">
+        <button class="secondary-button goal-editor-button" bindtap="cancelGoalEdit">取消</button>
+        <button
+          class="primary-button goal-editor-button"
+          loading="{{isGoalUpdating}}"
+          bindtap="applyGoalEdit"
+        >确认更新</button>
+      </view>
+    </view>
+
     <view class="session-strip">
       <text>{{stage === 'direction' ? '方向卡' : '商家卡'}}</text>
       <text>{{index + 1}} / {{cards.length}}</text>
@@ -190,12 +217,7 @@
             </view>
           </view>
 
-          <view wx:else class="direction-detail">
-            <view wx:if="{{currentCard.fit.length}}" class="mini-title">适合现在</view>
-            <view wx:for="{{currentCard.fit}}" wx:key="*this" class="reason-line">{{item}}</view>
-            <view wx:if="{{currentCard.avoidFor.length}}" class="mini-title muted-title">可能不适合</view>
-            <view wx:for="{{currentCard.avoidFor}}" wx:key="*this" class="reason-line muted-line">{{item}}</view>
-          </view>
+          <view wx:else></view>
         </view>
       </view>
     </view>

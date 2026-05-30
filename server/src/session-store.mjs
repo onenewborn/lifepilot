@@ -204,6 +204,41 @@ export async function setSessionMemoryContext(session, memoryContext) {
   return touchSession(session);
 }
 
+export async function updateSessionEntry({session, entryForm, parsed, cards, memoryContext = null}) {
+  const location = entryForm?.location || entryForm?.user_location || entryForm?.userLocation || session.location || null;
+  session.stage = "direction";
+  session.next_step = "swipe_food_directions";
+  session.goal = parsed.normalized_goal || "";
+  session.entry_form = entryForm || {};
+  session.location = location;
+  session.understanding = {
+    constraints: parsed.constraints || {},
+    requirements: parsed.requirements || [],
+    missing_info: parsed.missing_info || [],
+    confidence: parsed.confidence || null,
+    assistant_text: parsed.assistant_text || "",
+    normalized_goal: parsed.normalized_goal || "",
+    raw_entry_text: parsed.raw_entry_text || "",
+    dimensions: parsed.dimensions || {},
+    hard_constraints: parsed.hard_constraints || [],
+    soft_preferences: parsed.soft_preferences || [],
+    special_signals: parsed.special_signals || [],
+    parse_mode: parsed.parse_mode || "local_fallback",
+    timing: parsed.timing || null,
+    warning: parsed.warning || null,
+  };
+  if (memoryContext) session.memory_context = memoryContext;
+  session.direction_events = [];
+  session.offer_events = [];
+  session.direction_summary = null;
+  session.current_cards = cards || [];
+  session.offer_payload_meta = null;
+  session.result = null;
+  session.status = "active";
+  session.finalized_at = null;
+  return touchSession(session);
+}
+
 export async function getSession(sessionId) {
   if (!sessionId) return null;
   if (sessions.has(sessionId)) return sessions.get(sessionId);

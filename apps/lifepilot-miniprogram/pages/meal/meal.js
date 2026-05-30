@@ -50,6 +50,9 @@ Page({
       ]
     },
     goal: "",
+    editableGoal: "",
+    isEditingGoal: false,
+    isGoalUpdating: false,
     cards: [],
     index: 0,
     currentCard: null,
@@ -160,8 +163,7 @@ Page({
     return option ? option.text : "";
   },
 
-  buildEntryFormForApi() {
-    const { entryForm } = this.data;
+  buildEntryFormForApi(entryForm = this.data.entryForm) {
     const radiusMap = { near_1km: 1, near_3km: 3, futian: 8 };
     const budgetValue = Number(entryForm.budget);
     const budgetMax = Number.isFinite(budgetValue) && budgetValue >= 500 ? null : budgetValue;
@@ -237,6 +239,9 @@ Page({
       sessionId: session.session_id || this.data.sessionId,
       sessionStage: stage,
       goal: session.goal || this.data.goal,
+      editableGoal: session.entry_form?.raw_query || session.entry_form?.text || session.goal || this.data.entryForm.text,
+      isEditingGoal: false,
+      isGoalUpdating: false,
       cards,
       index: 0,
       directionSummary: summary,
@@ -299,6 +304,48 @@ Page({
       this.enableVideoSoon();
       this.prefetchOfferExplanations();
     });
+  },
+
+  startGoalEdit() {
+    if (this.data.stage !== "direction") return;
+    this.setData({
+      isEditingGoal: true,
+      editableGoal: this.data.editableGoal || this.data.goal || this.data.entryForm.text
+    });
+  },
+
+  cancelGoalEdit() {
+    this.setData({ isEditingGoal: false });
+  },
+
+  onEditableGoalInput(event) {
+    this.setData({ editableGoal: event.detail.value });
+  },
+
+  async applyGoalEdit() {
+    const text = String(this.data.editableGoal || "").trim();
+    if (!text || this.data.isGoalUpdating || !this.data.sessionId) return;
+    const entryForm = {
+      ...this.data.entryForm,
+      text,
+      raw_query: text,
+      location: this.data.location
+    };
+    this.setData({ isGoalUpdating: true, isLoading: true, loadingText: "小汪正在重新理解需求..." });
+    try {
+      const payload = await sessionApi.updateSessionEntry({
+        session_id: this.data.sessionId,
+        entry_form: this.buildEntryFormForApi(entryForm),
+        location: this.data.location,
+        timeout_ms: 30000
+      });
+      this.setData({ entryForm });
+      this.applySession(payload.session, { meta: payload.meta });
+    } catch (error) {
+      wx.showToast({ title: "需求更新失败", icon: "none" });
+    } finally {
+      this.setData({ isGoalUpdating: false, isLoading: false, loadingText: "" });
+    }
   },
 
   prefetchOfferExplanations() {
@@ -572,6 +619,10 @@ Page({
       stageSubtitle: "先告诉小汪今天想怎么吃",
       sessionId: "",
       sessionStage: "",
+      goal: "",
+      editableGoal: "",
+      isEditingGoal: false,
+      isGoalUpdating: false,
       cards: [],
       index: 0,
       currentCard: null,

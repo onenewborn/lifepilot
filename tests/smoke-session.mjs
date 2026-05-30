@@ -215,6 +215,50 @@ try {
   assert.equal(afterMissingCard.status, 200);
   assert.equal(afterMissingCard.payload.session.direction_events.length, 2);
 
+  const updatedEntry = await request("/api/session/entry", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+      entry_form: {
+        raw_query: "今天想吃清爽一点的热汤粉，别太油。",
+        budget_per_person_max: 80,
+        party_size: 1,
+      },
+      local_only: true,
+    },
+  });
+  assert.equal(updatedEntry.status, 200);
+  assert.equal(updatedEntry.payload.ok, true);
+  assert.equal(updatedEntry.payload.session.stage, "direction");
+  assert.equal(updatedEntry.payload.session.direction_events.length, 0);
+  assert.ok(updatedEntry.payload.session.current_cards.length > 0);
+  assert.ok(updatedEntry.payload.session.goal.includes("热汤粉"));
+
+  const updatedKeepCard = updatedEntry.payload.session.current_cards[0];
+  const updatedDislikeCard = updatedEntry.payload.session.current_cards[1];
+  const updatedKeep = await request("/api/session/swipe", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+      action: "keep",
+      card_id: updatedKeepCard.card_id,
+      dwell_ms: 640,
+    },
+  });
+  assert.equal(updatedKeep.status, 200);
+  assert.equal(updatedKeep.payload.session.direction_events.length, 1);
+  const updatedDislike = await request("/api/session/swipe", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+      action: "dislike",
+      card_id: updatedDislikeCard.card_id,
+      dwell_ms: 520,
+    },
+  });
+  assert.equal(updatedDislike.status, 200);
+  assert.equal(updatedDislike.payload.session.direction_events.length, 2);
+
   const advanced = await request("/api/session/advance", {
     method: "POST",
     body: {

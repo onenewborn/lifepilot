@@ -12,6 +12,10 @@ function swipeSession(data) {
   return request("/api/session/swipe", { data, timeout: 30000 });
 }
 
+function updateSessionEntry(data) {
+  return request("/api/session/entry", { data, timeout: 90000 });
+}
+
 function advanceSession(data) {
   return request("/api/session/advance", { data, timeout: 120000 });
 }
@@ -30,5 +34,6 @@ module.exports = {
   finalizeSession,
   getSession,
   startSession,
-  swipeSession
+  swipeSession,
+  updateSessionEntry
 };
