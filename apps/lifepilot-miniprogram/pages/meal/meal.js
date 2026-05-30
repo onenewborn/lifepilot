@@ -169,6 +169,23 @@ Page({
     return option ? option.text : "";
   },
 
+  budgetText(value) {
+    const budget = Number(value);
+    if (Number.isFinite(budget) && budget >= 500) return "预算不限";
+    if (Number.isFinite(budget) && budget > 0) return `人均 ${budget} 以内`;
+    return "预算未定";
+  },
+
+  entrySummary(entryForm = this.data.entryForm) {
+    return [
+      this.optionText("partySize", entryForm.partySize),
+      this.budgetText(entryForm.budget),
+      this.optionText("radius", entryForm.radius),
+      this.optionText("flavor", entryForm.flavor),
+      String(entryForm.text || "").trim(),
+    ].filter(Boolean).join(" · ");
+  },
+
   buildEntryFormForApi(entryForm = this.data.entryForm) {
     const radiusMap = { near_1km: 1, near_3km: 3, futian: 8 };
     const budgetValue = Number(entryForm.budget);
@@ -266,7 +283,7 @@ Page({
       sessionId: session.session_id || this.data.sessionId,
       sessionStage: stage,
       goal: session.goal || this.data.goal,
-      editableGoal: session.entry_form?.raw_query || session.entry_form?.text || session.goal || this.data.entryForm.text,
+      editableGoal: this.entrySummary(this.data.entryForm),
       isEditingGoal: false,
       isGoalUpdating: false,
       cards,
@@ -337,7 +354,7 @@ Page({
     if (this.data.stage !== "direction") return;
     this.setData({
       isEditingGoal: true,
-      editableGoal: this.data.editableGoal || this.data.goal || this.data.entryForm.text
+      editableGoal: this.data.editableGoal || this.entrySummary()
     });
   },
 
