@@ -233,7 +233,8 @@ export async function parseEntry({entryForm = {}, timeoutMs, forceLocal = false}
   const prompt = buildParseEntryPrompt({entryForm});
   const ai = await callArkChat({
     timeoutMs: timeoutMs || Math.max(config.ai.timeoutMs, 8000),
-    maxTokens: 700,
+    maxTokens: 1200,
+    responseFormat: {type: "json_object"},
     messages: [
       {role: "system", content: "你是饭点定了小程序的入口需求解析器，只输出符合要求的 JSON。"},
       {role: "user", content: prompt},

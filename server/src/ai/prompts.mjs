@@ -49,6 +49,7 @@ export function buildParseEntryPrompt({entryForm = {}} = {}) {
     "- 如果用户表达疲惫、下班、压力、想被犒劳、想省心等情绪，可以放进 energy 或 emotional_reward。",
     "- 如果用户表达约会、朋友、同事、不熟的人、怕尴尬、吃相、身上有味等社交顾虑，可以放进 social_friction。",
     "- 输出里的 evidence 必须是字符串数组，来自用户输入或按钮值，不能来自你的常识脑补。",
+    "- 按钮值也必须写成字符串，例如 \"party_size=2\"、\"budget_per_person_max=180\"、\"radius_km=4\"；绝对不要写成对象或键值片段。",
     "",
     "固定维度：",
     ENTRY_DIMENSIONS.join(", "),

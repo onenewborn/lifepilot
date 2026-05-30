@@ -1,6 +1,6 @@
 import { config } from "../config.mjs";
 
-export async function callArkChat({messages, maxTokens, temperature, timeoutMs} = {}) {
+export async function callArkChat({messages, maxTokens, temperature, timeoutMs, responseFormat} = {}) {
   const startedAt = Date.now();
   if (!config.ai.arkApiKey) {
     return {
@@ -15,6 +15,14 @@ export async function callArkChat({messages, maxTokens, temperature, timeoutMs} 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Number(timeoutMs || config.ai.timeoutMs));
   try {
+    const body = {
+      model: config.ai.arkModel,
+      messages: messages || [],
+      temperature: Number(temperature ?? config.ai.temperature),
+      max_tokens: Number(maxTokens ?? config.ai.maxTokens),
+      thinking: {type: "disabled"},
+    };
+    if (responseFormat) body.response_format = responseFormat;
     const response = await fetch(`${config.ai.arkBaseUrl}/chat/completions`, {
       method: "POST",
       headers: {
@@ -22,13 +30,7 @@ export async function callArkChat({messages, maxTokens, temperature, timeoutMs} 
         authorization: `Bearer ${config.ai.arkApiKey}`,
       },
       signal: controller.signal,
-      body: JSON.stringify({
-        model: config.ai.arkModel,
-        messages: messages || [],
-        temperature: Number(temperature ?? config.ai.temperature),
-        max_tokens: Number(maxTokens ?? config.ai.maxTokens),
-        thinking: {type: "disabled"},
-      }),
+      body: JSON.stringify(body),
     });
     const rawText = await response.text();
     let raw = null;
