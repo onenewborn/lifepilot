@@ -490,10 +490,19 @@
         <view class="section-title diary-title">小汪日记本</view>
         <view class="diary-subtitle">主人今天怎么挑饭、哪里犹豫、哪些偏好值得记住，小汪都会慢慢攒起来。</view>
       </view>
-      <button class="diary-refresh" loading="{{isDiaryLoading}}" bindtap="loadXiaowangDiary">刷新</button>
+      <view class="diary-head-actions">
+        <button class="diary-refresh" loading="{{isDreaming}}" bindtap="runXiaowangDreaming">复盘</button>
+        <button class="diary-refresh" loading="{{isDiaryLoading}}" bindtap="loadXiaowangDiary">刷新</button>
+      </view>
     </view>
 
     <view wx:if="{{diaryError}}" class="error">{{diaryError}}</view>
+
+    <view wx:if="{{diary && diary.daily_summary}}" class="diary-summary-card">
+      <view class="diary-summary-label">小汪今天看到</view>
+      <view class="diary-summary-text">{{diary.daily_summary.text}}</view>
+      <view wx:if="{{diary.daily_summary.next_prompt}}" class="diary-summary-next">{{diary.daily_summary.next_prompt}}</view>
+    </view>
 
     <view class="diary-section">
       <view class="mini-title">今天吃饭记录</view>
@@ -521,8 +530,29 @@
             <text>待确认</text>
           </view>
           <view class="memory-candidate-text">{{item.diary_text}}</view>
+          <view wx:if="{{editingMemoryCandidateId === item.candidate_id}}" class="memory-edit-box">
+            <textarea
+              class="memory-edit-input"
+              value="{{memoryEditText}}"
+              maxlength="120"
+              auto-height
+              bindinput="onMemoryEditInput"
+            />
+          </view>
           <view class="memory-candidate-actions">
             <button class="memory-skip-button" data-id="{{item.candidate_id}}" bindtap="rejectDiaryCandidate">先不记</button>
+            <button
+              wx:if="{{editingMemoryCandidateId !== item.candidate_id}}"
+              class="memory-skip-button"
+              data-id="{{item.candidate_id}}"
+              data-text="{{item.confirmation_text || item.statement}}"
+              bindtap="startEditDiaryCandidate"
+            >改一下</button>
+            <button
+              wx:else
+              class="memory-skip-button"
+              bindtap="cancelEditDiaryCandidate"
+            >取消</button>
             <button class="memory-confirm-button" data-id="{{item.candidate_id}}" bindtap="confirmDiaryCandidate">记住</button>
           </view>
         </view>

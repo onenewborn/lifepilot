@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { config } from "./config.mjs";
 import { requestOpenClawAgent } from "./openclaw-gateway-client.mjs";
+import { buildOpenClawDreamInput, storeOpenClawDreamResult } from "./openclaw-store.mjs";
 
 function safeArg(value) {
   return String(value || "").replace(/[^a-zA-Z0-9_.:-]/g, "_");
@@ -56,6 +57,34 @@ function buildDreamMessage({userId, dayId, apiBase}) {
   ].join("\n");
 }
 
+function buildDirectDreamMessage(dreamInput) {
+  return [
+    "请使用 lifepilot-dreaming 的判断标准，完成一次 LifePilot 后台 dreaming。",
+    "",
+    "重要约束：",
+    "1. 不要访问网络，不要回调 LifePilot API。",
+    "2. 只根据下面提供的 dream_input 做语义复盘。",
+    "3. 只能输出一个 JSON 对象，不要 markdown，不要解释。",
+    "4. 不要生成已确认长期记忆，只能生成待确认候选。",
+    "",
+    "输出 JSON schema:",
+    "{",
+    "  \"dream_id\": \"...\",",
+    "  \"user_id\": \"...\",",
+    "  \"day_id\": \"...\",",
+    "  \"status\": \"completed\",",
+    "  \"summary\": \"今天主人吃饭行为的自然语言总结\",",
+    "  \"memory_candidates\": [],",
+    "  \"preference_update_suggestions\": [],",
+    "  \"merchant_feedback_insights\": [],",
+    "  \"xiaowang_next_interaction_ideas\": []",
+    "}",
+    "",
+    "dream_input:",
+    JSON.stringify(dreamInput, null, 2),
+  ].join("\n");
+}
+
 function parseJsonMaybe(text) {
   const trimmed = String(text || "").trim();
   if (!trimmed) return null;
@@ -85,20 +114,35 @@ export async function runOpenClawDreamAgent({userId, dayId, apiBase, timeoutSeco
   if (resolvedTransport === "gateway_client") {
     const startedAt = Date.now();
     try {
+      const inputPayload = await buildOpenClawDreamInput({userId: safeUserId, dayId: safeDayId});
+      if (!inputPayload.ok) {
+        return {
+          ok: false,
+          error: inputPayload.error || "dream_input_not_found",
+          transport: resolvedTransport,
+          session_id: resolvedSessionId,
+          timing: {total_ms: Date.now() - startedAt},
+        };
+      }
       const result = await requestOpenClawAgent({
-        message,
+        message: buildDirectDreamMessage(inputPayload.dream_input),
         sessionId: resolvedSessionId,
         timeoutSeconds: timeout,
         idempotencyKey: `lifepilot-dream-${safeDayId}-${Date.now()}-${randomUUID().slice(0, 6)}`,
       });
+      const finalText = parseAgentFinalText(result);
+      const parsed = parseJsonMaybe(finalText);
+      const stored = parsed ? await storeOpenClawDreamResult({body: parsed}) : {ok: false, error: "dream_result_parse_failed"};
       return {
-        ok: result?.status === "ok",
-        error: result?.status === "ok" ? null : "openclaw_gateway_agent_failed",
+        ok: result?.status === "ok" && stored.ok,
+        error: result?.status === "ok" && stored.ok ? null : (stored.error || "openclaw_gateway_agent_failed"),
         transport: resolvedTransport,
         session_id: resolvedSessionId,
         timing: {total_ms: Date.now() - startedAt},
         parsed_stdout: result,
-        final_text: parseAgentFinalText(result),
+        final_text: finalText,
+        dream_result: parsed,
+        stored_job: stored.job || null,
       };
     } catch (error) {
       return {

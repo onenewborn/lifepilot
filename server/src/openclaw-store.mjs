@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { config } from "./config.mjs";
 import { getDayContext, getSession, createDayId } from "./session-store.mjs";
@@ -249,4 +249,23 @@ export async function getOpenClawJobByDreamId(dreamId) {
   const index = await readJson(dreamIndexPath(dreamId));
   if (!index?.job_id) return null;
   return getOpenClawJob(index.job_id);
+}
+
+export async function getLatestOpenClawJobForDay({userId, dayId} = {}) {
+  try {
+    const entries = await readdir(jobsRoot());
+    const jobs = [];
+    for (const entry of entries) {
+      if (!entry.endsWith(".json")) continue;
+      const job = await readJson(path.join(jobsRoot(), entry));
+      if (!job || job.schema_version !== DREAM_JOB_SCHEMA) continue;
+      if (dayId && job.day_id !== dayId) continue;
+      if (userId && job.user_id !== userId) continue;
+      jobs.push(job);
+    }
+    return jobs.sort((left, right) => String(right.stored_at || "").localeCompare(String(left.stored_at || "")))[0] || null;
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
 }

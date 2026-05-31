@@ -80,6 +80,14 @@ function decorateChatMessages(messages = []) {
   return (Array.isArray(messages) ? messages : []).map(decorateChatMessage);
 }
 
+function todayDayId(userId) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `day_${year}${month}${day}_${userId}`;
+}
+
 Page({
   data: {
     activeTab: "chat",
@@ -159,6 +167,9 @@ Page({
     isChatSubmitting: false,
     diary: null,
     isDiaryLoading: false,
+    isDreaming: false,
+    editingMemoryCandidateId: "",
+    memoryEditText: "",
     diaryError: "",
     isLoading: false,
     loadingText: "",
@@ -975,7 +986,7 @@ Page({
       return;
     }
     if (action === "run_dreaming") {
-      wx.showToast({ title: "后台复盘稍后接入", icon: "none" });
+      this.runXiaowangDreaming();
     }
   },
 
@@ -996,7 +1007,7 @@ Page({
     this.setData({ isDiaryLoading: true, diaryError: "" });
     try {
       const payload = await xiaowangApi.getDiary({ user_id: DEFAULT_USER_ID });
-      this.setData({ diary: payload });
+      this.setData({ diary: payload, editingMemoryCandidateId: "", memoryEditText: "" });
     } catch (error) {
       this.setData({ diaryError: error.message || "日记本加载失败" });
     } finally {
@@ -1009,7 +1020,11 @@ Page({
     if (!candidateId) return;
     this.setData({ isDiaryLoading: true });
     try {
-      await memoryApi.confirmCandidate(candidateId, { user_id: DEFAULT_USER_ID, actor: "user" });
+      const data = { user_id: DEFAULT_USER_ID, actor: "user" };
+      if (this.data.editingMemoryCandidateId === candidateId && String(this.data.memoryEditText || "").trim()) {
+        data.confirmation_text = String(this.data.memoryEditText || "").trim();
+      }
+      await memoryApi.confirmCandidate(candidateId, data);
       wx.showToast({ title: "小汪已记住", icon: "none" });
       this.setData({ isDiaryLoading: false });
       await this.loadXiaowangDiary();
@@ -1035,6 +1050,49 @@ Page({
       this.setData({ isDiaryLoading: false });
     } finally {
       if (this.data.isDiaryLoading) this.setData({ isDiaryLoading: false });
+    }
+  },
+
+  startEditDiaryCandidate(event) {
+    const candidateId = event.currentTarget.dataset.id;
+    const text = event.currentTarget.dataset.text || "";
+    this.setData({
+      editingMemoryCandidateId: candidateId,
+      memoryEditText: text
+    });
+  },
+
+  cancelEditDiaryCandidate() {
+    this.setData({
+      editingMemoryCandidateId: "",
+      memoryEditText: ""
+    });
+  },
+
+  onMemoryEditInput(event) {
+    this.setData({ memoryEditText: event.detail.value || "" });
+  },
+
+  async runXiaowangDreaming() {
+    if (this.data.isDreaming) return;
+    const dayId = this.data.diary && this.data.diary.day_id ? this.data.diary.day_id : todayDayId(DEFAULT_USER_ID);
+    this.setData({ isDreaming: true });
+    wx.showToast({ title: "小汪开始复盘", icon: "none" });
+    try {
+      const payload = await xiaowangApi.runDreaming({
+        user_id: DEFAULT_USER_ID,
+        day_id: dayId,
+        api_base: getApiBaseUrl(),
+        transport: "gateway_client",
+        local: false,
+        timeout_seconds: 240
+      });
+      wx.showToast({ title: payload.run && payload.run.ok ? "复盘完成" : "复盘已返回", icon: "none" });
+      await this.loadXiaowangDiary();
+    } catch (error) {
+      wx.showToast({ title: error.message || "复盘失败", icon: "none" });
+    } finally {
+      this.setData({ isDreaming: false });
     }
   },
 

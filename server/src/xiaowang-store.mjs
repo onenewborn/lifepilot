@@ -7,6 +7,7 @@ import { createDayId, getDayContext } from "./session-store.mjs";
 import { createMemoryCandidatesFromOpenClaw, listConfirmedPreferences, listMemoryCandidates } from "./memory-store.mjs";
 import { requestOpenClawAgent, resetOpenClawGatewayClient } from "./openclaw-gateway-client.mjs";
 import { callArkChat } from "./ai/ark-provider.mjs";
+import { getLatestOpenClawJobForDay } from "./openclaw-store.mjs";
 
 const DEFAULT_USER_ID = "demo_weiyingru";
 const CHAT_SCHEMA = "lifepilot.xiaowang_chat.v1";
@@ -50,7 +51,7 @@ const SKILL_REGISTRY = [
     action: "run_dreaming",
     cta: "开始复盘",
     runtime: "openclaw_gateway_client",
-    status: "planned",
+    status: "available",
   },
 ];
 
@@ -275,11 +276,17 @@ function parseOpenClawChatResponse(text) {
   };
 }
 
-function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount}) {
+function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = []}) {
   const context = recentChatContext(session.messages || []);
   const skills = SKILL_REGISTRY.map((skill) => (
     `- ${skill.skill}: ${skill.description} action=${skill.action} cta=${skill.cta} status=${skill.status}`
   )).join("\n");
+  const preferenceText = preferences.slice(0, 6)
+    .map((item) => `- ${item.confirmation_text || item.statement}`)
+    .join("\n") || "暂无";
+  const pendingText = pending.slice(0, 4)
+    .map((item) => `- ${item.confirmation_text || item.statement}`)
+    .join("\n") || "暂无";
   return [
     "请使用 lifepilot-xiaowang skill，按 OpenClaw workspace 的 SOUL.md 和 AGENTS.md 处理用户消息。",
     "",
@@ -298,6 +305,9 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     "",
     `当前已确认偏好数量：${preferenceCount}`,
     `待确认记忆数量：${pendingCount}`,
+    `今日汪记本总结：${diarySummary?.text || "暂无"}`,
+    `已确认偏好：\n${preferenceText}`,
+    `待确认记忆：\n${pendingText}`,
     context ? `最近对话：\n${context}` : "最近对话：暂无",
     "",
     `用户最新消息：${message}`,
@@ -306,12 +316,12 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
   ].join("\n");
 }
 
-async function getOpenClawChatReply({message, session, pendingCount, preferenceCount}) {
+async function getOpenClawChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending}) {
   const result = await requestOpenClawAgent({
     sessionId: `lifepilot-xiaowang-${session.session_id}`,
     timeoutSeconds: process.env.LIFEPILOT_XIAOWANG_OPENCLAW_TIMEOUT_SECONDS || 90,
     idempotencyKey: `lifepilot-xiaowang-${session.session_id}-${Date.now()}-${randomUUID().slice(0, 6)}`,
-    message: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount}),
+    message: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending}),
   });
   const text = parseOpenClawText(result);
   if (result?.status !== "ok" || !text) {
@@ -334,7 +344,7 @@ function isOpenClawTimeout(error) {
   return /timeout/i.test(error instanceof Error ? error.message : String(error));
 }
 
-async function getArkChatReply({message, session, pendingCount, preferenceCount}) {
+async function getArkChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending}) {
   const ai = await callArkChat({
     timeoutMs: Number(process.env.LIFEPILOT_XIAOWANG_ARK_TIMEOUT_MS || 12000),
     maxTokens: 700,
@@ -347,7 +357,7 @@ async function getArkChatReply({message, session, pendingCount, preferenceCount}
       },
       {
         role: "user",
-        content: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount}),
+        content: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending}),
       },
     ],
   });
@@ -462,6 +472,56 @@ function xiaowangPreferenceItem(preference = {}) {
   };
 }
 
+function keywordsFromText(text) {
+  const value = String(text || "");
+  return [
+    /热乎|热汤|暖/.test(value) ? "热乎" : "",
+    /省心|低决策|不折腾|方便/.test(value) ? "省心" : "",
+    /近|附近|公里|少走/.test(value) ? "近一点" : "",
+    /排队|等待|等位/.test(value) ? "少排队" : "",
+    /下饭|米饭|满足/.test(value) ? "下饭" : "",
+    /清爽|低油|轻/.test(value) ? "清爽点" : "",
+  ].filter(Boolean);
+}
+
+function uniqueItems(items = []) {
+  return [...new Set(items.filter(Boolean))];
+}
+
+function buildDiarySummary({mealSessions = [], memoryCandidates = [], confirmedPreferences = [], latestDreamJob = null} = {}) {
+  if (latestDreamJob?.summary) {
+    return {
+      source: "openclaw_dreaming",
+      text: `小汪复盘过啦：${latestDreamJob.summary}`,
+      next_prompt: (latestDreamJob.xiaowang_next_interaction_ideas || [])[0]?.text || "要不要让小汪根据今天的记录，继续帮主人挑一轮？",
+      dream_job_id: latestDreamJob.job_id,
+    };
+  }
+  const finalizedCount = mealSessions.filter((item) => item.finalized_at || item.status === "finalized").length;
+  const activeCount = mealSessions.filter((item) => !(item.finalized_at || item.status === "finalized")).length;
+  const keywords = uniqueItems(mealSessions.flatMap((item) => keywordsFromText(item.goal || item.diary_text || ""))).slice(0, 4);
+  const preferenceHint = confirmedPreferences.length
+    ? `小汪还记着 ${confirmedPreferences.length} 条长期偏好。`
+    : "长期偏好还不多，小汪会继续观察。";
+  const pendingHint = memoryCandidates.length
+    ? `还有 ${memoryCandidates.length} 条想请主人确认。`
+    : "今天暂时没有新的待确认记忆。";
+  let text = "今天小汪还没攒到吃饭记录。主人开一轮滑卡以后，我会在这里整理。";
+  if (mealSessions.length) {
+    const keywordText = keywords.length ? `主要在找${keywords.join("、")}的饭` : "有几轮吃饭选择";
+    const activeText = activeCount ? `，还有 ${activeCount} 轮没最后拍板，小汪先记着` : "";
+    text = `今天主人${keywordText}，已经选定 ${finalizedCount} 轮${activeText}。${pendingHint}`;
+  }
+  return {
+    source: "rule",
+    text: `${text}${mealSessions.length ? ` ${preferenceHint}` : ""}`,
+    next_prompt: memoryCandidates.length
+      ? "主人，要不要先确认一条小汪觉得有用的偏好？"
+      : "主人如果现在要吃饭，小汪可以结合今天的记录帮你继续挑。",
+    dream_job_id: "",
+  };
+}
+
 function memoryPromptsFromCalls({skillCalls = [], memoryPrompts = [], message}) {
   const prompts = Array.isArray(memoryPrompts) ? [...memoryPrompts] : [];
   const hasMemorySkill = skillCalls.some((call) => call.skill === "memory_capture");
@@ -534,7 +594,16 @@ export async function handleXiaowangChat({body = {}} = {}) {
 
   const pending = await listMemoryCandidates({userId, status: "pending"});
   const preferences = await listConfirmedPreferences({userId, status: "active"});
-  const dayId = body.day_id || body.dayId || "";
+  const dayId = body.day_id || body.dayId || createDayId(userId, new Date());
+  const dayContext = await getDayContext(dayId);
+  const mealSessionsForSummary = (dayContext?.meal_sessions || []).map(xiaowangMealDiaryItem);
+  const latestDreamJob = await getLatestOpenClawJobForDay({userId, dayId});
+  const diarySummary = buildDiarySummary({
+    mealSessions: mealSessionsForSummary,
+    memoryCandidates: pending.candidates || [],
+    confirmedPreferences: preferences.preferences || [],
+    latestDreamJob,
+  });
   let skillCards = [];
   let skillCalls = [];
   let memoryPrompts = [];
@@ -550,6 +619,9 @@ export async function handleXiaowangChat({body = {}} = {}) {
         session,
         pendingCount: pending.count || 0,
         preferenceCount: preferences.count || 0,
+        diarySummary,
+        preferences: preferences.preferences || [],
+        pending: pending.candidates || [],
       });
       content = openclawReply.content;
       skillCalls = openclawReply.skillCalls || [];
@@ -586,6 +658,9 @@ export async function handleXiaowangChat({body = {}} = {}) {
           session,
           pendingCount: pending.count || 0,
           preferenceCount: preferences.count || 0,
+          diarySummary,
+          preferences: preferences.preferences || [],
+          pending: pending.candidates || [],
         });
         content = arkReply.content;
         skillCalls = arkReply.skillCalls || [];
@@ -697,12 +772,20 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date} = {}) {
     .sort((left, right) => String(right.created_at || "").localeCompare(String(left.created_at || "")));
   const memoryCandidates = (pending.candidates || []).map(xiaowangMemoryCandidateItem);
   const confirmedPreferences = (preferences.preferences || []).map(xiaowangPreferenceItem);
+  const latestDreamJob = await getLatestOpenClawJobForDay({userId, dayId});
+  const dailySummary = buildDiarySummary({
+    mealSessions,
+    memoryCandidates,
+    confirmedPreferences,
+    latestDreamJob,
+  });
   return {
     ok: true,
     user_id: userId,
     day_id: dayId,
     day_context: dayContext || null,
     diary_date: dayContext?.date || dayId.match(/^day_(\d{8})_/)?.[1] || "",
+    daily_summary: dailySummary,
     meal_sessions: mealSessions,
     memory_candidates: memoryCandidates,
     confirmed_preferences: confirmedPreferences,

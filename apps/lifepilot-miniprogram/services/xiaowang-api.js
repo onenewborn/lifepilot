@@ -12,7 +12,12 @@ function getDiary(params = {}) {
   return request(`/api/xiaowang/diary${query ? `?${query}` : ""}`, { method: "GET", timeout: 30000 });
 }
 
+function runDreaming(data = {}) {
+  return request("/api/openclaw/run-dream", { data, timeout: 320000 });
+}
+
 module.exports = {
   chat,
-  getDiary
+  getDiary,
+  runDreaming
 };

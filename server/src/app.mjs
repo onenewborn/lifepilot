@@ -524,6 +524,10 @@ async function handleMemoryCandidateConfirm(req, res, candidateId) {
     userId: body.user_id || body.userId || "demo_weiyingru",
     candidateId,
     actor: body.actor || "user",
+    patch: body.patch || {
+      confirmation_text: body.confirmation_text || body.confirmationText,
+      statement: body.statement,
+    },
   });
   if (!payload.ok) {
     fail(res, 404, payload.error || "candidate_not_found", payload.error || "Candidate not found.");

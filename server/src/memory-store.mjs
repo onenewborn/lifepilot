@@ -655,7 +655,7 @@ export async function setConfirmedPreferenceSync({workspaceRoot = config.storage
   };
 }
 
-export async function confirmMemoryCandidate({workspaceRoot = config.storage.runtimeRoot, userId, candidateId: targetCandidateId, actor = "user"}) {
+export async function confirmMemoryCandidate({workspaceRoot = config.storage.runtimeRoot, userId, candidateId: targetCandidateId, actor = "user", patch = {}}) {
   const user = await ensureMemoryUser({workspaceRoot, userId});
   const candidatesStore = await readJsonIfExists(user.candidatesPath, {
     schema_version: SCHEMA_CANDIDATES,
@@ -671,11 +671,28 @@ export async function confirmMemoryCandidate({workspaceRoot = config.storage.run
   if (candidate.status !== "pending") {
     return {ok: false, user_id: user.userId, memory_root: user.root, error: "candidate_not_pending", candidate};
   }
+  const normalizedPatch = normalizePreferencePatch(patch);
+  const confirmationText = normalizedPatch.confirmation_text || normalizedPatch.statement || "";
+  const patchedCandidate = confirmationText ? {
+    ...candidate,
+    ...normalizedPatch,
+    statement: normalizedPatch.statement || `主人确认想让小汪记住：${confirmationText}`,
+    confirmation_text: confirmationText,
+    evidence: normalizedPatch.evidence || candidate.evidence,
+    edit: {
+      actor,
+      edited_at: nowIso(),
+      original_confirmation_text: candidate.confirmation_text || candidate.statement || "",
+    },
+  } : candidate;
+  if (hasSensitiveText(`${patchedCandidate.statement || ""} ${patchedCandidate.confirmation_text || ""}`)) {
+    return {ok: false, user_id: user.userId, memory_root: user.root, error: "sensitive_text_rejected"};
+  }
   const preferencesStore = await readJsonIfExists(user.preferencesPath, defaultPreferenceStore(user.userId));
-  const preference = preferenceFromCandidate({candidate, userId: user.userId, actor});
+  const preference = preferenceFromCandidate({candidate: patchedCandidate, userId: user.userId, actor});
   const updatedAt = nowIso();
   candidates[candidateIndex] = {
-    ...candidate,
+    ...patchedCandidate,
     status: "confirmed",
     updated_at: updatedAt,
     confirmed_at: updatedAt,
