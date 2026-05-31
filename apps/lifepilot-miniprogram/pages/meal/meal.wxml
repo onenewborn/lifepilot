@@ -209,6 +209,7 @@
             show-scrollbar="{{false}}"
             data-gesture-zone="info"
             bindtouchstart="onOfferInfoTouchStart"
+            catchtouchmove="onOfferInfoTouchMove"
             bindtouchend="onOfferInfoTouchEnd"
             bindtouchcancel="onOfferInfoTouchEnd"
           >

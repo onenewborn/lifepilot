@@ -98,6 +98,7 @@ Page({
     this.videoTimer = null;
     this.isCommittingSwipe = false;
     this.offerInfoTouching = false;
+    this.verticalTouching = false;
     this.offerExplanationRequests = {};
     this.offerExplanationAttempts = {};
     this.currentStartedAt = Date.now();
@@ -503,6 +504,10 @@ Page({
     this.touchStart = null;
   },
 
+  onOfferInfoTouchMove() {
+    this.offerInfoTouching = true;
+  },
+
   onOfferInfoTouchEnd() {
     if (this.offerInfoTouchTimer) clearTimeout(this.offerInfoTouchTimer);
     this.offerInfoTouchTimer = setTimeout(() => {
@@ -516,6 +521,7 @@ Page({
     if (this.data.stage === "offer" && this.offerInfoTouching) return;
     const touch = event.touches[0];
     this.touchStart = { x: touch.clientX, y: touch.clientY };
+    this.verticalTouching = false;
   },
 
   onTouchMove(event) {
@@ -525,9 +531,10 @@ Page({
     const dx = touch.clientX - this.touchStart.x;
     const dy = touch.clientY - this.touchStart.y;
     if (this.data.stage === "offer" && Math.abs(dy) > Math.abs(dx) + 8) {
-      this.setData(swipeGesture.resetStyles());
+      this.verticalTouching = true;
       return;
     }
+    if (this.verticalTouching) return;
     this.setData(swipeGesture.dragStyles(dx, dy));
   },
 
@@ -537,10 +544,11 @@ Page({
     const dx = (touch.clientX || this.touchStart.x) - this.touchStart.x;
     const dy = (touch.clientY || this.touchStart.y) - this.touchStart.y;
     this.touchStart = null;
-    if (this.data.stage === "offer" && Math.abs(dy) > Math.abs(dx) + 10) {
-      this.setData(swipeGesture.resetStyles());
+    if (this.data.stage === "offer" && (this.verticalTouching || Math.abs(dy) > Math.abs(dx) + 10)) {
+      this.verticalTouching = false;
       return;
     }
+    this.verticalTouching = false;
     if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
       if (this.skipNextVideoTap) {
         this.skipNextVideoTap = false;
