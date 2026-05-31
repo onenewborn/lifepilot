@@ -30,7 +30,7 @@ import {
 import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
 import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
 import { runOpenClawDreamAgent } from "./openclaw-runner.mjs";
-import { handleXiaowangChat, readXiaowangDiary } from "./xiaowang-store.mjs";
+import { handleXiaowangChat, listXiaowangSkills, readXiaowangDiary } from "./xiaowang-store.mjs";
 
 let latestLocationProbe = null;
 
@@ -633,6 +633,10 @@ async function handleXiaowangDiaryRoute(res, url) {
   ok(res, payload);
 }
 
+async function handleXiaowangSkillsRoute(res) {
+  ok(res, listXiaowangSkills());
+}
+
 async function route(req, res) {
   const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
 
@@ -719,6 +723,10 @@ async function route(req, res) {
     }
     if (req.method === "GET" && url.pathname === "/api/xiaowang/diary") {
       await handleXiaowangDiaryRoute(res, url);
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/xiaowang/skills") {
+      await handleXiaowangSkillsRoute(res);
       return;
     }
     if (req.method === "GET" && url.pathname.startsWith("/api/openclaw/jobs/by-dream/")) {

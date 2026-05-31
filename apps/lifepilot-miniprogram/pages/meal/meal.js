@@ -897,8 +897,13 @@ Page({
 
   runChatSkill(event) {
     const action = event.currentTarget.dataset.action;
-    if (action !== "start_meal") return;
-    this.startMealSkill();
+    if (action === "start_meal") {
+      this.startMealSkill();
+      return;
+    }
+    if (action === "open_diary" || action === "review_memory") {
+      this.switchMainTab({ currentTarget: { dataset: { tab: "diary" } } });
+    }
   },
 
   startMealSkill() {

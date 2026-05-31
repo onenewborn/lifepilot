@@ -9,6 +9,48 @@ import { requestOpenClawAgent } from "./openclaw-gateway-client.mjs";
 
 const DEFAULT_USER_ID = "demo_weiyingru";
 const CHAT_SCHEMA = "lifepilot.xiaowang_chat.v1";
+const SKILL_REGISTRY = [
+  {
+    skill: "meal_swipe",
+    title: "饭点滑卡",
+    description: "先滑方向卡，再筛具体商家，最后收束到一家。",
+    trigger_examples: ["今天吃什么", "帮我选饭", "不知道吃啥"],
+    action: "start_meal",
+    cta: "开始滑卡",
+    runtime: "local",
+    status: "available",
+  },
+  {
+    skill: "memory_capture",
+    title: "记住偏好",
+    description: "把明确表达的饮食偏好生成待确认记忆。",
+    trigger_examples: ["以后少推荐排队久的", "记住我喜欢热汤面"],
+    action: "review_memory",
+    cta: "查看待确认",
+    runtime: "local",
+    status: "available",
+  },
+  {
+    skill: "diary_review",
+    title: "小汪日记本",
+    description: "查看今天吃饭记录、待确认记忆和已确认偏好。",
+    trigger_examples: ["你记得我什么", "看看汪记本", "今天小汪记了什么"],
+    action: "open_diary",
+    cta: "打开汪记本",
+    runtime: "local",
+    status: "available",
+  },
+  {
+    skill: "openclaw_dreaming",
+    title: "后台复盘",
+    description: "让小汪在后台整理 day context，生成候选记忆和下一次互动建议。",
+    trigger_examples: ["复盘今天", "整理今天的吃饭记录"],
+    action: "run_dreaming",
+    cta: "开始复盘",
+    runtime: "openclaw_gateway_client",
+    status: "planned",
+  },
+];
 
 function nowIso() {
   return new Date().toISOString();
@@ -63,7 +105,27 @@ function wantsMealSkill(text) {
 }
 
 function wantsMemoryCandidate(text) {
-  return /(记住|以后|下次|多推荐|少推荐|别推|不要推|喜欢|不喜欢|讨厌|偏好)/.test(text);
+  return /(记住|以后|下次|多推荐|少推荐|别推|不要推)/.test(text);
+}
+
+function wantsDiarySkill(text) {
+  return /(汪记本|日记|记得我|记住了什么|你了解我|我的偏好|待确认|画像|今天.*记录|今天.*记了什么)/.test(text);
+}
+
+function skillByName(name) {
+  return SKILL_REGISTRY.find((item) => item.skill === name);
+}
+
+function skillCard(name) {
+  const skill = skillByName(name);
+  if (!skill) return null;
+  return {
+    skill: skill.skill,
+    action: skill.action,
+    title: skill.title,
+    description: skill.description,
+    cta: skill.cta,
+  };
 }
 
 function candidateFromChat({message, userId, sessionId}) {
@@ -84,11 +146,14 @@ function candidateFromChat({message, userId, sessionId}) {
 }
 
 function buildAssistantReply({message, pendingCount, preferenceCount, skillCards, createdCount}) {
-  if (skillCards.length) {
+  if (skillCards.some((item) => item.skill === "meal_swipe")) {
     return "可以，主人。小汪可以直接带你走饭点滑卡路线：先看方向，再筛具体店，最后收束到一家。";
   }
+  if (skillCards.some((item) => item.skill === "diary_review")) {
+    return `我可以打开汪记本给主人看。现在有 ${preferenceCount} 条已确认偏好、${pendingCount} 条待确认记忆。`;
+  }
   if (createdCount) {
-    return "我听到了，这像是一个可以长期帮助推荐的偏好。我先放进待确认记忆，主人确认后小汪再正式记住。";
+    return "我听到了，这像是一个可以帮助推荐的偏好。我先放进待确认记忆，主人确认后小汪再正式记住。";
   }
   if (/今天|刚刚|这顿|吃完|反馈/.test(message)) {
     return "收到，主人。今天这顿我会先作为当下记录理解；如果里面有稳定偏好，小汪会提醒你要不要沉淀成长期记忆。";
@@ -97,6 +162,13 @@ function buildAssistantReply({message, pendingCount, preferenceCount, skillCards
     return `我在看你的记忆本：已经确认 ${preferenceCount} 条，待确认 ${pendingCount} 条。你可以继续告诉我今天想怎么吃，或者让我帮你走滑卡。`;
   }
   return "我在，主人。你可以直接问我今天怎么吃，也可以告诉我以后想多推荐或少推荐什么。";
+}
+
+export function listXiaowangSkills() {
+  return {
+    ok: true,
+    skills: SKILL_REGISTRY,
+  };
 }
 
 function recentChatContext(messages = []) {
@@ -166,13 +238,10 @@ export async function handleXiaowangChat({body = {}} = {}) {
 
   const pending = await listMemoryCandidates({userId, status: "pending"});
   const preferences = await listConfirmedPreferences({userId, status: "active"});
-  const skillCards = wantsMealSkill(message) ? [{
-    skill: "meal_swipe",
-    action: "start_meal",
-    title: "走饭点滑卡",
-    description: "先滑方向卡，再筛具体商家。",
-    cta: "开始滑卡",
-  }] : [];
+  const skillCards = [
+    wantsMealSkill(message) ? skillCard("meal_swipe") : null,
+    wantsDiarySkill(message) ? skillCard("diary_review") : null,
+  ].filter(Boolean);
 
   let memoryResult = {created_count: 0, candidates: []};
   if (message && wantsMemoryCandidate(message)) {
