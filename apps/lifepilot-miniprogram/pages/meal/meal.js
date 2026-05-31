@@ -97,6 +97,7 @@ Page({
     this.swipeTimer = null;
     this.videoTimer = null;
     this.isCommittingSwipe = false;
+    this.offerInfoTouching = false;
     this.offerExplanationRequests = {};
     this.offerExplanationAttempts = {};
     this.currentStartedAt = Date.now();
@@ -497,17 +498,36 @@ Page({
     console.warn("[LifePilot] image load failed");
   },
 
+  onOfferInfoTouchStart() {
+    this.offerInfoTouching = true;
+    this.touchStart = null;
+  },
+
+  onOfferInfoTouchEnd() {
+    if (this.offerInfoTouchTimer) clearTimeout(this.offerInfoTouchTimer);
+    this.offerInfoTouchTimer = setTimeout(() => {
+      this.offerInfoTouchTimer = null;
+      this.offerInfoTouching = false;
+    }, 220);
+  },
+
   onTouchStart(event) {
     if (this.isCommittingSwipe || !this.data.currentCard) return;
+    if (this.data.stage === "offer" && this.offerInfoTouching) return;
     const touch = event.touches[0];
     this.touchStart = { x: touch.clientX, y: touch.clientY };
   },
 
   onTouchMove(event) {
     if (!this.touchStart || this.isCommittingSwipe) return;
+    if (this.data.stage === "offer" && this.offerInfoTouching) return;
     const touch = event.touches[0];
     const dx = touch.clientX - this.touchStart.x;
     const dy = touch.clientY - this.touchStart.y;
+    if (this.data.stage === "offer" && Math.abs(dy) > Math.abs(dx) + 8) {
+      this.setData(swipeGesture.resetStyles());
+      return;
+    }
     this.setData(swipeGesture.dragStyles(dx, dy));
   },
 
@@ -517,6 +537,10 @@ Page({
     const dx = (touch.clientX || this.touchStart.x) - this.touchStart.x;
     const dy = (touch.clientY || this.touchStart.y) - this.touchStart.y;
     this.touchStart = null;
+    if (this.data.stage === "offer" && Math.abs(dy) > Math.abs(dx) + 10) {
+      this.setData(swipeGesture.resetStyles());
+      return;
+    }
     if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
       if (this.skipNextVideoTap) {
         this.skipNextVideoTap = false;

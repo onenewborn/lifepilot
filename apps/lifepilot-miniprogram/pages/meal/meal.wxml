@@ -202,7 +202,16 @@
             <cover-view wx:if="{{videoPaused}}" class="pause-badge offer-pause-badge" catchtap="toggleVideoPlay">⏸</cover-view>
           </view>
 
-          <scroll-view class="offer-info" scroll-y enhanced show-scrollbar="{{false}}">
+          <scroll-view
+            class="offer-info"
+            scroll-y
+            enhanced
+            show-scrollbar="{{false}}"
+            data-gesture-zone="info"
+            bindtouchstart="onOfferInfoTouchStart"
+            bindtouchend="onOfferInfoTouchEnd"
+            bindtouchcancel="onOfferInfoTouchEnd"
+          >
             <view class="offer-title-row">
               <image class="offer-thumb" src="{{currentCard.coverThumbUrl}}" mode="aspectFill" binderror="onImageError" />
               <view class="offer-title-copy">
