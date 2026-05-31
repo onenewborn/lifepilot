@@ -1,5 +1,5 @@
-<view class="page">
-  <view class="topbar">
+<view class="page {{activeTab === 'chat' ? 'chat-page' : ''}}">
+  <view wx:if="{{activeTab !== 'chat'}}" class="topbar">
     <view>
       <text class="brand">饭点定了</text>
     </view>
@@ -411,36 +411,44 @@
   </view>
 
   <view wx:elif="{{activeTab === 'chat'}}" class="chat-panel">
-    <view class="chat-hero">
-      <image class="chat-avatar" src="{{xiaowangMascotUrl}}" mode="aspectFit" />
-      <view class="chat-hero-copy">
-        <view class="chat-title">问小汪</view>
-        <view class="chat-subtitle">先把今天的状态告诉我；需要做决定时，我会调起饭点滑卡。</view>
-      </view>
-    </view>
-
-    <view class="skill-launcher">
-      <view class="skill-launcher-copy">
-        <view class="skill-launcher-title">今天不知道吃什么？</view>
-        <view class="skill-launcher-desc">让小汪先问几句，再带你滑方向和具体店。</view>
-      </view>
-      <button class="skill-launcher-button" bindtap="startMealSkill">直接帮我选</button>
-    </view>
-
     <scroll-view class="chat-list" scroll-y enhanced show-scrollbar="{{false}}">
+      <view class="chat-time">今天</view>
+      <view class="chat-message-row assistant-row">
+        <image class="chat-message-avatar" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
+        <view class="chat-message-stack">
+          <view class="chat-sender">小汪</view>
+          <view class="chat-bubble assistant-bubble">我在。把今天的状态告诉我；需要做决定时，我可以直接调起饭点滑卡。</view>
+        </view>
+      </view>
+      <view class="chat-message-row assistant-row skill-message-row">
+        <image class="chat-message-avatar" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
+        <view class="chat-message-stack full-stack">
+          <view class="skill-launcher">
+            <view class="skill-launcher-copy">
+              <view class="skill-launcher-title">今天不知道吃什么？</view>
+              <view class="skill-launcher-desc">先走方向，再筛具体店。</view>
+            </view>
+            <button class="skill-launcher-button" bindtap="startMealSkill">直接帮我选</button>
+          </view>
+        </view>
+      </view>
       <view
         wx:for="{{chatMessages}}"
         wx:key="id"
-        class="chat-message {{item.role === 'user' ? 'chat-message-user' : 'chat-message-assistant'}}"
+        class="chat-message-row {{item.role === 'user' ? 'user-row' : 'assistant-row'}}"
       >
-        <view class="chat-bubble">{{item.content}}</view>
-        <view wx:if="{{item.skill_cards && item.skill_cards.length}}" class="skill-card-list">
-          <view wx:for="{{item.skill_cards}}" wx:for-item="skill" wx:key="skill" class="skill-card">
-            <view class="skill-card-copy">
-              <view class="skill-card-title">{{skill.title}}</view>
-              <view class="skill-card-desc">{{skill.description}}</view>
+        <image wx:if="{{item.role !== 'user'}}" class="chat-message-avatar" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
+        <view class="chat-message-stack {{item.role === 'user' ? 'user-stack' : ''}}">
+          <view wx:if="{{item.role !== 'user'}}" class="chat-sender">小汪</view>
+          <view class="chat-bubble {{item.role === 'user' ? 'user-bubble' : 'assistant-bubble'}}">{{item.content}}</view>
+          <view wx:if="{{item.skill_cards && item.skill_cards.length}}" class="skill-card-list">
+            <view wx:for="{{item.skill_cards}}" wx:for-item="skill" wx:key="skill" class="skill-card">
+              <view class="skill-card-copy">
+                <view class="skill-card-title">{{skill.title}}</view>
+                <view class="skill-card-desc">{{skill.description}}</view>
+              </view>
+              <button class="skill-card-button" data-action="{{skill.action}}" bindtap="runChatSkill">{{skill.cta}}</button>
             </view>
-            <button class="skill-card-button" data-action="{{skill.action}}" bindtap="runChatSkill">{{skill.cta}}</button>
           </view>
         </view>
       </view>
@@ -512,9 +520,18 @@
   </view>
 
   <view class="main-tabs">
-    <button class="main-tab {{activeTab === 'chat' ? 'main-tab-active' : ''}}" data-tab="chat" bindtap="switchMainTab">问小汪</button>
-    <button class="main-tab {{activeTab === 'meal' ? 'main-tab-active' : ''}}" data-tab="meal" bindtap="switchMainTab">挑饭</button>
-    <button class="main-tab {{activeTab === 'diary' ? 'main-tab-active' : ''}}" data-tab="diary" bindtap="switchMainTab">汪记本</button>
+    <button class="main-tab {{activeTab === 'chat' ? 'main-tab-active' : ''}}" data-tab="chat" bindtap="switchMainTab">
+      <view class="main-tab-icon">汪</view>
+      <view class="main-tab-label">问小汪</view>
+    </button>
+    <button class="main-tab {{activeTab === 'meal' ? 'main-tab-active' : ''}}" data-tab="meal" bindtap="switchMainTab">
+      <view class="main-tab-icon">饭</view>
+      <view class="main-tab-label">挑饭</view>
+    </button>
+    <button class="main-tab {{activeTab === 'diary' ? 'main-tab-active' : ''}}" data-tab="diary" bindtap="switchMainTab">
+      <view class="main-tab-icon">记</view>
+      <view class="main-tab-label">汪记本</view>
+    </button>
   </view>
 
   <view class="debug-strip">

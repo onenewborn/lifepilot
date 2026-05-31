@@ -88,12 +88,7 @@ Page({
     postMealFeedbackText: "",
     postMealResponse: null,
     chatSessionId: "",
-    chatMessages: [{
-      id: "welcome",
-      role: "assistant",
-      content: "我在，主人。你可以问我今天吃什么，也可以让我直接带你走饭点滑卡。",
-      skill_cards: []
-    }],
+    chatMessages: [],
     chatInput: "",
     isChatSubmitting: false,
     diary: null,
