@@ -9,6 +9,7 @@ import { requestOpenClawAgent } from "./openclaw-gateway-client.mjs";
 
 const DEFAULT_USER_ID = "demo_weiyingru";
 const CHAT_SCHEMA = "lifepilot.xiaowang_chat.v1";
+const DIARY_TIME_ZONE = "Asia/Shanghai";
 const SKILL_REGISTRY = [
   {
     skill: "meal_swipe",
@@ -54,6 +55,34 @@ const SKILL_REGISTRY = [
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function formatDiaryDateTime(value) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    return {
+      display_date: "",
+      display_time: "",
+      display_datetime: "",
+    };
+  }
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("zh-CN", {
+      timeZone: DIARY_TIME_ZONE,
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(date).map((part) => [part.type, part.value])
+  );
+  const displayDate = `${parts.month}月${parts.day}日`;
+  const displayTime = `${parts.hour}:${parts.minute}`;
+  return {
+    display_date: displayDate,
+    display_time: displayTime,
+    display_datetime: `${displayDate} ${displayTime}`,
+  };
 }
 
 function safeId(value) {
@@ -313,6 +342,84 @@ function skillCardsFromCalls(skillCalls = []) {
     .filter(Boolean);
 }
 
+function mealSlotLabel(slot) {
+  return {
+    breakfast: "早餐",
+    lunch: "午餐",
+    afternoon: "下午这顿",
+    dinner: "晚餐",
+    late_night: "夜宵",
+  }[slot] || "这顿饭";
+}
+
+function statusLabel(session) {
+  if (session.finalized_at || session.status === "finalized") return "已选定";
+  if (session.offer_event_count) return "看店中";
+  if (session.direction_event_count) return "挑方向中";
+  return "刚开始";
+}
+
+function compactGoal(text) {
+  const value = String(text || "")
+    .trim()
+    .replace(/^用户(想|需要|希望|正在找|在找)/, "")
+    .replace(/^一个/, "想要一个")
+    .replace(/^找一家/, "想找一家");
+  if (!value) return "";
+  return value.length > 54 ? `${value.slice(0, 54)}...` : value;
+}
+
+function xiaowangMealDiaryItem(session = {}) {
+  const timeSource = session.finalized_at || session.updated_at || session.created_at;
+  const time = formatDiaryDateTime(timeSource);
+  const slot = mealSlotLabel(session.meal_slot);
+  const status = statusLabel(session);
+  const merchantName = session.final_merchant_name || "";
+  const goal = compactGoal(session.goal);
+  const seenCount = Number(session.offer_event_count || session.direction_event_count || 0);
+
+  let diaryTitle = merchantName ? `${slot}选了 ${merchantName}` : `${slot}的小汪记录`;
+  let diaryText = goal
+    ? `主人这次想要：${goal}`
+    : "主人开了一轮饭点滑卡，小汪先记在这里。";
+  if (merchantName) {
+    diaryText = goal
+      ? `小汪记下啦：主人最后选了 ${merchantName}。一开始想要的是「${goal}」。`
+      : `小汪记下啦：主人最后选了 ${merchantName}。`;
+  } else if (seenCount > 0) {
+    diaryText = goal
+      ? `这轮还没最后拍板，但小汪已经陪主人看了 ${seenCount} 张卡。主人当时想要「${goal}」。`
+      : `这轮还没最后拍板，小汪已经陪主人看了 ${seenCount} 张卡。`;
+  }
+
+  return {
+    ...session,
+    ...time,
+    diary_title: diaryTitle,
+    diary_text: diaryText,
+    diary_status: status,
+  };
+}
+
+function xiaowangMemoryCandidateItem(candidate = {}) {
+  const time = formatDiaryDateTime(candidate.created_at || candidate.updated_at);
+  const text = candidate.confirmation_text || candidate.statement || "";
+  return {
+    ...candidate,
+    ...time,
+    diary_text: `主人，这条要不要让小汪长期记住：${text}`,
+  };
+}
+
+function xiaowangPreferenceItem(preference = {}) {
+  const time = formatDiaryDateTime(preference.updated_at || preference.created_at);
+  return {
+    ...preference,
+    ...time,
+    diary_text: preference.statement || preference.confirmation_text || "",
+  };
+}
+
 function memoryPromptsFromCalls({skillCalls = [], memoryPrompts = [], message}) {
   const prompts = Array.isArray(memoryPrompts) ? [...memoryPrompts] : [];
   const hasMemorySkill = skillCalls.some((call) => call.skill === "memory_capture");
@@ -501,15 +608,21 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date} = {}) {
   const dayContext = await getDayContext(dayId);
   const pending = await listMemoryCandidates({userId, status: "pending"});
   const preferences = await listConfirmedPreferences({userId});
+  const mealSessions = (dayContext?.meal_sessions || [])
+    .map(xiaowangMealDiaryItem)
+    .sort((left, right) => String(right.created_at || "").localeCompare(String(left.created_at || "")));
+  const memoryCandidates = (pending.candidates || []).map(xiaowangMemoryCandidateItem);
+  const confirmedPreferences = (preferences.preferences || []).map(xiaowangPreferenceItem);
   return {
     ok: true,
     user_id: userId,
     day_id: dayId,
     day_context: dayContext || null,
-    meal_sessions: dayContext?.meal_sessions || [],
-    memory_candidates: pending.candidates || [],
-    confirmed_preferences: preferences.preferences || [],
-    prompts: (pending.candidates || []).slice(0, 3).map((candidate) => ({
+    diary_date: dayContext?.date || dayId.match(/^day_(\d{8})_/)?.[1] || "",
+    meal_sessions: mealSessions,
+    memory_candidates: memoryCandidates,
+    confirmed_preferences: confirmedPreferences,
+    prompts: memoryCandidates.slice(0, 3).map((candidate) => ({
       candidate_id: candidate.candidate_id,
       text: `要不要让小汪记住：${candidate.confirmation_text || candidate.statement}`,
     })),

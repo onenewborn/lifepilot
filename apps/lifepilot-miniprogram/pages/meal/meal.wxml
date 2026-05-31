@@ -479,7 +479,7 @@
     <view class="diary-head">
       <view>
         <view class="section-title diary-title">小汪日记本</view>
-        <view class="diary-subtitle">每天记录吃饭习惯、行为反馈，以及待确认的长期偏好。</view>
+        <view class="diary-subtitle">主人今天怎么挑饭、哪里犹豫、哪些偏好值得记住，小汪都会慢慢攒起来。</view>
       </view>
       <button class="diary-refresh" loading="{{isDiaryLoading}}" bindtap="loadXiaowangDiary">刷新</button>
     </view>
@@ -490,18 +490,28 @@
       <view class="mini-title">今天吃饭记录</view>
       <view wx:if="{{diary && diary.meal_sessions && diary.meal_sessions.length}}">
         <view wx:for="{{diary.meal_sessions}}" wx:key="session_id" class="diary-item">
-          <view class="diary-item-title">{{item.final_choice && item.final_choice.merchant_name ? item.final_choice.merchant_name : '饭点滑卡记录'}}</view>
-          <view class="diary-item-text">{{item.goal || item.entry_summary || '小汪已记录这次选择过程。'}}</view>
+          <view class="diary-item-meta">
+            <text>{{item.display_date}}</text>
+            <text>{{item.display_time}}</text>
+            <text>{{item.diary_status}}</text>
+          </view>
+          <view class="diary-item-title">{{item.diary_title}}</view>
+          <view class="diary-item-text">{{item.diary_text}}</view>
         </view>
       </view>
-      <view wx:else class="diary-empty">今天还没有可沉淀的吃饭记录。可以先去挑饭，或者直接问小汪。</view>
+      <view wx:else class="diary-empty">今天小汪还没陪主人认真挑过饭。等你开始一轮，我就把过程记下来。</view>
     </view>
 
     <view class="diary-section">
       <view class="mini-title">小汪想确认</view>
       <view wx:if="{{diary && diary.memory_candidates && diary.memory_candidates.length}}">
         <view wx:for="{{diary.memory_candidates}}" wx:key="candidate_id" class="memory-candidate">
-          <view class="memory-candidate-text">{{item.confirmation_text || item.statement}}</view>
+          <view class="diary-item-meta">
+            <text>{{item.display_date}}</text>
+            <text>{{item.display_time}}</text>
+            <text>待确认</text>
+          </view>
+          <view class="memory-candidate-text">{{item.diary_text}}</view>
           <view class="memory-candidate-actions">
             <button class="memory-skip-button" data-id="{{item.candidate_id}}" bindtap="rejectDiaryCandidate">先不记</button>
             <button class="memory-confirm-button" data-id="{{item.candidate_id}}" bindtap="confirmDiaryCandidate">记住</button>
@@ -514,9 +524,12 @@
     <view class="diary-section">
       <view class="mini-title">已经记住</view>
       <view wx:if="{{diary && diary.confirmed_preferences && diary.confirmed_preferences.length}}" class="preference-list">
-        <view wx:for="{{diary.confirmed_preferences}}" wx:key="preference_id" class="preference-pill">{{item.statement}}</view>
+        <view wx:for="{{diary.confirmed_preferences}}" wx:key="preference_id" class="preference-pill">
+          <view>{{item.diary_text}}</view>
+          <view wx:if="{{item.display_date}}" class="preference-time">{{item.display_date}} {{item.display_time}}</view>
+        </view>
       </view>
-      <view wx:else class="diary-empty">确认后的小习惯会出现在这里，之后推荐会更懂你。</view>
+      <view wx:else class="diary-empty">主人点过“记住”以后，小汪会把长期偏好收在这里，之后挑饭会更懂你。</view>
     </view>
   </view>
 

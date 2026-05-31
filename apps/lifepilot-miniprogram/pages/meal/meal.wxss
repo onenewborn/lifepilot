@@ -1565,9 +1565,19 @@ button::after {
 }
 
 .diary-item-title {
+  margin-top: 8rpx;
   color: #2d2118;
   font-size: 28rpx;
   font-weight: 900;
+}
+
+.diary-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  color: rgba(75, 50, 31, 0.48);
+  font-size: 21rpx;
+  font-weight: 800;
 }
 
 .diary-item-text,
@@ -1584,6 +1594,13 @@ button::after {
   padding: 20rpx;
   border-radius: 18rpx;
   background: rgba(255, 255, 255, 0.52);
+}
+
+.preference-time {
+  margin-top: 4rpx;
+  color: rgba(75, 50, 31, 0.42);
+  font-size: 20rpx;
+  font-weight: 800;
 }
 
 .memory-candidate-actions {
