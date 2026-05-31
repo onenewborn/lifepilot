@@ -1199,8 +1199,8 @@ button::after {
   right: 28rpx;
   bottom: calc(48rpx + env(safe-area-inset-bottom));
   z-index: 18;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  align-items: center;
   gap: 10rpx;
   padding: 10rpx;
   border-radius: 999rpx;
@@ -1209,6 +1209,8 @@ button::after {
 }
 
 .main-tab {
+  flex: 1;
+  min-width: 0;
   height: 62rpx;
   border-radius: 999rpx;
   color: rgba(75, 50, 31, 0.68);
