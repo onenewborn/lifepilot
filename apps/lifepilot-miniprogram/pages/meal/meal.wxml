@@ -440,7 +440,15 @@
         <image wx:if="{{item.role !== 'user'}}" class="chat-message-avatar" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
         <view class="chat-message-stack {{item.role === 'user' ? 'user-stack' : ''}}">
           <view wx:if="{{item.role !== 'user'}}" class="chat-sender">小汪</view>
-          <view class="chat-bubble {{item.role === 'user' ? 'user-bubble' : 'assistant-bubble'}}">{{item.content}}</view>
+          <view class="chat-bubble {{item.role === 'user' ? 'user-bubble' : 'assistant-bubble'}} {{item.isThinking ? 'thinking-bubble' : ''}}">
+            <block wx:if="{{item.isThinking}}">
+              <text>{{item.content}}</text>
+              <text class="thinking-dot">.</text>
+              <text class="thinking-dot second-dot">.</text>
+              <text class="thinking-dot third-dot">.</text>
+            </block>
+            <block wx:else>{{item.content}}</block>
+          </view>
           <view wx:if="{{item.skill_cards && item.skill_cards.length}}" class="skill-card-list">
             <view wx:for="{{item.skill_cards}}" wx:for-item="skill" wx:key="skill" class="skill-card">
               <view class="skill-card-copy">

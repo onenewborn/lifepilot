@@ -853,10 +853,17 @@ Page({
       content: text,
       skill_cards: []
     };
+    const thinkingMessage = {
+      id: `thinking_${Date.now()}`,
+      role: "assistant",
+      content: "小汪正在想...",
+      isThinking: true,
+      skill_cards: []
+    };
     this.setData({
       chatInput: "",
       isChatSubmitting: true,
-      chatMessages: this.data.chatMessages.concat(localUserMessage)
+      chatMessages: this.data.chatMessages.concat(localUserMessage, thinkingMessage)
     });
     try {
       const payload = await xiaowangApi.chat({
@@ -870,13 +877,17 @@ Page({
         diary: null
       });
     } catch (error) {
+      const messages = this.data.chatMessages.map((item) => (
+        item.id === thinkingMessage.id
+          ? {
+            ...item,
+            content: error.message || "小汪暂时连不上后端。",
+            isThinking: false
+          }
+          : item
+      ));
       this.setData({
-        chatMessages: this.data.chatMessages.concat({
-          id: `error_${Date.now()}`,
-          role: "assistant",
-          content: error.message || "小汪暂时连不上后端。",
-          skill_cards: []
-        })
+        chatMessages: messages
       });
       wx.showToast({ title: "问小汪失败", icon: "none" });
     } finally {

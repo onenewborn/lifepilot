@@ -1415,6 +1415,23 @@ button::after {
   background: rgba(255, 255, 255, 0.92);
 }
 
+.thinking-bubble {
+  color: rgba(75, 50, 31, 0.62);
+}
+
+.thinking-dot {
+  display: inline-block;
+  animation: thinkingPulse 1.1s ease-in-out infinite;
+}
+
+.second-dot {
+  animation-delay: 0.16s;
+}
+
+.third-dot {
+  animation-delay: 0.32s;
+}
+
 .user-bubble {
   background: #ff6334;
   color: #ffffff;
@@ -1608,5 +1625,18 @@ button::after {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes thinkingPulse {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2rpx);
   }
 }
