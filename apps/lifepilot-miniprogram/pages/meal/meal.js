@@ -567,7 +567,7 @@ Page({
     }, 150);
   },
 
-  async recordSwipe(action) {
+  async recordSwipe(action, options = {}) {
     const card = this.data.currentCard;
     if (!card) {
       this.isCommittingSwipe = false;
@@ -595,7 +595,9 @@ Page({
       });
     } else {
       this.setData({ offerEvents: this.data.offerEvents.concat(event) });
-      this.advanceLocalCardStack();
+      this.advanceLocalCardStack(() => {
+        if (options.finalizeAfterOffer !== false && !this.data.currentCard) this.finalizeMeal();
+      });
     }
   },
 
@@ -746,8 +748,8 @@ Page({
 
   async chooseCurrentOffer() {
     if (!this.data.currentCard || this.data.stage !== "offer") return;
-    await this.recordSwipe("keep");
-    this.finalizeMeal();
+    await this.recordSwipe("keep", {finalizeAfterOffer: false});
+    await this.finalizeMeal();
   },
 
   async finalizeMeal() {

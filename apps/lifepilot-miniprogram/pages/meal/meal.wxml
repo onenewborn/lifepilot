@@ -291,9 +291,15 @@
     <view wx:else class="empty-state">
       <view class="section-title">{{stage === 'direction' ? '方向已经滑完了' : '商户已经看完了'}}</view>
       <view class="empty-text">{{stage === 'direction' ? '可以让小汪总结一下刚刚保留和放弃的区别。' : '可以直接进入最终确认。'}}</view>
+      <button
+        wx:if="{{stage === 'offer'}}"
+        class="primary-button full-button"
+        loading="{{isLoading}}"
+        bindtap="finalizeMeal"
+      >进入最终确认</button>
     </view>
 
-    <view class="action-bar {{stage === 'offer' ? 'offer-action-bar' : ''}}">
+    <view wx:if="{{currentCard}}" class="action-bar {{stage === 'offer' ? 'offer-action-bar' : ''}}">
       <button class="round-button dislike-button" bindtap="onDislike" disabled="{{!currentCard || isLoading}}">×</button>
       <button
         wx:if="{{stage === 'direction'}}"
@@ -349,19 +355,27 @@
 
   <view wx:elif="{{stage === 'final'}}" class="final-panel">
     <view wx:if="{{result.hasSelection}}">
-      <view class="section-title">小汪建议这一家</view>
+      <view class="final-kicker">最终确认</view>
+      <view class="section-title final-title">小汪建议这一家</view>
       <view class="result-ai-row">
         <image class="result-ai-avatar" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
-        <view class="result-ai-copy">我会按主人刚刚保留的方向来判断，不只是看评分。</view>
+        <view class="result-ai-copy">{{result.summaryText}}</view>
       </view>
       <view class="result-card">
         <image class="result-image" src="{{result.primary.imageUrl}}" mode="aspectFill" />
         <view class="result-content">
-          <view class="card-title dark-title">{{result.primary.title}}</view>
+          <view class="result-merchant">{{result.primary.title}}</view>
           <view class="dish-title dark-dish">{{result.primary.dishTitle}}</view>
-          <view class="summary-text compact">{{result.summaryText}}</view>
           <view class="tag-row fixed-tags">
             <text wx:for="{{result.primary.tags}}" wx:key="*this" class="tag dark-tag">{{item}}</text>
+          </view>
+          <view wx:if="{{result.primary.matched.length}}" class="result-reason-block">
+            <view class="result-mini-title">为什么是这家</view>
+            <view wx:for="{{result.primary.matched}}" wx:key="*this" class="result-reason-line">{{item}}</view>
+          </view>
+          <view wx:if="{{result.primary.issueLines.length}}" class="result-reason-block result-watchout-block">
+            <view class="result-mini-title">{{result.primary.issueTitle}}</view>
+            <view wx:for="{{result.primary.issueLines}}" wx:key="*this" class="result-reason-line">{{item}}</view>
           </view>
         </view>
       </view>
