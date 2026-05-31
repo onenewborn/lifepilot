@@ -449,6 +449,15 @@
             </block>
             <block wx:else>{{item.content}}</block>
           </view>
+          <view wx:if="{{item.debug_trace}}" class="agent-trace">
+            <view class="agent-trace-head">
+              <text class="agent-trace-dot"></text>
+              <text>开发轨迹</text>
+            </view>
+            <view class="agent-trace-lines">
+              <text wx:for="{{item.debug_trace.lines}}" wx:key="*this" class="agent-trace-line">{{item}}</text>
+            </view>
+          </view>
           <view wx:if="{{item.skill_cards && item.skill_cards.length}}" class="skill-card-list">
             <view wx:for="{{item.skill_cards}}" wx:for-item="skill" wx:key="skill" class="skill-card">
               <view class="skill-card-copy">

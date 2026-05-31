@@ -1444,6 +1444,50 @@ button::after {
   font-weight: 800;
 }
 
+.agent-trace {
+  width: 100%;
+  margin-top: 8rpx;
+  padding: 10rpx 12rpx;
+  border-radius: 8rpx;
+  background: rgba(45, 33, 24, 0.06);
+  box-sizing: border-box;
+}
+
+.agent-trace-head {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  color: rgba(75, 50, 31, 0.52);
+  font-size: 19rpx;
+  font-weight: 900;
+}
+
+.agent-trace-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 999rpx;
+  background: #3fa46a;
+}
+
+.agent-trace-lines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 8rpx;
+}
+
+.agent-trace-line {
+  max-width: 100%;
+  padding: 5rpx 8rpx;
+  border-radius: 6rpx;
+  background: rgba(255, 255, 255, 0.62);
+  color: rgba(75, 50, 31, 0.62);
+  font-size: 18rpx;
+  font-weight: 800;
+  line-height: 1.25;
+  word-break: break-all;
+}
+
 .skill-card-list {
   width: 100%;
   margin-top: 12rpx;

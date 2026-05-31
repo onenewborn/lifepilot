@@ -14,6 +14,62 @@ const LOCATION_LANDMARKS = [
   { label: "福田区 · 车公庙附近", latitude: 22.536, longitude: 114.028 },
 ];
 
+function shortRunId(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  return text.length > 18 ? text.slice(-18) : text;
+}
+
+function sourceLabelForAssistant(message) {
+  const mode = String(message.mode || "").trim();
+  if (mode === "openclaw_gateway_client") return "AI · OpenClaw";
+  if (mode === "local_fallback_after_openclaw_error") return "后端兜底";
+  if (mode === "local_empty_message") return "本地空消息";
+  if (mode === "local_skill_router") return "后端规则";
+  return mode || "";
+}
+
+function buildChatDebugTrace(message) {
+  if (!message || message.role === "user" || message.isThinking) return null;
+  const sourceLabel = sourceLabelForAssistant(message);
+  const lines = [];
+  if (sourceLabel) lines.push(`来源：${sourceLabel}`);
+  if (message.openclaw && message.openclaw.parse_mode) {
+    lines.push(`解析：${message.openclaw.parse_mode}`);
+  }
+  if (message.openclaw && message.openclaw.run_id) {
+    lines.push(`Run：${shortRunId(message.openclaw.run_id)}`);
+  }
+  if (message.openclaw && message.openclaw.error) {
+    lines.push(`OpenClaw 异常：${message.openclaw.error}`);
+  }
+  const skillCalls = Array.isArray(message.agent_skill_calls) ? message.agent_skill_calls : [];
+  const skillCards = Array.isArray(message.skill_cards) ? message.skill_cards : [];
+  const skillNames = skillCalls.length
+    ? skillCalls.map((item) => item.skill).filter(Boolean)
+    : skillCards.map((item) => item.skill || item.title).filter(Boolean);
+  if (skillNames.length) lines.push(`Skill：${skillNames.join("、")}`);
+  if (message.memory_candidate_created_count) {
+    lines.push(`记忆候选：${message.memory_candidate_created_count} 条`);
+  }
+  return lines.length ? {
+    source_label: sourceLabel,
+    lines
+  } : null;
+}
+
+function decorateChatMessage(message) {
+  if (!message || typeof message !== "object") return message;
+  return {
+    ...message,
+    debug_trace: buildChatDebugTrace(message)
+  };
+}
+
+function decorateChatMessages(messages = []) {
+  return (Array.isArray(messages) ? messages : []).map(decorateChatMessage);
+}
+
 Page({
   data: {
     activeTab: "chat",
@@ -863,7 +919,10 @@ Page({
     this.setData({
       chatInput: "",
       isChatSubmitting: true,
-      chatMessages: this.data.chatMessages.concat(localUserMessage, thinkingMessage)
+      chatMessages: this.data.chatMessages.concat(
+        decorateChatMessage(localUserMessage),
+        decorateChatMessage(thinkingMessage)
+      )
     });
     try {
       const payload = await xiaowangApi.chat({
@@ -873,7 +932,7 @@ Page({
       });
       this.setData({
         chatSessionId: payload.session && payload.session.session_id ? payload.session.session_id : this.data.chatSessionId,
-        chatMessages: payload.messages || this.data.chatMessages.concat(payload.assistant || []),
+        chatMessages: decorateChatMessages(payload.messages || this.data.chatMessages.concat(payload.assistant || [])),
         diary: null
       });
     } catch (error) {
