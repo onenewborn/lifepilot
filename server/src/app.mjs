@@ -28,6 +28,7 @@ import {
   writeMealSessionSummaryToEvermind,
 } from "./evermind-sync.mjs";
 import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
+import { buildMerchantCompareContext, buildMerchantIntelContext } from "./merchant-tools.mjs";
 import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
 import { runOpenClawDreamAgent } from "./openclaw-runner.mjs";
 import { handleXiaowangChat, listXiaowangSkills, readXiaowangDiary } from "./xiaowang-store.mjs";
@@ -338,6 +339,36 @@ async function handleSessionFinalize(req, res) {
 async function handleQueueStatus(req, res) {
   const body = req.method === "POST" ? await readBody(req) : {};
   ok(res, queuePayload(body.merchant || body));
+}
+
+async function handleMerchantIntelContext(req, res) {
+  const body = await readBody(req);
+  const payload = await buildMerchantIntelContext({
+    userId: body.user_id || body.userId || "demo_weiyingru",
+    merchantId: body.merchant_id || body.merchantId,
+    sessionId: body.session_id || body.sessionId || "",
+    question: body.question || body.query || "",
+  });
+  if (!payload.ok) {
+    fail(res, 404, payload.error || "merchant_not_found", payload.error || "Merchant not found.", payload);
+    return;
+  }
+  ok(res, payload);
+}
+
+async function handleMerchantCompareContext(req, res) {
+  const body = await readBody(req);
+  const payload = await buildMerchantCompareContext({
+    userId: body.user_id || body.userId || "demo_weiyingru",
+    merchantIds: body.merchant_ids || body.merchantIds || [body.left_merchant_id || body.leftMerchantId, body.right_merchant_id || body.rightMerchantId],
+    sessionId: body.session_id || body.sessionId || "",
+    question: body.question || body.query || "",
+  });
+  if (!payload.ok) {
+    fail(res, 404, payload.error || "merchant_not_found", payload.error || "Merchant not found.", payload);
+    return;
+  }
+  ok(res, payload);
 }
 
 async function handleWeatherForecast(req, res) {
@@ -703,6 +734,14 @@ async function route(req, res) {
     }
     if ((req.method === "GET" || req.method === "POST") && url.pathname === "/api/queue/status") {
       await handleQueueStatus(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/tools/merchant-intel-context") {
+      await handleMerchantIntelContext(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/tools/merchant-compare-context") {
+      await handleMerchantCompareContext(req, res);
       return;
     }
     if (req.method === "GET" && url.pathname.startsWith("/api/day-context/")) {
