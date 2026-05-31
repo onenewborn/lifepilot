@@ -5,6 +5,7 @@ import path from "node:path";
 import { config } from "./config.mjs";
 import { createDayId, getDayContext } from "./session-store.mjs";
 import { createMemoryCandidatesFromOpenClaw, listConfirmedPreferences, listMemoryCandidates } from "./memory-store.mjs";
+import { requestOpenClawAgent } from "./openclaw-gateway-client.mjs";
 
 const DEFAULT_USER_ID = "demo_weiyingru";
 const CHAT_SCHEMA = "lifepilot.xiaowang_chat.v1";
@@ -98,6 +99,55 @@ function buildAssistantReply({message, pendingCount, preferenceCount, skillCards
   return "我在，主人。你可以直接问我今天怎么吃，也可以告诉我以后想多推荐或少推荐什么。";
 }
 
+function recentChatContext(messages = []) {
+  return messages
+    .slice(-8)
+    .map((item) => `${item.role === "user" ? "用户" : "小汪"}：${String(item.content || "").trim()}`)
+    .filter((line) => line.trim())
+    .join("\n");
+}
+
+function parseOpenClawText(result) {
+  return result?.result?.payloads?.map((payload) => payload.text).filter(Boolean).join("\n").trim() || "";
+}
+
+function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount}) {
+  const context = recentChatContext(session.messages || []);
+  return [
+    "你是 LifePilot 微信小程序里的小汪。请按 OpenClaw workspace 的 SOUL.md 和 AGENTS.md 回复。",
+    "",
+    "用户正在和小汪聊天。请用自然、简短、具体的中文回复，像 IM 对话，不要写报告。",
+    "不要暴露 gateway、runner、transport、schema、OpenClaw 等内部实现。",
+    "如果用户想吃饭、选饭或不知道吃什么，可以提到你能调起饭点滑卡，但不要伪造已经调起；后端会用 skill card 处理。",
+    "如果用户表达长期偏好或要求记住，提醒需要主人确认后小汪才会正式记住。",
+    "",
+    `当前已确认偏好数量：${preferenceCount}`,
+    `待确认记忆数量：${pendingCount}`,
+    context ? `最近对话：\n${context}` : "最近对话：暂无",
+    "",
+    `用户最新消息：${message}`,
+    "",
+    "请只输出小汪要发给用户的一段话，最多 3 句。",
+  ].join("\n");
+}
+
+async function getOpenClawChatReply({message, session, pendingCount, preferenceCount}) {
+  const result = await requestOpenClawAgent({
+    sessionId: `lifepilot-xiaowang-${session.session_id}`,
+    timeoutSeconds: 60,
+    idempotencyKey: `lifepilot-xiaowang-${session.session_id}-${Date.now()}-${randomUUID().slice(0, 6)}`,
+    message: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount}),
+  });
+  const text = parseOpenClawText(result);
+  if (result?.status !== "ok" || !text) {
+    throw new Error("openclaw_empty_reply");
+  }
+  return {
+    content: text,
+    raw: result,
+  };
+}
+
 export async function handleXiaowangChat({body = {}} = {}) {
   const userId = body.user_id || body.userId || DEFAULT_USER_ID;
   const message = String(body.message || "").trim();
@@ -134,20 +184,55 @@ export async function handleXiaowangChat({body = {}} = {}) {
     });
   }
 
-  const assistant = {
-    id: `msg_${Date.now()}_${randomUUID().slice(0, 6)}`,
-    role: "assistant",
-    content: buildAssistantReply({
+  let content = "";
+  let mode = "local_skill_router";
+  let openclawMeta = null;
+  if (!skillCards.length && !memoryResult.created_count && message) {
+    try {
+      const openclawReply = await getOpenClawChatReply({
+        message,
+        session,
+        pendingCount: pending.count || 0,
+        preferenceCount: preferences.count || 0,
+      });
+      content = openclawReply.content;
+      mode = "openclaw_gateway_client";
+      openclawMeta = {
+        status: openclawReply.raw?.status || "",
+        run_id: openclawReply.raw?.runId || "",
+      };
+    } catch (error) {
+      content = buildAssistantReply({
+        message,
+        pendingCount: pending.count || 0,
+        preferenceCount: preferences.count || 0,
+        skillCards,
+        createdCount: memoryResult.created_count || 0,
+      });
+      mode = "local_fallback_after_openclaw_error";
+      openclawMeta = {
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  } else {
+    content = buildAssistantReply({
       message,
       pendingCount: pending.count || 0,
       preferenceCount: preferences.count || 0,
       skillCards,
       createdCount: memoryResult.created_count || 0,
-    }),
-    mode: "local_skill_router",
+    });
+  }
+
+  const assistant = {
+    id: `msg_${Date.now()}_${randomUUID().slice(0, 6)}`,
+    role: "assistant",
+    content,
+    mode,
     skill_cards: skillCards,
     memory_candidate_created_count: memoryResult.created_count || 0,
     memory_candidates: memoryResult.candidates || [],
+    openclaw: openclawMeta,
     created_at: createdAt,
   };
 
