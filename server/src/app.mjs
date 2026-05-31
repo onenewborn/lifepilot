@@ -30,6 +30,7 @@ import {
 import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
 import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
 import { runOpenClawDreamAgent } from "./openclaw-runner.mjs";
+import { handleXiaowangChat, readXiaowangDiary } from "./xiaowang-store.mjs";
 
 let latestLocationProbe = null;
 
@@ -618,6 +619,20 @@ async function handleOpenClawRunDream(req, res) {
   });
 }
 
+async function handleXiaowangChatRoute(req, res) {
+  const body = await readBody(req);
+  const payload = await handleXiaowangChat({body});
+  ok(res, payload);
+}
+
+async function handleXiaowangDiaryRoute(res, url) {
+  const payload = await readXiaowangDiary({
+    userId: url.searchParams.get("user_id") || url.searchParams.get("userId") || "demo_weiyingru",
+    date: url.searchParams.get("date") || "",
+  });
+  ok(res, payload);
+}
+
 async function route(req, res) {
   const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
 
@@ -696,6 +711,14 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/openclaw/run-dream") {
       await handleOpenClawRunDream(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/xiaowang/chat") {
+      await handleXiaowangChatRoute(req, res);
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/xiaowang/diary") {
+      await handleXiaowangDiaryRoute(res, url);
       return;
     }
     if (req.method === "GET" && url.pathname.startsWith("/api/openclaw/jobs/by-dream/")) {

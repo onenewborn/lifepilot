@@ -1,5 +1,6 @@
 const sessionApi = require("../../services/session-api");
 const memoryApi = require("../../services/memory-api");
+const xiaowangApi = require("../../services/xiaowang-api");
 const { getApiBaseUrl, getApiMode } = require("../../config/api");
 const { normalizeDirectionCard, normalizeOfferCard, normalizeResult } = require("../../utils/card-normalizer");
 const swipeGesture = require("../../utils/swipe-gesture");
@@ -15,6 +16,7 @@ const LOCATION_LANDMARKS = [
 
 Page({
   data: {
+    activeTab: "meal",
     stage: "entry",
     stageLabel: "饭点",
     stageSubtitle: "先告诉小汪今天想怎么吃",
@@ -85,6 +87,18 @@ Page({
     result: null,
     postMealFeedbackText: "",
     postMealResponse: null,
+    chatSessionId: "",
+    chatMessages: [{
+      id: "welcome",
+      role: "assistant",
+      content: "我在，主人。你可以问我今天吃什么，也可以让我直接带你走饭点滑卡。",
+      skill_cards: []
+    }],
+    chatInput: "",
+    isChatSubmitting: false,
+    diary: null,
+    isDiaryLoading: false,
+    diaryError: "",
     isLoading: false,
     loadingText: "",
     bootNotice: "",
@@ -807,6 +821,132 @@ Page({
       wx.showToast({ title: "反馈提交失败", icon: "none" });
     } finally {
       this.setData({ isLoading: false, loadingText: "" });
+    }
+  },
+
+  switchMainTab(event) {
+    const tab = event.currentTarget.dataset.tab || "meal";
+    const next = {
+      activeTab: tab,
+      errorText: tab === "meal" ? this.data.errorText : ""
+    };
+    if (tab === "meal") {
+      next.stageLabel = this.labelForStage(this.data.stage);
+      next.stageSubtitle = this.subtitleForStage(this.data.stage);
+    } else if (tab === "chat") {
+      next.stageLabel = "问小汪";
+      next.stageSubtitle = "可以聊天，也可以调起滑卡";
+    } else if (tab === "diary") {
+      next.stageLabel = "小汪日记本";
+      next.stageSubtitle = "今天的吃饭记录和待确认记忆";
+    }
+    this.setData(next, () => {
+      if (tab === "diary" && !this.data.diary) this.loadXiaowangDiary();
+    });
+  },
+
+  onChatInput(event) {
+    this.setData({ chatInput: event.detail.value || "" });
+  },
+
+  async submitXiaowangChat() {
+    const text = String(this.data.chatInput || "").trim();
+    if (!text || this.data.isChatSubmitting) return;
+    const localUserMessage = {
+      id: `local_${Date.now()}`,
+      role: "user",
+      content: text,
+      skill_cards: []
+    };
+    this.setData({
+      chatInput: "",
+      isChatSubmitting: true,
+      chatMessages: this.data.chatMessages.concat(localUserMessage)
+    });
+    try {
+      const payload = await xiaowangApi.chat({
+        user_id: DEFAULT_USER_ID,
+        session_id: this.data.chatSessionId,
+        message: text
+      });
+      this.setData({
+        chatSessionId: payload.session && payload.session.session_id ? payload.session.session_id : this.data.chatSessionId,
+        chatMessages: payload.messages || this.data.chatMessages.concat(payload.assistant || []),
+        diary: null
+      });
+    } catch (error) {
+      this.setData({
+        chatMessages: this.data.chatMessages.concat({
+          id: `error_${Date.now()}`,
+          role: "assistant",
+          content: error.message || "小汪暂时连不上后端。",
+          skill_cards: []
+        })
+      });
+      wx.showToast({ title: "问小汪失败", icon: "none" });
+    } finally {
+      this.setData({ isChatSubmitting: false });
+    }
+  },
+
+  runChatSkill(event) {
+    const action = event.currentTarget.dataset.action;
+    if (action !== "start_meal") return;
+    this.setData({
+      activeTab: "meal",
+      stageLabel: this.labelForStage(this.data.stage),
+      stageSubtitle: this.subtitleForStage(this.data.stage)
+    }, () => {
+      if (this.data.stage === "entry") {
+        this.startMealFlow();
+      }
+    });
+  },
+
+  async loadXiaowangDiary() {
+    if (this.data.isDiaryLoading) return;
+    this.setData({ isDiaryLoading: true, diaryError: "" });
+    try {
+      const payload = await xiaowangApi.getDiary({ user_id: DEFAULT_USER_ID });
+      this.setData({ diary: payload });
+    } catch (error) {
+      this.setData({ diaryError: error.message || "日记本加载失败" });
+    } finally {
+      this.setData({ isDiaryLoading: false });
+    }
+  },
+
+  async confirmDiaryCandidate(event) {
+    const candidateId = event.currentTarget.dataset.id;
+    if (!candidateId) return;
+    this.setData({ isDiaryLoading: true });
+    try {
+      await memoryApi.confirmCandidate(candidateId, { user_id: DEFAULT_USER_ID, actor: "user" });
+      wx.showToast({ title: "小汪已记住", icon: "none" });
+      this.setData({ isDiaryLoading: false });
+      await this.loadXiaowangDiary();
+    } catch (error) {
+      wx.showToast({ title: "确认失败", icon: "none" });
+      this.setData({ isDiaryLoading: false });
+    } finally {
+      if (this.data.isDiaryLoading) this.setData({ isDiaryLoading: false });
+    }
+  },
+
+  async rejectDiaryCandidate(event) {
+    const candidateId = event.currentTarget.dataset.id;
+    if (!candidateId) return;
+    this.setData({ isDiaryLoading: true });
+    try {
+      await memoryApi.rejectCandidate(candidateId, { user_id: DEFAULT_USER_ID, actor: "user", reason: "user_reject_from_diary" });
+      wx.showToast({ title: "已先不记", icon: "none" });
+      this.setData({ isDiaryLoading: false });
+      await this.loadXiaowangDiary();
+    } catch (error) {
+      wx.showToast({ title: "忽略失败", icon: "none" });
+      this.setData({ isDiaryLoading: false });
+    } finally {
+      if (this.data.isDiaryLoading) this.setData({ isDiaryLoading: false });
     }
   },
 

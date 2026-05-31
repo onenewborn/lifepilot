@@ -9,7 +9,7 @@
   <view wx:if="{{bootNotice}}" class="notice">{{bootNotice}}</view>
   <view wx:if="{{errorText}}" class="error">{{errorText}}</view>
 
-  <view wx:if="{{stage === 'entry'}}" class="entry-panel">
+  <view wx:if="{{activeTab === 'meal' && stage === 'entry'}}" class="entry-panel">
     <view class="entry-title-row">
       <view class="section-title entry-title">今天想怎么吃？</view>
       <button class="location-chip" bindtap="getLocation">{{locationText}}</button>
@@ -111,7 +111,7 @@
     </view>
   </view>
 
-  <view wx:elif="{{stage === 'direction' || stage === 'offer'}}" class="flow {{stage === 'offer' ? 'offer-flow' : ''}}">
+  <view wx:elif="{{activeTab === 'meal' && (stage === 'direction' || stage === 'offer')}}" class="flow {{stage === 'offer' ? 'offer-flow' : ''}}">
     <view wx:if="{{stage === 'direction'}}" class="direction-brief">
       <image class="direction-brief-avatar" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
       <view class="direction-brief-copy">先滑几张方向卡，喜欢的留下，不喜欢的划走，后面再看具体店。</view>
@@ -319,7 +319,7 @@
     </view>
   </view>
 
-  <view wx:elif="{{stage === 'direction_summary' || stage === 'direction_summary_loading'}}" class="summary-panel">
+  <view wx:elif="{{activeTab === 'meal' && (stage === 'direction_summary' || stage === 'direction_summary_loading')}}" class="summary-panel">
     <image class="summary-mascot" src="{{xiaowangSummaryUrl}}" mode="aspectFit" />
     <view class="section-title">小汪先帮主人收窄一下</view>
     <view wx:if="{{directionSummary}}" class="summary-choice-block">
@@ -353,7 +353,7 @@
     </view>
   </view>
 
-  <view wx:elif="{{stage === 'final'}}" class="final-panel">
+  <view wx:elif="{{activeTab === 'meal' && stage === 'final'}}" class="final-panel">
     <view wx:if="{{result.hasSelection}}">
       <view class="final-kicker">最终确认</view>
       <view class="section-title final-title">小汪建议这一家</view>
@@ -410,11 +410,103 @@
     <button class="secondary-button full-button" bindtap="resetFlow">再来一轮</button>
   </view>
 
+  <view wx:elif="{{activeTab === 'chat'}}" class="chat-panel">
+    <view class="chat-hero">
+      <image class="chat-avatar" src="{{xiaowangMascotUrl}}" mode="aspectFit" />
+      <view class="chat-hero-copy">
+        <view class="chat-title">问小汪</view>
+        <view class="chat-subtitle">可以聊今天怎么吃，也可以让小汪直接调起饭点滑卡。</view>
+      </view>
+    </view>
+
+    <scroll-view class="chat-list" scroll-y enhanced show-scrollbar="{{false}}">
+      <view
+        wx:for="{{chatMessages}}"
+        wx:key="id"
+        class="chat-message {{item.role === 'user' ? 'chat-message-user' : 'chat-message-assistant'}}"
+      >
+        <view class="chat-bubble">{{item.content}}</view>
+        <view wx:if="{{item.skill_cards && item.skill_cards.length}}" class="skill-card-list">
+          <view wx:for="{{item.skill_cards}}" wx:for-item="skill" wx:key="skill" class="skill-card">
+            <view class="skill-card-copy">
+              <view class="skill-card-title">{{skill.title}}</view>
+              <view class="skill-card-desc">{{skill.description}}</view>
+            </view>
+            <button class="skill-card-button" data-action="{{skill.action}}" bindtap="runChatSkill">{{skill.cta}}</button>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="chat-input-row">
+      <textarea
+        class="chat-input"
+        value="{{chatInput}}"
+        maxlength="160"
+        auto-height
+        bindinput="onChatInput"
+        placeholder="比如：帮我走滑卡，今天想吃热乎一点。"
+      />
+      <button class="chat-send-button" loading="{{isChatSubmitting}}" bindtap="submitXiaowangChat">发送</button>
+    </view>
+  </view>
+
+  <view wx:elif="{{activeTab === 'diary'}}" class="diary-panel">
+    <view class="diary-head">
+      <view>
+        <view class="section-title diary-title">小汪日记本</view>
+        <view class="diary-subtitle">每天记录吃饭习惯、行为反馈，以及待确认的长期偏好。</view>
+      </view>
+      <button class="diary-refresh" loading="{{isDiaryLoading}}" bindtap="loadXiaowangDiary">刷新</button>
+    </view>
+
+    <view wx:if="{{diaryError}}" class="error">{{diaryError}}</view>
+
+    <view class="diary-section">
+      <view class="mini-title">今天吃饭记录</view>
+      <view wx:if="{{diary && diary.meal_sessions && diary.meal_sessions.length}}">
+        <view wx:for="{{diary.meal_sessions}}" wx:key="session_id" class="diary-item">
+          <view class="diary-item-title">{{item.final_choice && item.final_choice.merchant_name ? item.final_choice.merchant_name : '饭点滑卡记录'}}</view>
+          <view class="diary-item-text">{{item.goal || item.entry_summary || '小汪已记录这次选择过程。'}}</view>
+        </view>
+      </view>
+      <view wx:else class="diary-empty">今天还没有可沉淀的吃饭记录。可以先去挑饭，或者直接问小汪。</view>
+    </view>
+
+    <view class="diary-section">
+      <view class="mini-title">小汪想确认</view>
+      <view wx:if="{{diary && diary.memory_candidates && diary.memory_candidates.length}}">
+        <view wx:for="{{diary.memory_candidates}}" wx:key="candidate_id" class="memory-candidate">
+          <view class="memory-candidate-text">{{item.confirmation_text || item.statement}}</view>
+          <view class="memory-candidate-actions">
+            <button class="memory-skip-button" data-id="{{item.candidate_id}}" bindtap="rejectDiaryCandidate">先不记</button>
+            <button class="memory-confirm-button" data-id="{{item.candidate_id}}" bindtap="confirmDiaryCandidate">记住</button>
+          </view>
+        </view>
+      </view>
+      <view wx:else class="diary-empty">暂时没有需要主人确认的长期记忆。</view>
+    </view>
+
+    <view class="diary-section">
+      <view class="mini-title">已经记住</view>
+      <view wx:if="{{diary && diary.confirmed_preferences && diary.confirmed_preferences.length}}" class="preference-list">
+        <view wx:for="{{diary.confirmed_preferences}}" wx:key="preference_id" class="preference-pill">{{item.statement}}</view>
+      </view>
+      <view wx:else class="diary-empty">确认后的小习惯会出现在这里，之后推荐会更懂你。</view>
+    </view>
+  </view>
+
   <view wx:if="{{isLoading}}" class="loading-mask">
     <view class="loading-box">
       <view class="loader"></view>
       <view>{{loadingText}}</view>
     </view>
+  </view>
+
+  <view class="main-tabs">
+    <button class="main-tab {{activeTab === 'meal' ? 'main-tab-active' : ''}}" data-tab="meal" bindtap="switchMainTab">挑饭</button>
+    <button class="main-tab {{activeTab === 'chat' ? 'main-tab-active' : ''}}" data-tab="chat" bindtap="switchMainTab">问小汪</button>
+    <button class="main-tab {{activeTab === 'diary' ? 'main-tab-active' : ''}}" data-tab="diary" bindtap="switchMainTab">汪记本</button>
   </view>
 
   <view class="debug-strip">

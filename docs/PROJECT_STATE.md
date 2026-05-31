@@ -1,6 +1,6 @@
 # 项目驾驶舱
 
-更新时间：2026-05-30 23:55
+更新时间：2026-05-31 10:54
 
 ## 一句话
 
@@ -53,22 +53,17 @@ tag: lifepilot-rebuild-base-20260530
 /Users/mona/Documents/lifepilot/apps/lifepilot-miniprogram
 ```
 
-当前只开放饭点主链路：
+当前小程序已经开放三段主入口：
 
 ```text
-入口表单
-→ 方向卡左右滑
-→ 方向小结
-→ 商家卡左右滑
-→ 最终推荐
-→ 饭后反馈 / 候选记忆
+挑饭：入口表单 → 方向卡 → 方向小结 → 商家卡 → 最终确认 → 饭后反馈 / 候选记忆
+问小汪：轻量聊天入口，支持返回 meal_swipe skill 卡并调起滑卡路线
+汪记本：今日吃饭记录、待确认长期偏好、已确认偏好
 ```
 
 暂时隐藏：
 
 ```text
-问小汪
-汪记本
 OpenClaw 过程展示
 完整 IM / tool trace 展示
 ```
@@ -90,6 +85,8 @@ POST /api/session/finalize
 POST /api/session/offer-explanation
 GET  /api/session/:id
 GET  /api/day-context/:id
+POST /api/xiaowang/chat
+GET  /api/xiaowang/diary
 GET/POST /api/weather/forecast
 GET/POST /api/queue/status
 POST /api/map/route
@@ -158,11 +155,22 @@ apps/lifepilot-miniprogram/data/video-manifest.js
 商户解释改为一张一张预取，避免一次批量请求慢和 429
 第二阶段商家卡已参考旧 workspace 重做展示结构：上半媒体、下半商家信息、小汪判断和留意事项分层展示
 商家卡 normalizer 已补 displayTags、coverThumbUrl、storeFacts、issueLines 等旧版展示字段
+商家卡文字区与滑动手势分离，手机端可以纵向滚动文本，媒体区负责左右滑
+增加 api mode 开关，手机预览可切 tunnel，开发者工具可切 local
+最终确认页已补成可用前端
+底部增加“挑饭 / 问小汪 / 汪记本”三段导航
+问小汪新增最小 skill router：用户说“帮我走滑卡/今天吃什么”时返回 meal_swipe skill 卡
+汪记本新增最小 UI：展示今日 meal session、待确认 memory candidates、confirmed preferences
 ```
 
 最近提交：
 
 ```text
+8b40f64 feat: add final confirmation flow
+b49555a fix: separate merchant scroll and swipe zones
+b268578 fix: reduce merchant gesture conflicts
+e4b2827 fix: allow merchant info scrolling on mobile
+f88c3df chore: add miniprogram api mode switch
 106099a fix: improve merchant card presentation
 4c73e7f docs: sync openclaw bridge phase
 b3c2adb feat: enrich direction summary feedback
@@ -231,11 +239,11 @@ OpenClaw trace / 长连接 / 流式过程展示后续可以用 web 控制台或�
 ## 当前已知问题
 
 ```text
-1. 商家卡展示刚参考旧版重做，需要在微信开发者工具里人工测一轮布局、滚动、视频和按钮。
-2. 方向小结页刚补完，也需要在开发者工具里人工测一轮。
-3. 商户卡解释仍依赖 Ark/Doubao 单卡预取，首张卡可能有等待。
-4. Evermind 通用长期记忆不应该每张卡都请求，后续要在 session 启动时读一次并缓存。
-5. 问小汪、汪记本、OpenClaw tool trace 展示尚未迁入新小程序。
+1. 问小汪和汪记本是第一版骨架，还需要继续做更完整的聊天 UI、日级记录结构和 OpenClaw skill 调度。
+2. 汪记本当前读取产品后端 day context 和 memory ledger，还没有真正的“小汪每日主动总结”生成流程。
+3. 问小汪当前是 local skill router，后续要接 OpenClaw skills/agent trace。
+4. 商户卡解释仍依赖 Ark/Doubao 单卡预取，首张卡可能有等待。
+5. Evermind 通用长期记忆不应该每张卡都请求，后续要在 session 启动时读一次并缓存。
 6. 根目录有一个未跟踪的临时 project.config.json，暂时不要提交。
 ```
 

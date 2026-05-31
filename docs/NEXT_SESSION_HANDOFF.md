@@ -1,6 +1,6 @@
 # 新会话交接
 
-更新时间：2026-05-30 23:55
+更新时间：2026-05-31 10:54
 
 ## 请先理解
 
@@ -20,7 +20,7 @@
 
 ## 当前任务主线
 
-我们正在做微信小程序前端迁移和体验打磨。后端饭点闭环、记忆基础、OpenClaw bridge、Evermind 接入都已经有最小链路，现在重点是让小程序体验接近旧版，同时保持新代码模块化。
+我们正在做微信小程序前端迁移和体验打磨。后端饭点闭环、记忆基础、OpenClaw bridge、Evermind 接入都已经有最小链路；当前刚开始把“问小汪 / 汪记本 / skill 调度”迁回新小程序。
 
 当前小程序入口：
 
@@ -38,19 +38,19 @@ apps/lifepilot-miniprogram/pages/meal/meal.wxss
 
 ## 最近刚做完
 
-最近几次修复集中在视频、方向小结和商家卡视觉：
+最近几次修复集中在手机预览、商家卡、最终确认和问小汪骨架：
 
 ```text
-方向卡视频改为 COS manifest，恢复旧版有声视频源
-点击视频可以暂停/继续
-暂停态显示白色 ⏸
-静音按钮移到视频外，避免微信 video 原生层吃点击
-方向小结页展示用户保留/排除的方向
-方向小结页增加“差不多 / 补充一句”
-用户补充会传给下一阶段商户解释 prompt
-商家卡参考旧 workspace 第二阶段重做了一轮展示
-商家卡现在是上半媒体、下半商家信息、标签、推荐吃法、小汪判断、留意事项分层展示
-补齐了商家卡 normalizer 字段：displayTags、coverThumbUrl、storeFacts、issueLines
+API_MODE 开关已实现，当前可切 local / tunnel / custom
+手机预览通过 cloudflared tunnel 连接后端已跑通
+商家卡媒体区负责左右滑，文字区独立纵向滚动
+商家卡媒体高度已加高
+最终确认页已有可用前端
+新增后端 POST /api/xiaowang/chat
+新增后端 GET /api/xiaowang/diary
+新增前端底部三段导航：挑饭 / 问小汪 / 汪记本
+问小汪最小版支持返回 meal_swipe skill 卡，点击后直接调起滑卡流程
+汪记本最小版展示今日饭点记录、待确认长期记忆、已确认偏好，并支持“记住 / 先不记”
 ```
 
 阶段表也已同步：`docs/MIGRATION_PHASES.json` 里的 P6 是 `in_progress`，不是空白待办。OpenClaw memory bridge、dreaming skill 设计和 Evermind 读写已经有最小实现，后续主要补原生消息渠道、trace 展示和问小汪入口。
@@ -58,11 +58,11 @@ apps/lifepilot-miniprogram/pages/meal/meal.wxss
 最新关键提交：
 
 ```text
+8b40f64 feat: add final confirmation flow
+b49555a fix: separate merchant scroll and swipe zones
+f88c3df chore: add miniprogram api mode switch
 106099a fix: improve merchant card presentation
 4c73e7f docs: sync openclaw bridge phase
-b3c2adb feat: enrich direction summary feedback
-23a24eb fix: move mute control outside video
-01567f0 fix: restore direction video sound controls
 ```
 
 ## 用户明确偏好
@@ -85,10 +85,11 @@ b3c2adb feat: enrich direction summary feedback
 建议下一轮从这里开始：
 
 ```text
-1. 让用户在微信开发者工具里测试刚刚的小结页、静音按钮和新版商家卡。
-2. 重点看商家卡：媒体高度、信息区滚动、标签密度、小汪判断块、底部“就这家”按钮是否顺眼。
-3. 如果商家卡还有工程感，继续对齐旧小程序第二阶段样式，但保持新代码模块化。
-4. 接着做 session 启动时一次性读取长期记忆并缓存，避免每张商家卡请求 Evermind。
+1. 在微信开发者工具/手机预览里测试“问小汪 → 帮我走滑卡 → skill 卡 → 开始滑卡”。
+2. 测试“汪记本 → 待确认记忆 → 记住/先不记”。
+3. 继续把问小汪从 local router 升级为 OpenClaw skill 调度，输出 skill_cards 和 trace。
+4. 设计汪记本日级 UI：每一天的小汪总结、吃饭行为、偏好变化、待确认记忆。
+5. 接着做 session 启动时一次性读取长期记忆并缓存，避免每张商家卡请求 Evermind。
 ```
 
 ## 当前已知坑
@@ -105,7 +106,8 @@ b3c2adb feat: enrich direction summary feedback
    方向视频 manifest 在 apps/lifepilot-miniprogram/data/video-manifest.js。
 
 4. 后端默认端口是 4331。
-   小程序默认请求 http://127.0.0.1:4331。
+   小程序 API 由 apps/lifepilot-miniprogram/config/api.js 的 API_MODE 控制。
+   手机预览通常用 tunnel，开发者工具本地调试通常用 local。
 
 5. 商家卡 AI 解释已改为单卡预取，不要再默认一次请求 10 张。
 
@@ -114,6 +116,13 @@ b3c2adb feat: enrich direction summary feedback
    apps/lifepilot-miniprogram/pages/meal/meal.wxss
    apps/lifepilot-miniprogram/utils/card-normalizer.js
    继续改视觉时优先在这三个文件里小步调整。
+
+7. 问小汪 / 汪记本第一版涉及：
+   server/src/xiaowang-store.mjs
+   server/src/app.mjs
+   apps/lifepilot-miniprogram/services/xiaowang-api.js
+   apps/lifepilot-miniprogram/services/memory-api.js
+   apps/lifepilot-miniprogram/pages/meal/meal.*
 ```
 
 ## 开始前命令
