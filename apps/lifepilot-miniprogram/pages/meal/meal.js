@@ -1,5 +1,6 @@
 const sessionApi = require("../../services/session-api");
 const memoryApi = require("../../services/memory-api");
+const { getApiBaseUrl, getApiMode } = require("../../config/api");
 const { normalizeDirectionCard, normalizeOfferCard, normalizeResult } = require("../../utils/card-normalizer");
 const swipeGesture = require("../../utils/swipe-gesture");
 
@@ -20,9 +21,9 @@ Page({
     sessionId: "",
     sessionStage: "",
     sessionDebug: {
-      api: "4331",
+      api: getApiBaseUrl(),
       memory: "-",
-      mode: "ready"
+      mode: getApiMode()
     },
     entryForm: {
       partySize: "one",
@@ -264,7 +265,7 @@ Page({
       wx.setStorageSync(STORAGE_SESSION_ID, session.session_id);
       this.applySession(session, { meta: payload.meta });
     } catch (error) {
-      this.setData({ errorText: error.message || "后端连接失败" });
+      this.setData({ errorText: `${error.message || "后端连接失败"}\nAPI: ${getApiBaseUrl()}` });
       wx.showToast({ title: "后端连接失败", icon: "none" });
     } finally {
       this.setData({ isLoading: false, loadingText: "" });
@@ -302,8 +303,8 @@ Page({
       directionSummary: summary,
       result,
       sessionDebug: {
-        api: "4331",
-        mode: session.schema_version || "session",
+        api: getApiBaseUrl(),
+        mode: `${getApiMode()} · ${session.schema_version || "session"}`,
         memory: memoryMeta ? `confirmed ${memoryMeta.confirmed_preferences || 0} / evermind ${memoryMeta.evermind_memories || 0}` : this.data.sessionDebug.memory
       },
       bootNotice: options.notice || ""
