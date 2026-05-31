@@ -86,3 +86,7 @@ export function resetOpenClawGatewayClientForTests() {
   client = null;
   clientPromise = null;
 }
+
+export function resetOpenClawGatewayClient() {
+  resetOpenClawGatewayClientForTests();
+}

@@ -23,6 +23,7 @@ function shortRunId(value) {
 function sourceLabelForAssistant(message) {
   const mode = String(message.mode || "").trim();
   if (mode === "openclaw_gateway_client") return "AI · OpenClaw";
+  if (mode === "ark_fallback_after_openclaw_error") return "AI · Ark 兜底";
   if (mode === "local_fallback_after_openclaw_error") return "后端兜底";
   if (mode === "local_empty_message") return "本地空消息";
   if (mode === "local_skill_router") return "后端规则";
@@ -42,6 +43,15 @@ function buildChatDebugTrace(message) {
   }
   if (message.openclaw && message.openclaw.error) {
     lines.push(`OpenClaw 异常：${message.openclaw.error}`);
+  }
+  if (message.ai && message.ai.provider) {
+    lines.push(`AI：${message.ai.provider}`);
+  }
+  if (message.ai && message.ai.parse_mode) {
+    lines.push(`AI解析：${message.ai.parse_mode}`);
+  }
+  if (message.ai && message.ai.error) {
+    lines.push(`AI异常：${message.ai.error}`);
   }
   const skillCalls = Array.isArray(message.agent_skill_calls) ? message.agent_skill_calls : [];
   const skillCards = Array.isArray(message.skill_cards) ? message.skill_cards : [];

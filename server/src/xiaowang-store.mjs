@@ -5,7 +5,8 @@ import path from "node:path";
 import { config } from "./config.mjs";
 import { createDayId, getDayContext } from "./session-store.mjs";
 import { createMemoryCandidatesFromOpenClaw, listConfirmedPreferences, listMemoryCandidates } from "./memory-store.mjs";
-import { requestOpenClawAgent } from "./openclaw-gateway-client.mjs";
+import { requestOpenClawAgent, resetOpenClawGatewayClient } from "./openclaw-gateway-client.mjs";
+import { callArkChat } from "./ai/ark-provider.mjs";
 
 const DEFAULT_USER_ID = "demo_weiyingru";
 const CHAT_SCHEMA = "lifepilot.xiaowang_chat.v1";
@@ -308,7 +309,7 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
 async function getOpenClawChatReply({message, session, pendingCount, preferenceCount}) {
   const result = await requestOpenClawAgent({
     sessionId: `lifepilot-xiaowang-${session.session_id}`,
-    timeoutSeconds: 60,
+    timeoutSeconds: process.env.LIFEPILOT_XIAOWANG_OPENCLAW_TIMEOUT_SECONDS || 90,
     idempotencyKey: `lifepilot-xiaowang-${session.session_id}-${Date.now()}-${randomUUID().slice(0, 6)}`,
     message: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount}),
   });
@@ -326,6 +327,47 @@ async function getOpenClawChatReply({message, session, pendingCount, preferenceC
     memoryPrompts: response.memory_prompts,
     parseMode: response.parse_mode,
     raw: result,
+  };
+}
+
+function isOpenClawTimeout(error) {
+  return /timeout/i.test(error instanceof Error ? error.message : String(error));
+}
+
+async function getArkChatReply({message, session, pendingCount, preferenceCount}) {
+  const ai = await callArkChat({
+    timeoutMs: Number(process.env.LIFEPILOT_XIAOWANG_ARK_TIMEOUT_MS || 12000),
+    maxTokens: 700,
+    temperature: 0.35,
+    responseFormat: {type: "json_object"},
+    messages: [
+      {
+        role: "system",
+        content: "你是 LifePilot 微信小程序里的小汪。你要用简短、亲切、像 IM 对话的中文回复，并判断是否调用产品 skill。只输出 JSON。",
+      },
+      {
+        role: "user",
+        content: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount}),
+      },
+    ],
+  });
+  if (!ai.ok || !ai.text) {
+    const error = new Error(ai.error_code || "ark_empty_reply");
+    error.ai = ai;
+    throw error;
+  }
+  const response = parseOpenClawChatResponse(ai.text);
+  if (!response.message) {
+    const error = new Error("ark_missing_message");
+    error.ai = ai;
+    throw error;
+  }
+  return {
+    content: response.message,
+    skillCalls: response.skill_calls,
+    memoryPrompts: response.memory_prompts,
+    parseMode: response.parse_mode,
+    raw: ai,
   };
 }
 
@@ -500,6 +542,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
   let content = "";
   let mode = "openclaw_gateway_client";
   let openclawMeta = null;
+  let aiMeta = null;
   if (message) {
     try {
       const openclawReply = await getOpenClawChatReply({
@@ -533,26 +576,66 @@ export async function handleXiaowangChat({body = {}} = {}) {
         parse_mode: openclawReply.parseMode || "",
       };
     } catch (error) {
-      skillCards = fallbackSkillCards(message);
-      if (wantsMemoryCandidate(message)) {
-        memoryResult = await createMemoryCandidatesFromOpenClaw({
-          userId,
-          dreamId: "",
-          dayId,
-          candidates: [candidateFromChat({message, userId, sessionId: session.session_id})],
-        });
-      }
-      content = buildAssistantReply({
-        message,
-        pendingCount: pending.count || 0,
-        preferenceCount: preferences.count || 0,
-        skillCards,
-        createdCount: memoryResult.created_count || 0,
-      });
-      mode = "local_fallback_after_openclaw_error";
+      if (isOpenClawTimeout(error)) resetOpenClawGatewayClient();
       openclawMeta = {
         error: error instanceof Error ? error.message : String(error),
       };
+      try {
+        const arkReply = await getArkChatReply({
+          message,
+          session,
+          pendingCount: pending.count || 0,
+          preferenceCount: preferences.count || 0,
+        });
+        content = arkReply.content;
+        skillCalls = arkReply.skillCalls || [];
+        skillCards = skillCardsFromCalls(skillCalls);
+        memoryPrompts = memoryPromptsFromCalls({
+          skillCalls,
+          memoryPrompts: arkReply.memoryPrompts || [],
+          message,
+        });
+        if (skillCalls.some((item) => item.skill === "memory_capture")) {
+          memoryResult = await createMemoryCandidatesFromPrompts({
+            userId,
+            sessionId: session.session_id,
+            dayId,
+            message,
+            skillCalls,
+            memoryPrompts,
+          });
+        }
+        mode = "ark_fallback_after_openclaw_error";
+        aiMeta = {
+          provider: arkReply.raw?.provider || "ark_doubao",
+          model: arkReply.raw?.model || "",
+          parse_mode: arkReply.parseMode || "",
+          timing: arkReply.raw?.timing || null,
+        };
+      } catch (arkError) {
+        skillCards = fallbackSkillCards(message);
+        if (wantsMemoryCandidate(message)) {
+          memoryResult = await createMemoryCandidatesFromOpenClaw({
+            userId,
+            dreamId: "",
+            dayId,
+            candidates: [candidateFromChat({message, userId, sessionId: session.session_id})],
+          });
+        }
+        content = buildAssistantReply({
+          message,
+          pendingCount: pending.count || 0,
+          preferenceCount: preferences.count || 0,
+          skillCards,
+          createdCount: memoryResult.created_count || 0,
+        });
+        mode = "local_fallback_after_openclaw_error";
+        aiMeta = {
+          provider: "ark_doubao",
+          error: arkError instanceof Error ? arkError.message : String(arkError),
+          raw: arkError?.ai || null,
+        };
+      }
     }
   } else {
     mode = "local_empty_message";
@@ -576,6 +659,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
     memory_candidate_created_count: memoryResult.created_count || 0,
     memory_candidates: memoryResult.candidates || [],
     openclaw: openclawMeta,
+    ai: aiMeta,
     created_at: createdAt,
   };
 
