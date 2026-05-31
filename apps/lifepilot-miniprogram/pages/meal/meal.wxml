@@ -415,8 +415,16 @@
       <image class="chat-avatar" src="{{xiaowangMascotUrl}}" mode="aspectFit" />
       <view class="chat-hero-copy">
         <view class="chat-title">问小汪</view>
-        <view class="chat-subtitle">可以聊今天怎么吃，也可以让小汪直接调起饭点滑卡。</view>
+        <view class="chat-subtitle">先把今天的状态告诉我；需要做决定时，我会调起饭点滑卡。</view>
       </view>
+    </view>
+
+    <view class="skill-launcher">
+      <view class="skill-launcher-copy">
+        <view class="skill-launcher-title">今天不知道吃什么？</view>
+        <view class="skill-launcher-desc">让小汪先问几句，再带你滑方向和具体店。</view>
+      </view>
+      <button class="skill-launcher-button" bindtap="startMealSkill">直接帮我选</button>
     </view>
 
     <scroll-view class="chat-list" scroll-y enhanced show-scrollbar="{{false}}">
@@ -504,8 +512,8 @@
   </view>
 
   <view class="main-tabs">
-    <button class="main-tab {{activeTab === 'meal' ? 'main-tab-active' : ''}}" data-tab="meal" bindtap="switchMainTab">挑饭</button>
     <button class="main-tab {{activeTab === 'chat' ? 'main-tab-active' : ''}}" data-tab="chat" bindtap="switchMainTab">问小汪</button>
+    <button class="main-tab {{activeTab === 'meal' ? 'main-tab-active' : ''}}" data-tab="meal" bindtap="switchMainTab">挑饭</button>
     <button class="main-tab {{activeTab === 'diary' ? 'main-tab-active' : ''}}" data-tab="diary" bindtap="switchMainTab">汪记本</button>
   </view>
 

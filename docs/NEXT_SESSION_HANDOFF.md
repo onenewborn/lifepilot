@@ -49,6 +49,7 @@ API_MODE 开关已实现，当前可切 local / tunnel / custom
 新增后端 POST /api/xiaowang/chat
 新增后端 GET /api/xiaowang/diary
 新增前端底部三段导航：挑饭 / 问小汪 / 汪记本
+产品入口已调整为问小汪优先：默认进入问小汪，底部顺序为问小汪 / 挑饭 / 汪记本
 问小汪最小版支持返回 meal_swipe skill 卡，点击后直接调起滑卡流程
 汪记本最小版展示今日饭点记录、待确认长期记忆、已确认偏好，并支持“记住 / 先不记”
 ```
@@ -85,7 +86,7 @@ f88c3df chore: add miniprogram api mode switch
 建议下一轮从这里开始：
 
 ```text
-1. 在微信开发者工具/手机预览里测试“问小汪 → 帮我走滑卡 → skill 卡 → 开始滑卡”。
+1. 在微信开发者工具/手机预览里测试默认进入问小汪，以及“直接帮我选 / 帮我走滑卡 → 开始滑卡”。
 2. 测试“汪记本 → 待确认记忆 → 记住/先不记”。
 3. 继续把问小汪从 local router 升级为 OpenClaw skill 调度，输出 skill_cards 和 trace。
 4. 设计汪记本日级 UI：每一天的小汪总结、吃饭行为、偏好变化、待确认记忆。

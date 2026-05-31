@@ -1267,9 +1267,39 @@ button::after {
 }
 
 .chat-list {
-  height: 620rpx;
+  height: 500rpx;
   padding-right: 2rpx;
   box-sizing: border-box;
+}
+
+.skill-launcher {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 22rpx;
+  padding: 20rpx;
+  border-radius: 20rpx;
+  background: #2d2118;
+  box-shadow: 0 16rpx 34rpx rgba(45, 33, 24, 0.16);
+}
+
+.skill-launcher-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.skill-launcher-title {
+  color: #fff8ec;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.skill-launcher-desc {
+  margin-top: 6rpx;
+  color: rgba(255, 248, 236, 0.68);
+  font-size: 23rpx;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .chat-message {
@@ -1337,6 +1367,7 @@ button::after {
 }
 
 .skill-card-button,
+.skill-launcher-button,
 .chat-send-button,
 .diary-refresh,
 .memory-confirm-button {
@@ -1349,6 +1380,11 @@ button::after {
   font-size: 24rpx;
   font-weight: 900;
   line-height: 58rpx;
+}
+
+.skill-launcher-button {
+  background: #ff6334;
+  color: #ffffff;
 }
 
 .chat-input-row {

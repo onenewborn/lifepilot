@@ -56,8 +56,8 @@ tag: lifepilot-rebuild-base-20260530
 当前小程序已经开放三段主入口：
 
 ```text
-挑饭：入口表单 → 方向卡 → 方向小结 → 商家卡 → 最终确认 → 饭后反馈 / 候选记忆
-问小汪：轻量聊天入口，支持返回 meal_swipe skill 卡并调起滑卡路线
+问小汪：默认第一入口，轻量聊天入口，支持返回 meal_swipe skill 卡并调起滑卡路线
+挑饭：作为问小汪可调用 skill，入口表单 → 方向卡 → 方向小结 → 商家卡 → 最终确认 → 饭后反馈 / 候选记忆
 汪记本：今日吃饭记录、待确认长期偏好、已确认偏好
 ```
 
@@ -161,6 +161,7 @@ apps/lifepilot-miniprogram/data/video-manifest.js
 底部增加“挑饭 / 问小汪 / 汪记本”三段导航
 问小汪新增最小 skill router：用户说“帮我走滑卡/今天吃什么”时返回 meal_swipe skill 卡
 汪记本新增最小 UI：展示今日 meal session、待确认 memory candidates、confirmed preferences
+产品入口调整为问小汪优先：默认进入问小汪，底部顺序为“问小汪 / 挑饭 / 汪记本”，滑卡作为小汪可调用 skill
 ```
 
 最近提交：

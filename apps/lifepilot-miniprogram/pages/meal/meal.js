@@ -16,10 +16,10 @@ const LOCATION_LANDMARKS = [
 
 Page({
   data: {
-    activeTab: "meal",
+    activeTab: "chat",
     stage: "entry",
-    stageLabel: "饭点",
-    stageSubtitle: "先告诉小汪今天想怎么吃",
+    stageLabel: "问小汪",
+    stageSubtitle: "可以聊天，也可以调起滑卡",
     sessionId: "",
     sessionStage: "",
     sessionDebug: {
@@ -892,6 +892,10 @@ Page({
   runChatSkill(event) {
     const action = event.currentTarget.dataset.action;
     if (action !== "start_meal") return;
+    this.startMealSkill();
+  },
+
+  startMealSkill() {
     this.setData({
       activeTab: "meal",
       stageLabel: this.labelForStage(this.data.stage),
