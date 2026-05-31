@@ -327,7 +327,7 @@ button::after {
 }
 
 .offer-flow {
-  min-height: 1200rpx;
+  min-height: 1280rpx;
 }
 
 .direction-brief {
@@ -494,7 +494,7 @@ button::after {
 }
 
 .offer-flow .deck {
-  height: 1140rpx;
+  height: 1220rpx;
 }
 
 .food-card {
@@ -510,7 +510,7 @@ button::after {
 }
 
 .offer-flow .food-card {
-  height: 1110rpx;
+  height: 1190rpx;
   border-radius: 26rpx;
   background: #fffaf0;
   box-shadow: 0 22rpx 54rpx rgba(126, 74, 34, 0.2);
@@ -536,6 +536,14 @@ button::after {
 .media {
   width: 100%;
   height: 100%;
+}
+
+.direction-swipe-surface {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
 }
 
 .media-shade {
@@ -655,7 +663,7 @@ button::after {
   position: relative;
   flex-shrink: 0;
   width: 100%;
-  height: 640rpx;
+  height: 720rpx;
   overflow: hidden;
   background: #201914;
 }

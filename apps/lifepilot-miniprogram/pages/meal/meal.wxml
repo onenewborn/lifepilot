@@ -163,15 +163,17 @@
       <view
         class="food-card current-card {{currentCard.cardType === 'offer' ? 'offer-card' : ''}}"
         style="{{cardStyle}}"
-        catchtouchstart="onTouchStart"
-        catchtouchmove="onTouchMove"
-        catchtouchend="onTouchEnd"
       >
         <view class="swipe-mark keep-mark" style="{{keepFeedbackStyle}}">保留</view>
         <view class="swipe-mark dislike-mark" style="{{dislikeFeedbackStyle}}">放弃</view>
 
         <block wx:if="{{currentCard.cardType === 'offer'}}">
-          <view class="offer-media">
+          <view
+            class="offer-media"
+            catchtouchstart="onTouchStart"
+            catchtouchmove="onTouchMove"
+            catchtouchend="onTouchEnd"
+          >
             <image
               wx:if="{{videoDisabled || !currentCard.videoUrl}}"
               class="offer-media-asset"
@@ -207,11 +209,6 @@
             scroll-y
             enhanced
             show-scrollbar="{{false}}"
-            data-gesture-zone="info"
-            bindtouchstart="onOfferInfoTouchStart"
-            catchtouchmove="onOfferInfoTouchMove"
-            bindtouchend="onOfferInfoTouchEnd"
-            bindtouchcancel="onOfferInfoTouchEnd"
           >
             <view class="offer-title-row">
               <image class="offer-thumb" src="{{currentCard.coverThumbUrl}}" mode="aspectFill" binderror="onImageError" />
@@ -241,43 +238,50 @@
         </block>
 
         <block wx:else>
-          <image
-            wx:if="{{videoDisabled || !currentCard.videoUrl}}"
-            class="media"
-            src="{{currentImageUrl}}"
-            mode="aspectFill"
-            binderror="onImageError"
-          />
-          <video
-            wx:else
-            id="currentFoodVideo"
-            class="media"
-            src="{{currentCard.videoUrl}}"
-            poster="{{currentPosterUrl}}"
-            autoplay
-            loop
-            muted="{{videoMuted}}"
-            object-fit="cover"
-            enable-play-gesture="{{true}}"
-            show-center-play-btn="{{false}}"
-            show-fullscreen-btn="{{false}}"
-            show-play-btn="{{false}}"
-            controls="{{false}}"
-            bindtap="toggleVideoPlay"
-            bindloadedmetadata="onVideoReady"
-            binderror="onVideoError"
-          />
+          <view
+            class="direction-swipe-surface"
+            catchtouchstart="onTouchStart"
+            catchtouchmove="onTouchMove"
+            catchtouchend="onTouchEnd"
+          >
+            <image
+              wx:if="{{videoDisabled || !currentCard.videoUrl}}"
+              class="media"
+              src="{{currentImageUrl}}"
+              mode="aspectFill"
+              binderror="onImageError"
+            />
+            <video
+              wx:else
+              id="currentFoodVideo"
+              class="media"
+              src="{{currentCard.videoUrl}}"
+              poster="{{currentPosterUrl}}"
+              autoplay
+              loop
+              muted="{{videoMuted}}"
+              object-fit="cover"
+              enable-play-gesture="{{true}}"
+              show-center-play-btn="{{false}}"
+              show-fullscreen-btn="{{false}}"
+              show-play-btn="{{false}}"
+              controls="{{false}}"
+              bindtap="toggleVideoPlay"
+              bindloadedmetadata="onVideoReady"
+              binderror="onVideoError"
+            />
 
-          <view class="media-shade" catchtap="toggleVideoPlay"></view>
-          <cover-view wx:if="{{videoPaused}}" class="pause-badge" catchtap="toggleVideoPlay">⏸</cover-view>
+            <view class="media-shade" catchtap="toggleVideoPlay"></view>
+            <cover-view wx:if="{{videoPaused}}" class="pause-badge" catchtap="toggleVideoPlay">⏸</cover-view>
 
-          <view class="card-body">
-            <view class="badge">{{currentCard.badge}}</view>
-            <view class="card-title">{{currentCard.title}}</view>
-            <view class="card-subtitle">{{currentCard.subtitle}}</view>
+            <view class="card-body">
+              <view class="badge">{{currentCard.badge}}</view>
+              <view class="card-title">{{currentCard.title}}</view>
+              <view class="card-subtitle">{{currentCard.subtitle}}</view>
 
-            <view class="tag-row">
-              <text wx:for="{{currentCard.tags}}" wx:key="*this" class="tag">{{item}}</text>
+              <view class="tag-row">
+                <text wx:for="{{currentCard.tags}}" wx:key="*this" class="tag">{{item}}</text>
+              </view>
             </view>
           </view>
         </block>

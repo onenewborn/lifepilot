@@ -97,7 +97,6 @@ Page({
     this.swipeTimer = null;
     this.videoTimer = null;
     this.isCommittingSwipe = false;
-    this.offerInfoTouching = false;
     this.verticalTouching = false;
     this.offerExplanationRequests = {};
     this.offerExplanationAttempts = {};
@@ -499,26 +498,8 @@ Page({
     console.warn("[LifePilot] image load failed");
   },
 
-  onOfferInfoTouchStart() {
-    this.offerInfoTouching = true;
-    this.touchStart = null;
-  },
-
-  onOfferInfoTouchMove() {
-    this.offerInfoTouching = true;
-  },
-
-  onOfferInfoTouchEnd() {
-    if (this.offerInfoTouchTimer) clearTimeout(this.offerInfoTouchTimer);
-    this.offerInfoTouchTimer = setTimeout(() => {
-      this.offerInfoTouchTimer = null;
-      this.offerInfoTouching = false;
-    }, 220);
-  },
-
   onTouchStart(event) {
     if (this.isCommittingSwipe || !this.data.currentCard) return;
-    if (this.data.stage === "offer" && this.offerInfoTouching) return;
     const touch = event.touches[0];
     this.touchStart = { x: touch.clientX, y: touch.clientY };
     this.verticalTouching = false;
@@ -526,7 +507,6 @@ Page({
 
   onTouchMove(event) {
     if (!this.touchStart || this.isCommittingSwipe) return;
-    if (this.data.stage === "offer" && this.offerInfoTouching) return;
     const touch = event.touches[0];
     const dx = touch.clientX - this.touchStart.x;
     const dy = touch.clientY - this.touchStart.y;
