@@ -903,6 +903,10 @@ Page({
     }
     if (action === "open_diary" || action === "review_memory") {
       this.switchMainTab({ currentTarget: { dataset: { tab: "diary" } } });
+      return;
+    }
+    if (action === "run_dreaming") {
+      wx.showToast({ title: "后台复盘稍后接入", icon: "none" });
     }
   },
 

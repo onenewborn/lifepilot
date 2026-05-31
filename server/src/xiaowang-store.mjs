@@ -128,18 +128,19 @@ function skillCard(name) {
   };
 }
 
-function candidateFromChat({message, userId, sessionId}) {
+function candidateFromChat({message, userId, sessionId, confirmationText}) {
+  const confirmation = String(confirmationText || message).trim();
   return {
     type: "food_preference",
     category: "xiaowang_chat",
-    polarity: /(不喜欢|讨厌|少推荐|别推|不要推)/.test(message) ? "negative" : "positive",
-    statement: `主人在问小汪时提到：${message}`,
-    confirmation_text: message.replace(/^记住[：:，,\s]*/, "") || message,
+    polarity: /(不喜欢|讨厌|少推荐|别推|不要推)/.test(confirmation) ? "negative" : "positive",
+    statement: `主人在问小汪时提到：${confirmation}`,
+    confirmation_text: confirmation.replace(/^记住[：:，,\s]*/, "") || confirmation,
     confidence: 0.78,
     evidence: [{
       source: "xiaowang_chat",
       session_id: sessionId,
-      reason: message,
+      reason: message || confirmation,
     }],
     needs_confirmation: true,
   };
@@ -183,15 +184,87 @@ function parseOpenClawText(result) {
   return result?.result?.payloads?.map((payload) => payload.text).filter(Boolean).join("\n").trim() || "";
 }
 
+function extractJsonObject(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return null;
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fenced ? fenced[1].trim() : raw;
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    const start = candidate.indexOf("{");
+    const end = candidate.lastIndexOf("}");
+    if (start < 0 || end <= start) return null;
+    try {
+      return JSON.parse(candidate.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
+}
+
+function normalizeSkillCalls(calls = []) {
+  if (!Array.isArray(calls)) return [];
+  const seen = new Set();
+  return calls
+    .map((call) => {
+      const skill = skillByName(call?.skill);
+      if (!skill) return null;
+      if (seen.has(skill.skill)) return null;
+      seen.add(skill.skill);
+      return {
+        skill: skill.skill,
+        action: skill.action,
+        reason: String(call.reason || "").trim(),
+        args: call.args && typeof call.args === "object" ? call.args : {},
+      };
+    })
+    .filter(Boolean);
+}
+
+function parseOpenClawChatResponse(text) {
+  const parsed = extractJsonObject(text);
+  if (!parsed || typeof parsed !== "object") {
+    return {
+      message: String(text || "").trim(),
+      skill_calls: [],
+      memory_prompts: [],
+      parse_mode: "text_fallback",
+    };
+  }
+  return {
+    message: String(parsed.message || "").trim(),
+    skill_calls: normalizeSkillCalls(parsed.skill_calls || parsed.skillCalls || []),
+    memory_prompts: Array.isArray(parsed.memory_prompts || parsed.memoryPrompts)
+      ? (parsed.memory_prompts || parsed.memoryPrompts).map((item) => ({
+        text: String(item?.text || "").trim(),
+        confirmation_text: String(item?.confirmation_text || item?.confirmationText || "").trim(),
+      })).filter((item) => item.text || item.confirmation_text)
+      : [],
+    parse_mode: "json",
+  };
+}
+
 function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount}) {
   const context = recentChatContext(session.messages || []);
+  const skills = SKILL_REGISTRY.map((skill) => (
+    `- ${skill.skill}: ${skill.description} action=${skill.action} cta=${skill.cta} status=${skill.status}`
+  )).join("\n");
   return [
-    "你是 LifePilot 微信小程序里的小汪。请按 OpenClaw workspace 的 SOUL.md 和 AGENTS.md 回复。",
+    "请使用 lifepilot-xiaowang skill，按 OpenClaw workspace 的 SOUL.md 和 AGENTS.md 处理用户消息。",
     "",
-    "用户正在和小汪聊天。请用自然、简短、具体的中文回复，像 IM 对话，不要写报告。",
+    "用户正在和小汪聊天。你需要自己判断是否调用 LifePilot 产品 skill。",
+    "请只输出 JSON，不要加 Markdown，不要解释 JSON。",
+    "",
+    "JSON schema:",
+    "{\"message\":\"小汪要发给用户的一段自然回复，最多 3 句。\",\"skill_calls\":[{\"skill\":\"meal_swipe\",\"action\":\"start_meal\",\"reason\":\"\",\"args\":{}}],\"memory_prompts\":[]}",
+    "",
+    "可用 skills:",
+    skills,
+    "",
     "不要暴露 gateway、runner、transport、schema、OpenClaw 等内部实现。",
-    "如果用户想吃饭、选饭或不知道吃什么，可以提到你能调起饭点滑卡，但不要伪造已经调起；后端会用 skill card 处理。",
-    "如果用户表达长期偏好或要求记住，提醒需要主人确认后小汪才会正式记住。",
+    "如果用户表达长期偏好或要求记住，使用 memory_capture，并在 memory_prompts 中给出待确认文本。",
+    "如果不需要 skill，skill_calls 返回空数组。",
     "",
     `当前已确认偏好数量：${preferenceCount}`,
     `待确认记忆数量：${pendingCount}`,
@@ -199,7 +272,7 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     "",
     `用户最新消息：${message}`,
     "",
-    "请只输出小汪要发给用户的一段话，最多 3 句。",
+    "再次强调：只输出 JSON，message 最多 3 句。",
   ].join("\n");
 }
 
@@ -214,10 +287,84 @@ async function getOpenClawChatReply({message, session, pendingCount, preferenceC
   if (result?.status !== "ok" || !text) {
     throw new Error("openclaw_empty_reply");
   }
+  const response = parseOpenClawChatResponse(text);
+  if (!response.message) {
+    throw new Error("openclaw_missing_message");
+  }
   return {
-    content: text,
+    content: response.message,
+    skillCalls: response.skill_calls,
+    memoryPrompts: response.memory_prompts,
+    parseMode: response.parse_mode,
     raw: result,
   };
+}
+
+function fallbackSkillCards(message) {
+  return [
+    wantsMealSkill(message) ? skillCard("meal_swipe") : null,
+    wantsDiarySkill(message) ? skillCard("diary_review") : null,
+  ].filter(Boolean);
+}
+
+function skillCardsFromCalls(skillCalls = []) {
+  return normalizeSkillCalls(skillCalls)
+    .map((call) => skillCard(call.skill))
+    .filter(Boolean);
+}
+
+function memoryPromptsFromCalls({skillCalls = [], memoryPrompts = [], message}) {
+  const prompts = Array.isArray(memoryPrompts) ? [...memoryPrompts] : [];
+  const hasMemorySkill = skillCalls.some((call) => call.skill === "memory_capture");
+  if (!hasMemorySkill) return prompts;
+
+  const call = skillCalls.find((item) => item.skill === "memory_capture") || {};
+  const args = call.args || {};
+  const confirmationText = String(
+    args.confirmation_text
+      || args.confirmationText
+      || args.text
+      || args.preference
+      || ""
+  ).trim();
+  if (confirmationText && !prompts.some((item) => item.confirmation_text === confirmationText)) {
+    prompts.push({
+      text: `要不要让小汪记住：${confirmationText}`,
+      confirmation_text: confirmationText,
+    });
+  }
+  if (!prompts.length) {
+    prompts.push({
+      text: `要不要让小汪记住：${message}`,
+      confirmation_text: message,
+    });
+  }
+  return prompts;
+}
+
+async function createMemoryCandidatesFromPrompts({userId, sessionId, dayId, message, skillCalls = [], memoryPrompts = []}) {
+  const prompts = memoryPromptsFromCalls({skillCalls, memoryPrompts, message})
+    .map((item) => ({
+      text: String(item?.text || "").trim(),
+      confirmation_text: String(item?.confirmation_text || item?.confirmationText || item?.text || "").trim(),
+    }))
+    .filter((item) => item.confirmation_text);
+
+  if (!prompts.length) {
+    return {created_count: 0, candidates: []};
+  }
+
+  return createMemoryCandidatesFromOpenClaw({
+    userId,
+    dreamId: "",
+    dayId,
+    candidates: prompts.slice(0, 3).map((prompt) => candidateFromChat({
+      message,
+      userId,
+      sessionId,
+      confirmationText: prompt.confirmation_text,
+    })),
+  });
 }
 
 export async function handleXiaowangChat({body = {}} = {}) {
@@ -238,25 +385,15 @@ export async function handleXiaowangChat({body = {}} = {}) {
 
   const pending = await listMemoryCandidates({userId, status: "pending"});
   const preferences = await listConfirmedPreferences({userId, status: "active"});
-  const skillCards = [
-    wantsMealSkill(message) ? skillCard("meal_swipe") : null,
-    wantsDiarySkill(message) ? skillCard("diary_review") : null,
-  ].filter(Boolean);
-
+  const dayId = body.day_id || body.dayId || "";
+  let skillCards = [];
+  let skillCalls = [];
+  let memoryPrompts = [];
   let memoryResult = {created_count: 0, candidates: []};
-  if (message && wantsMemoryCandidate(message)) {
-    memoryResult = await createMemoryCandidatesFromOpenClaw({
-      userId,
-      dreamId: "",
-      dayId: body.day_id || body.dayId || "",
-      candidates: [candidateFromChat({message, userId, sessionId: session.session_id})],
-    });
-  }
-
   let content = "";
-  let mode = "local_skill_router";
+  let mode = "openclaw_gateway_client";
   let openclawMeta = null;
-  if (!skillCards.length && !memoryResult.created_count && message) {
+  if (message) {
     try {
       const openclawReply = await getOpenClawChatReply({
         message,
@@ -265,12 +402,39 @@ export async function handleXiaowangChat({body = {}} = {}) {
         preferenceCount: preferences.count || 0,
       });
       content = openclawReply.content;
+      skillCalls = openclawReply.skillCalls || [];
+      skillCards = skillCardsFromCalls(skillCalls);
+      memoryPrompts = memoryPromptsFromCalls({
+        skillCalls,
+        memoryPrompts: openclawReply.memoryPrompts || [],
+        message,
+      });
+      if (skillCalls.some((item) => item.skill === "memory_capture")) {
+        memoryResult = await createMemoryCandidatesFromPrompts({
+          userId,
+          sessionId: session.session_id,
+          dayId,
+          message,
+          skillCalls,
+          memoryPrompts,
+        });
+      }
       mode = "openclaw_gateway_client";
       openclawMeta = {
         status: openclawReply.raw?.status || "",
         run_id: openclawReply.raw?.runId || "",
+        parse_mode: openclawReply.parseMode || "",
       };
     } catch (error) {
+      skillCards = fallbackSkillCards(message);
+      if (wantsMemoryCandidate(message)) {
+        memoryResult = await createMemoryCandidatesFromOpenClaw({
+          userId,
+          dreamId: "",
+          dayId,
+          candidates: [candidateFromChat({message, userId, sessionId: session.session_id})],
+        });
+      }
       content = buildAssistantReply({
         message,
         pendingCount: pending.count || 0,
@@ -284,6 +448,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
       };
     }
   } else {
+    mode = "local_empty_message";
     content = buildAssistantReply({
       message,
       pendingCount: pending.count || 0,
@@ -299,6 +464,8 @@ export async function handleXiaowangChat({body = {}} = {}) {
     content,
     mode,
     skill_cards: skillCards,
+    agent_skill_calls: skillCalls,
+    memory_prompts: memoryPrompts,
     memory_candidate_created_count: memoryResult.created_count || 0,
     memory_candidates: memoryResult.candidates || [],
     openclaw: openclawMeta,
