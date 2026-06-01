@@ -342,15 +342,15 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     .map((item) => `- ${item.confirmation_text || item.statement}`)
     .join("\n") || "暂无";
   return [
-    "请使用 lifepilot-xiaowang skill，按 OpenClaw workspace 的 SOUL.md 和 AGENTS.md 处理用户消息。",
+    "你是 LifePilot 小汪。请按 OpenClaw workspace 的 SOUL.md 和 AGENTS.md 处理用户消息，并自行判断是否需要调用 LifePilot 独立 skills/tools。",
     "",
-    "用户正在和小汪聊天。你需要自己判断是否调用 LifePilot 产品 skill。",
+    "用户正在和小汪聊天。你需要自己判断是否调用 LifePilot 产品 tool。不要再通过二级 router skill 处理。",
     "请只输出 JSON，不要加 Markdown，不要解释 JSON。",
     "",
     "JSON schema:",
     "{\"message\":\"小汪要发给用户的一段自然回复，最多 3 句。\",\"skill_calls\":[{\"skill\":\"merchant_intel\",\"action\":\"show_merchant_intel\",\"reason\":\"\",\"args\":{\"merchant_id\":\"m_futian_006\"}}],\"memory_prompts\":[]}",
     "",
-    "可用 skills:",
+    "可用 LifePilot tool ids（当前 JSON 兼容层仍使用 snake_case；OpenClaw skill 目录使用 hyphen 命名）:",
     skills,
     "",
     "不要暴露 gateway、runner、transport、schema、OpenClaw 等内部实现。",
@@ -378,9 +378,9 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
 
 async function getOpenClawChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext}) {
   const result = await requestOpenClawAgent({
-    sessionId: `lifepilot-xiaowang-${session.session_id}`,
+    sessionId: `lifepilot-chat-${session.session_id}`,
     timeoutSeconds: process.env.LIFEPILOT_XIAOWANG_OPENCLAW_TIMEOUT_SECONDS || 90,
-    idempotencyKey: `lifepilot-xiaowang-${session.session_id}-${Date.now()}-${randomUUID().slice(0, 6)}`,
+    idempotencyKey: `lifepilot-chat-${session.session_id}-${Date.now()}-${randomUUID().slice(0, 6)}`,
     message: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext}),
   });
   const text = parseOpenClawText(result);

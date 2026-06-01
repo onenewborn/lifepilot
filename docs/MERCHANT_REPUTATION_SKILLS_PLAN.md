@@ -512,16 +512,16 @@ POST /api/tools/deal-search-context
 
 ## OpenClaw 设计
 
-### lifepilot-xiaowang/SKILL.md
+### OpenClaw 独立 Skills
 
-需要新增食探 skill 定义：
+小汪身份由 `AGENTS.md` / `SOUL.md` 定义，不再保留二级 router skill。食探能力拆成独立 skill：
 
 ```text
-merchant_intel
-merchant_compare
-party_ordering
-area_ranking
-deal_search
+merchant-intel
+merchant-compare
+party-ordering
+area-ranking
+deal-search
 ```
 
 每个 skill 都要写：
@@ -744,7 +744,7 @@ OpenClaw 小汪能在一次 agent loop 中调用 LifePilot 工具获取后端证
 要做：
 
 ```text
-更新 lifepilot-xiaowang/SKILL.md
+新增 / 更新 merchant-intel/SKILL.md 与 merchant-compare/SKILL.md
 更新 SOUL.md
 更新 AGENTS.md
 让 /api/xiaowang/chat-async 负责启动/等待 OpenClaw agent run，而不是在后端执行商户判断
@@ -761,7 +761,7 @@ LifePilot 后端负责：
 - 做数据校验、权限边界、候选记忆写入守门和前端渲染传输
 
 OpenClaw 负责：
-- 判断是否调用 merchant_intel / merchant_compare
+- 判断是否调用 merchant-intel / merchant-compare
 - 调用工具并读取工具结果
 - 结合长期偏好生成最终小汪回复
 - 决定“更适合今天/更适合主人/更适合多人局”的解释
