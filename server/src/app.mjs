@@ -28,7 +28,7 @@ import {
   writeMealSessionSummaryToEvermind,
 } from "./evermind-sync.mjs";
 import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
-import { buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantsFromText } from "./merchant-tools.mjs";
+import { buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantsFromText, searchMerchantCandidates } from "./merchant-tools.mjs";
 import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
 import { runOpenClawDreamAgent } from "./openclaw-runner.mjs";
 import { getXiaowangChatJob, handleXiaowangChat, listXiaowangSkills, readXiaowangDiary, startXiaowangChatJob } from "./xiaowang-store.mjs";
@@ -368,6 +368,17 @@ async function handleMerchantCompareContext(req, res) {
     fail(res, 404, payload.error || "merchant_not_found", payload.error || "Merchant not found.", payload);
     return;
   }
+  ok(res, payload);
+}
+
+async function handleMerchantCandidateSearch(req, res, url) {
+  const body = req.method === "POST" ? await readBody(req) : {};
+  const payload = await searchMerchantCandidates({
+    userId: body.user_id || body.userId || "demo_weiyingru",
+    query: body.query || body.text || url.searchParams.get("query") || url.searchParams.get("text") || "",
+    preferences: body.preferences || body.structured_preferences || body.structuredPreferences || {},
+    limit: body.limit || url.searchParams.get("limit") || 4,
+  });
   ok(res, payload);
 }
 
@@ -766,6 +777,10 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/tools/merchant-compare-context") {
       await handleMerchantCompareContext(req, res);
+      return;
+    }
+    if ((req.method === "GET" || req.method === "POST") && url.pathname === "/api/tools/merchant-candidate-search") {
+      await handleMerchantCandidateSearch(req, res, url);
       return;
     }
     if ((req.method === "GET" || req.method === "POST") && url.pathname === "/api/tools/merchant-resolve") {

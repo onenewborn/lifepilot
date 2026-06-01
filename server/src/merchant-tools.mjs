@@ -153,6 +153,237 @@ function notFound(merchantIds = []) {
   };
 }
 
+function numberOrNull(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+const ORDERED_LEVELS = {
+  none: 0,
+  low: 1,
+  medium: 2,
+  high: 3,
+};
+
+function levelValue(value) {
+  return ORDERED_LEVELS[String(value || "").toLowerCase()] ?? null;
+}
+
+function normalizeArray(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).map((item) => String(item));
+  if (value === undefined || value === null || value === "") return [];
+  return [String(value)];
+}
+
+function compactText(value) {
+  return String(value || "").toLowerCase().replace(/[·・\s_-]/g, "");
+}
+
+function levelMatches(actual, rule = {}) {
+  const actualValue = levelValue(actual);
+  const targetValue = levelValue(rule.target ?? rule.value ?? rule);
+  if (actualValue === null || targetValue === null) return false;
+  const operator = rule.operator || "eq";
+  if (operator === "gte") return actualValue >= targetValue;
+  if (operator === "lte") return actualValue <= targetValue;
+  return actualValue === targetValue;
+}
+
+function withinMaxLevel(actual, maxValue) {
+  const actualValue = levelValue(actual);
+  const targetValue = levelValue(maxValue);
+  return actualValue !== null && targetValue !== null && actualValue <= targetValue;
+}
+
+function collectMerchantOffers(offers = []) {
+  const byMerchant = new Map();
+  for (const offer of offers) {
+    const rows = byMerchant.get(offer.merchant_id) || [];
+    rows.push(offer);
+    byMerchant.set(offer.merchant_id, rows);
+  }
+  return byMerchant;
+}
+
+function scoreCandidate({merchant, offers = [], preferences = {}, query = ""}) {
+  const food = preferences.food_preferences || preferences.foodPreferences || {};
+  const constraints = preferences.constraints || {};
+  const scene = preferences.scene || {};
+  const requestedCuisine = normalizeArray(food.cuisine_tags || food.cuisineTags);
+  const requestedFlavor = normalizeArray(food.flavor_tags || food.flavorTags);
+  const requestedMealStyle = normalizeArray(scene.meal_style || scene.mealStyle || constraints.meal_style || constraints.mealStyle);
+  const requestedNeighborhood = normalizeArray(scene.neighborhood || constraints.neighborhood);
+  const requestedServiceSpeed = normalizeArray(constraints.service_speed || constraints.serviceSpeed);
+  const maxPrice = numberOrNull(constraints.max_price_per_person ?? constraints.maxPricePerPerson);
+  const soloFriendly = constraints.solo_friendly ?? constraints.soloFriendly ?? scene.solo_friendly ?? scene.soloFriendly;
+  const chatFriendly = constraints.chat_friendly ?? constraints.chatFriendly ?? scene.chat_friendly ?? scene.chatFriendly;
+  const queryText = compactText(query);
+
+  let bestOffer = null;
+  let bestOfferScore = -Infinity;
+  let score = 0;
+  const reasons = [];
+  const caveats = [];
+
+  if (requestedNeighborhood.length) {
+    const matched = requestedNeighborhood.some((item) => compactText(merchant.neighborhood).includes(compactText(item)));
+    if (matched) {
+      score += 16;
+      reasons.push(`区域匹配 ${merchant.neighborhood}`);
+    } else {
+      caveats.push(`不在指定区域 ${requestedNeighborhood.join("/")}`);
+    }
+  }
+
+  if (constraints.max_queue_risk || constraints.maxQueueRisk) {
+    const maxQueueRisk = constraints.max_queue_risk || constraints.maxQueueRisk;
+    if (withinMaxLevel(merchant.queue_risk, maxQueueRisk)) {
+      score += 16;
+      reasons.push(`排队风险 ${merchant.queue_risk}`);
+    } else {
+      score -= 12;
+      caveats.push(`排队风险 ${merchant.queue_risk}`);
+    }
+  }
+
+  if (soloFriendly === true) {
+    if (merchant.environment?.solo_friendly) {
+      score += 10;
+      reasons.push("一人友好");
+    } else {
+      score -= 10;
+      caveats.push("不太适合一个人");
+    }
+  }
+
+  if (chatFriendly === true) {
+    if (merchant.environment?.chat_friendly && merchant.environment?.noise_level !== "high") {
+      score += 8;
+      reasons.push("适合聊天");
+    } else {
+      caveats.push("聊天环境一般");
+    }
+  }
+
+  for (const offer of offers) {
+    let offerScore = 0;
+    const fieldsText = [
+      offer.title,
+      offer.display_title,
+      offer.hook,
+      offer.flavor_label,
+      ...(offer.cuisine_tags || []),
+      ...(offer.decision_tags || []),
+      ...(offer.signature_items || []),
+      ...(merchant.specialties || []),
+      merchant.scene,
+      merchant.name,
+    ].map(compactText).join(" ");
+
+    for (const tag of [...requestedCuisine, ...requestedFlavor]) {
+      if (!tag) continue;
+      if (fieldsText.includes(compactText(tag))) offerScore += 14;
+    }
+
+    if (food.spice_level || food.spiceLevel) {
+      const rule = food.spice_level || food.spiceLevel;
+      if (levelMatches(offer.spice_level, rule)) offerScore += 14;
+      else offerScore -= 5;
+    }
+
+    if (food.oil_level || food.oilLevel) {
+      const rule = food.oil_level || food.oilLevel;
+      if (levelMatches(offer.oil_level, rule)) offerScore += 12;
+      else offerScore -= 6;
+    }
+
+    if (food.temperature && offer.temperature === food.temperature) offerScore += 5;
+    if (requestedMealStyle.includes(offer.meal_style)) offerScore += 8;
+    if (requestedServiceSpeed.includes(offer.service_speed)) offerScore += 8;
+    if (maxPrice !== null) offerScore += Number(offer.price_per_person) <= maxPrice ? 10 : -10;
+    if (soloFriendly === true) offerScore += offer.solo_friendly ? 6 : -6;
+    if (queryText && fieldsText.includes(queryText)) offerScore += 10;
+
+    if (offerScore > bestOfferScore) {
+      bestOfferScore = offerScore;
+      bestOffer = offer;
+    }
+  }
+
+  if (bestOffer && bestOfferScore > 0) {
+    score += bestOfferScore;
+    if (requestedCuisine.length || requestedFlavor.length) reasons.push(`口味/品类命中 ${bestOffer.title}`);
+    if (maxPrice !== null && Number(bestOffer.price_per_person) <= maxPrice) reasons.push(`人均约 ${bestOffer.price_per_person}`);
+    if (food.spice_level || food.spiceLevel) reasons.push(`辣度 ${bestOffer.spice_level}`);
+    if (food.oil_level || food.oilLevel) reasons.push(`油量 ${bestOffer.oil_level}`);
+    if (requestedServiceSpeed.includes(bestOffer.service_speed)) reasons.push(`出餐 ${bestOffer.service_speed}`);
+  }
+
+  if (!reasons.length && queryText) {
+    const merchantText = compactText([
+      merchant.name,
+      merchant.scene,
+      merchant.neighborhood,
+      ...(merchant.specialties || []),
+    ].join(" "));
+    if (merchantText.includes(queryText)) {
+      score += 12;
+      reasons.push("店名/场景文本命中");
+    }
+  }
+
+  return {
+    score,
+    reasons: [...new Set(reasons)].slice(0, 5),
+    caveats: [...new Set(caveats)].slice(0, 3),
+    bestOffer,
+  };
+}
+
+export async function searchMerchantCandidates({userId = "demo_weiyingru", query = "", preferences = {}, limit = 4} = {}) {
+  const merchants = await readMerchants();
+  const offers = await readOffers();
+  const offersByMerchant = collectMerchantOffers(offers);
+  const scored = [];
+  for (const merchant of merchants.values()) {
+    const result = scoreCandidate({
+      merchant,
+      offers: offersByMerchant.get(merchant.merchant_id) || [],
+      preferences,
+      query,
+    });
+    if (result.score > 0) {
+      scored.push({
+        merchant,
+        ...result,
+      });
+    }
+  }
+  scored.sort((left, right) => right.score - left.score || Number(left.merchant.distance_km || 999) - Number(right.merchant.distance_km || 999));
+  const candidates = scored.slice(0, Math.max(1, Number(limit) || 4)).map((item) => ({
+    merchant: compactMerchant(item.merchant),
+    best_offer: item.bestOffer ? compactOffer(item.bestOffer) : null,
+    match_score: item.score,
+    match_reasons: item.reasons,
+    caveats: item.caveats,
+  }));
+  return {
+    ok: true,
+    tool: "merchant_candidate_search",
+    user_id: userId,
+    query: String(query || ""),
+    preferences,
+    candidates,
+    candidate_count: candidates.length,
+    search_contract: {
+      natural_language_owner: "openclaw",
+      backend_role: "structured_filter_and_evidence_retrieval",
+      no_backend_winner: true,
+      note: "后端按 OpenClaw 给出的结构化偏好检索候选；最终推荐和解释由 OpenClaw 完成。",
+    },
+  };
+}
+
 export async function buildMerchantIntelContext({userId = "demo_weiyingru", merchantId, sessionId = "", question = ""} = {}) {
   const merchants = await readMerchants();
   const merchant = merchants.get(merchantId);
