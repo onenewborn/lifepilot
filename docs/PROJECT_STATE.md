@@ -1,6 +1,6 @@
 # 项目驾驶舱
 
-更新时间：2026-05-31 10:54
+更新时间：2026-06-01 15:30
 
 ## 一句话
 
@@ -240,12 +240,19 @@ OpenClaw trace / 长连接 / 流式过程展示后续可以用 web 控制台或�
 ## 当前已知问题
 
 ```text
-1. 问小汪和汪记本是第一版骨架，还需要继续做更完整的聊天 UI、日级记录结构和 OpenClaw skill 调度。
+1. 问小汪和汪记本仍需要继续做更完整的聊天 UI、日级记录结构和 OpenClaw skill 调度。
 2. 汪记本当前读取产品后端 day context 和 memory ledger，还没有真正的“小汪每日主动总结”生成流程。
-3. 问小汪当前是 local skill router，后续要接 OpenClaw skills/agent trace。
-4. 商户卡解释仍依赖 Ark/Doubao 单卡预取，首张卡可能有等待。
-5. Evermind 通用长期记忆不应该每张卡都请求，后续要在 session 启动时读一次并缓存。
-6. 根目录有一个未跟踪的临时 project.config.json，暂时不要提交。
+3. merchant-intel / merchant-compare 的脚本和后端证据工具已经具备雏形，但 OpenClaw sandbox 当前访问不到本地 4331 后端。
+4. 本地端口、手机真机、开发者工具、OpenClaw sandbox 对 127.0.0.1 的理解不同，临时 tunnel 也不稳定；固定 HTTPS API 的优先级升高。
+5. 商户卡解释仍依赖 Ark/Doubao 单卡预取，首张卡可能有等待。
+6. Evermind 通用长期记忆不应该每张卡都请求，后续要在 session 启动时读一次并缓存。
+7. 根目录有一个未跟踪的临时 project.config.json，暂时不要提交。
+```
+
+最新问题小结见：
+
+```text
+docs/CURRENT_ISSUES_SUMMARY.md
 ```
 
 ## 下一步建议
@@ -268,6 +275,7 @@ OpenClaw trace / 长连接 / 流式过程展示后续可以用 web 控制台或�
 ```text
 docs/PROJECT_STATE.md
 docs/NEXT_SESSION_HANDOFF.md
+docs/CURRENT_ISSUES_SUMMARY.md
 apps/lifepilot-miniprogram/README.md
 docs/MIGRATION_PHASES.json
 ```

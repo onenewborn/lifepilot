@@ -1,6 +1,6 @@
 # 新会话交接
 
-更新时间：2026-05-31 10:54
+更新时间：2026-06-01 15:30
 
 ## 请先理解
 
@@ -17,6 +17,12 @@
 ```
 
 旧 workspace 只作为参考和 OpenClaw runtime 所在地，不要把新前端/后端继续塞回旧 workspace。
+
+最新的问题和部署小结在：
+
+```text
+docs/CURRENT_ISSUES_SUMMARY.md
+```
 
 ## 当前任务主线
 
@@ -86,11 +92,12 @@ f88c3df chore: add miniprogram api mode switch
 建议下一轮从这里开始：
 
 ```text
-1. 在微信开发者工具/手机预览里测试默认进入问小汪，以及“直接帮我选 / 帮我走滑卡 → 开始滑卡”。
-2. 测试“汪记本 → 待确认记忆 → 记住/先不记”。
-3. 继续把问小汪从 local router 升级为 OpenClaw skill 调度，输出 skill_cards 和 trace。
-4. 设计汪记本日级 UI：每一天的小汪总结、吃饭行为、偏好变化、待确认记忆。
-5. 接着做 session 启动时一次性读取长期记忆并缓存，避免每张商家卡请求 Evermind。
+1. 优先把后端迁到稳定 HTTPS API：域名 + 轻量服务器 + Nginx + PM2 + HTTPS。
+2. 把 https://api.lifepilot-xiaowang.cn 配到小程序合法域名和 OpenClaw LIFEPILOT_API_BASE。
+3. 继续把 merchant-intel / merchant-compare 接成真正的 OpenClaw 工具调用，而不是后端兜底。
+4. 在微信开发者工具/手机预览里测试默认进入问小汪，以及“直接帮我选 / 帮我走滑卡 → 开始滑卡”。
+5. 设计汪记本日级 UI：每一天的小汪总结、吃饭行为、偏好变化、待确认记忆。
+6. 接着做 session 启动时一次性读取长期记忆并缓存，避免每张商家卡请求 Evermind。
 ```
 
 ## 当前已知坑
@@ -109,6 +116,7 @@ f88c3df chore: add miniprogram api mode switch
 4. 后端默认端口是 4331。
    小程序 API 由 apps/lifepilot-miniprogram/config/api.js 的 API_MODE 控制。
    手机预览通常用 tunnel，开发者工具本地调试通常用 local。
+   但 OpenClaw sandbox 当前访问不到本地 4331；这也是为什么固定 HTTPS API 现在变重要。
 
 5. 商家卡 AI 解释已改为单卡预取，不要再默认一次请求 10 张。
 
