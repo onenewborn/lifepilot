@@ -28,12 +28,16 @@ export async function resolveMerchantIdsFromText(text = "", {limit = 4} = {}) {
   const matches = [];
   for (const merchant of merchants.values()) {
     const name = String(merchant.name || "");
+    const compactName = name.replace(/[·・\s]/g, "");
+    const shortName = compactName.replace(/(川菜馆|牛肉火锅|粉面云吞|兰州牛肉面|客家菜|潮州菜|顺德菜|烧烤|火锅|小馆|饭堂|扒房|肠粉)$/g, "");
     const aliases = [
       name,
-      name.replace(/[·・\s]/g, ""),
+      compactName,
+      shortName,
       ...(merchant.specialties || []),
-    ].filter(Boolean);
-    const matched = aliases.some((alias) => alias && value.includes(alias));
+    ].filter((alias) => alias && alias.length >= 2);
+    const compactValue = value.replace(/[·・\s]/g, "");
+    const matched = aliases.some((alias) => compactValue.includes(alias) || alias.includes(compactValue));
     if (matched) matches.push(merchant.merchant_id);
   }
   return [...new Set(matches)].slice(0, limit);

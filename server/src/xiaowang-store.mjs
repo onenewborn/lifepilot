@@ -680,15 +680,19 @@ function currentMerchantIdFromContext(context = {}) {
 
 async function merchantIdsFromSkillCall({call, message, currentContext}) {
   const args = call.args || {};
-  const ids = [
+  const rawMerchantRefs = [
     ...(Array.isArray(args.merchant_ids || args.merchantIds) ? (args.merchant_ids || args.merchantIds) : []),
     args.merchant_id || args.merchantId,
+    args.merchant_name || args.merchantName || "",
+    args.left_merchant_name || args.leftMerchantName || "",
+    args.right_merchant_name || args.rightMerchantName || "",
+  ].filter(Boolean);
+  const ids = [
+    ...rawMerchantRefs.filter((item) => /^m_futian_\d{3}$/.test(String(item))),
     currentMerchantIdFromContext(currentContext),
     ...(await resolveMerchantIdsFromText([
       message,
-      args.merchant_name || args.merchantName || "",
-      args.left_merchant_name || args.leftMerchantName || "",
-      args.right_merchant_name || args.rightMerchantName || "",
+      ...rawMerchantRefs,
     ].filter(Boolean).join(" "))),
   ].filter(Boolean);
   return [...new Set(ids)];
