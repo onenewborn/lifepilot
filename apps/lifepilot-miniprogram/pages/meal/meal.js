@@ -44,6 +44,14 @@ function buildChatDebugTrace(message) {
   if (message.openclaw && message.openclaw.error) {
     lines.push(`OpenClaw 异常：${message.openclaw.error}`);
   }
+  if (message.openclaw && Array.isArray(message.openclaw.skill_trace) && message.openclaw.skill_trace.length) {
+    message.openclaw.skill_trace.forEach((trace) => {
+      const skill = trace.skill || "skill";
+      const state = trace.ok ? "完成" : (trace.error || "异常");
+      const ids = Array.isArray(trace.merchant_ids) && trace.merchant_ids.length ? ` · ${trace.merchant_ids.join(",")}` : "";
+      lines.push(`工具：${skill} ${state}${ids}`);
+    });
+  }
   if (message.ai && message.ai.provider) {
     lines.push(`AI：${message.ai.provider}`);
   }
@@ -70,9 +78,37 @@ function buildChatDebugTrace(message) {
 
 function decorateChatMessage(message) {
   if (!message || typeof message !== "object") return message;
+  const skillResultCards = Array.isArray(message.skill_result_cards)
+    ? message.skill_result_cards.map((card) => ({
+      ...card,
+      merchants: Array.isArray(card.merchants)
+        ? card.merchants.map((merchant) => ({
+          ...merchant,
+          specialtiesText: Array.isArray(merchant.specialties) ? merchant.specialties.join("、") : ""
+        }))
+        : card.merchants
+    }))
+    : message.skill_result_cards;
   return {
     ...message,
+    skill_result_cards: skillResultCards,
     debug_trace: buildChatDebugTrace(message)
+  };
+}
+
+function currentChatContext(data) {
+  const currentCard = data.currentCard || null;
+  return {
+    active_tab: data.activeTab,
+    meal_stage: data.stage,
+    meal_session_id: data.sessionId || "",
+    current_card: currentCard ? {
+      merchant_id: currentCard.merchantId || currentCard.merchant_id || "",
+      merchant_name: currentCard.merchantName || currentCard.merchant_name || currentCard.title || "",
+      title: currentCard.title || "",
+      tags: currentCard.tags || [],
+      facts: currentCard.facts || {}
+    } : null
   };
 }
 
@@ -949,7 +985,8 @@ Page({
       const payload = await xiaowangApi.chat({
         user_id: DEFAULT_USER_ID,
         session_id: this.data.chatSessionId,
-        message: text
+        message: text,
+        current_context: currentChatContext(this.data)
       });
       this.setData({
         chatSessionId: payload.session && payload.session.session_id ? payload.session.session_id : this.data.chatSessionId,

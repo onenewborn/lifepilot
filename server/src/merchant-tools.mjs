@@ -21,6 +21,24 @@ async function readMerchants() {
   return cachedMerchants;
 }
 
+export async function resolveMerchantIdsFromText(text = "", {limit = 4} = {}) {
+  const value = String(text || "").trim();
+  if (!value) return [];
+  const merchants = await readMerchants();
+  const matches = [];
+  for (const merchant of merchants.values()) {
+    const name = String(merchant.name || "");
+    const aliases = [
+      name,
+      name.replace(/[·・\s]/g, ""),
+      ...(merchant.specialties || []),
+    ].filter(Boolean);
+    const matched = aliases.some((alias) => alias && value.includes(alias));
+    if (matched) matches.push(merchant.merchant_id);
+  }
+  return [...new Set(matches)].slice(0, limit);
+}
+
 async function readOffers() {
   if (!cachedOffers) {
     cachedOffers = JSON.parse(await readFile(OFFERS_PATH, "utf8")).offers || [];

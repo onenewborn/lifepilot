@@ -467,6 +467,36 @@
               <button class="skill-card-button" data-action="{{skill.action}}" bindtap="runChatSkill">{{skill.cta}}</button>
             </view>
           </view>
+          <view wx:if="{{item.skill_result_cards && item.skill_result_cards.length}}" class="skill-result-list">
+            <view wx:for="{{item.skill_result_cards}}" wx:for-item="result" wx:key="title" class="skill-result-card">
+              <view class="skill-result-title">{{result.title}}</view>
+              <view wx:if="{{result.subtitle}}" class="skill-result-subtitle">{{result.subtitle}}</view>
+              <view wx:if="{{result.summary}}" class="skill-result-summary">{{result.summary}}</view>
+              <view wx:if="{{result.primary_points && result.primary_points.length}}" class="skill-result-points">
+                <view wx:for="{{result.primary_points}}" wx:for-item="point" wx:key="*this" class="skill-result-point">{{point}}</view>
+              </view>
+              <view wx:if="{{result.evidence_chips && result.evidence_chips.length}}" class="evidence-chip-list">
+                <view wx:for="{{result.evidence_chips}}" wx:for-item="chip" wx:key="label" class="evidence-chip">
+                  <text>{{chip.label}}</text>
+                  <text wx:if="{{chip.value}}" class="evidence-chip-value">{{chip.value}}</text>
+                </view>
+              </view>
+              <view wx:if="{{result.merchants && result.merchants.length}}" class="compare-merchant-list">
+                <view wx:for="{{result.merchants}}" wx:for-item="merchant" wx:key="merchant_id" class="compare-merchant">
+                  <view class="compare-merchant-head">
+                    <text class="compare-merchant-name">{{merchant.name}}</text>
+                    <text class="compare-merchant-rating">{{merchant.rating}}</text>
+                  </view>
+                  <view wx:if="{{merchant.scene}}" class="compare-merchant-scene">{{merchant.scene}}</view>
+                  <view wx:if="{{merchant.specialtiesText}}" class="compare-merchant-tags">招牌：{{merchant.specialtiesText}}</view>
+                  <view wx:if="{{merchant.tags && merchant.tags.length}}" class="compare-evidence-row">
+                    <text wx:for="{{merchant.tags}}" wx:for-item="tag" wx:key="label" class="compare-evidence-chip">{{tag.label}} {{tag.value}}</text>
+                  </view>
+                </view>
+              </view>
+              <view wx:if="{{result.note}}" class="skill-result-note">{{result.note}}</view>
+            </view>
+          </view>
         </view>
       </view>
     </scroll-view>

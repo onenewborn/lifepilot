@@ -8,6 +8,7 @@ import { createMemoryCandidatesFromOpenClaw, listConfirmedPreferences, listMemor
 import { requestOpenClawAgent, resetOpenClawGatewayClient } from "./openclaw-gateway-client.mjs";
 import { callArkChat } from "./ai/ark-provider.mjs";
 import { getLatestOpenClawJobForDay } from "./openclaw-store.mjs";
+import { buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantIdsFromText } from "./merchant-tools.mjs";
 
 const DEFAULT_USER_ID = "demo_weiyingru";
 const CHAT_SCHEMA = "lifepilot.xiaowang_chat.v1";
@@ -50,6 +51,26 @@ const SKILL_REGISTRY = [
     trigger_examples: ["复盘今天", "整理今天的吃饭记录"],
     action: "run_dreaming",
     cta: "开始复盘",
+    runtime: "openclaw_gateway_client",
+    status: "available",
+  },
+  {
+    skill: "merchant_intel",
+    title: "商家理解",
+    description: "解释这家店的特色菜、口味、排队风险和适合几个人吃。",
+    trigger_examples: ["这家有什么特色菜", "这家适合一个人吗", "这家口味怎么样"],
+    action: "show_merchant_intel",
+    cta: "看商家证据",
+    runtime: "openclaw_gateway_client",
+    status: "available",
+  },
+  {
+    skill: "merchant_compare",
+    title: "商家对比",
+    description: "基于评分、评论分布、口碑标签和用户记忆比较两到四家店。",
+    trigger_examples: ["这两家怎么选", "哪家更好吃", "汪记豆花和川香楼比一下"],
+    action: "show_merchant_compare",
+    cta: "看对比证据",
     runtime: "openclaw_gateway_client",
     status: "available",
   },
@@ -141,6 +162,14 @@ function wantsMemoryCandidate(text) {
 
 function wantsDiarySkill(text) {
   return /(汪记本|日记|记得我|记住了什么|你了解我|我的偏好|待确认|画像|今天.*记录|今天.*记了什么)/.test(text);
+}
+
+function wantsMerchantIntelSkill(text) {
+  return /(这家|这店|商家|店).*?(特色|招牌|口味|好吃|适合|排队|环境|怎么点|几个人|一个人|两个人|三个人)|特色菜|招牌菜/.test(text);
+}
+
+function wantsMerchantCompareSkill(text) {
+  return /(对比|比较|哪家|哪个更|谁更|怎么选|二选一|两家|三家|排名|榜)/.test(text);
 }
 
 function skillByName(name) {
@@ -266,6 +295,9 @@ function parseOpenClawChatResponse(text) {
   return {
     message: String(parsed.message || "").trim(),
     skill_calls: normalizeSkillCalls(parsed.skill_calls || parsed.skillCalls || []),
+    skill_result_cards: Array.isArray(parsed.skill_result_cards || parsed.skillResultCards)
+      ? (parsed.skill_result_cards || parsed.skillResultCards)
+      : [],
     memory_prompts: Array.isArray(parsed.memory_prompts || parsed.memoryPrompts)
       ? (parsed.memory_prompts || parsed.memoryPrompts).map((item) => ({
         text: String(item?.text || "").trim(),
@@ -276,7 +308,28 @@ function parseOpenClawChatResponse(text) {
   };
 }
 
-function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = []}) {
+function compactCurrentContext(context = {}) {
+  if (!context || typeof context !== "object") return null;
+  const card = context.current_card || context.currentCard || context.current_merchant || context.currentMerchant || {};
+  if (!card || typeof card !== "object") return null;
+  const merchantId = card.merchant_id || card.merchantId || "";
+  const merchantName = card.merchant_name || card.merchantName || card.title || "";
+  if (!merchantId && !merchantName) return null;
+  return {
+    active_tab: context.active_tab || context.activeTab || "",
+    meal_stage: context.meal_stage || context.mealStage || "",
+    meal_session_id: context.meal_session_id || context.mealSessionId || "",
+    current_merchant: {
+      merchant_id: merchantId,
+      merchant_name: merchantName,
+      title: card.title || "",
+      tags: card.tags || [],
+      facts: card.facts || {},
+    },
+  };
+}
+
+function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = [], currentContext = null}) {
   const context = recentChatContext(session.messages || []);
   const skills = SKILL_REGISTRY.map((skill) => (
     `- ${skill.skill}: ${skill.description} action=${skill.action} cta=${skill.cta} status=${skill.status}`
@@ -294,13 +347,17 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     "请只输出 JSON，不要加 Markdown，不要解释 JSON。",
     "",
     "JSON schema:",
-    "{\"message\":\"小汪要发给用户的一段自然回复，最多 3 句。\",\"skill_calls\":[{\"skill\":\"meal_swipe\",\"action\":\"start_meal\",\"reason\":\"\",\"args\":{}}],\"memory_prompts\":[]}",
+    "{\"message\":\"小汪要发给用户的一段自然回复，最多 3 句。\",\"skill_calls\":[{\"skill\":\"merchant_intel\",\"action\":\"show_merchant_intel\",\"reason\":\"\",\"args\":{\"merchant_id\":\"m_futian_006\"}}],\"memory_prompts\":[]}",
     "",
     "可用 skills:",
     skills,
     "",
     "不要暴露 gateway、runner、transport、schema、OpenClaw 等内部实现。",
     "如果用户表达长期偏好或要求记住，使用 memory_capture，并在 memory_prompts 中给出待确认文本。",
+    "如果用户问某家店的特色菜、口味、排队、适合几个人吃，使用 merchant_intel。",
+    "如果用户问两家或多家店怎么选、哪家更好吃、类似店对比，使用 merchant_compare。",
+    "merchant_intel / merchant_compare 只负责发起 skill_call；最终证据由 LifePilot 后端工具补齐。你不要自己编评分和评论数。",
+    "如果当前上下文里有 current_merchant，用户说“这家/这店”时优先使用它的 merchant_id。",
     "如果不需要 skill，skill_calls 返回空数组。",
     "",
     `当前已确认偏好数量：${preferenceCount}`,
@@ -308,6 +365,7 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     `今日汪记本总结：${diarySummary?.text || "暂无"}`,
     `已确认偏好：\n${preferenceText}`,
     `待确认记忆：\n${pendingText}`,
+    currentContext ? `当前产品上下文：\n${JSON.stringify(currentContext)}` : "当前产品上下文：暂无",
     context ? `最近对话：\n${context}` : "最近对话：暂无",
     "",
     `用户最新消息：${message}`,
@@ -316,12 +374,12 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
   ].join("\n");
 }
 
-async function getOpenClawChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending}) {
+async function getOpenClawChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext}) {
   const result = await requestOpenClawAgent({
     sessionId: `lifepilot-xiaowang-${session.session_id}`,
     timeoutSeconds: process.env.LIFEPILOT_XIAOWANG_OPENCLAW_TIMEOUT_SECONDS || 90,
     idempotencyKey: `lifepilot-xiaowang-${session.session_id}-${Date.now()}-${randomUUID().slice(0, 6)}`,
-    message: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending}),
+    message: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext}),
   });
   const text = parseOpenClawText(result);
   if (result?.status !== "ok" || !text) {
@@ -334,6 +392,7 @@ async function getOpenClawChatReply({message, session, pendingCount, preferenceC
   return {
     content: response.message,
     skillCalls: response.skill_calls,
+    skillResultCards: response.skill_result_cards || [],
     memoryPrompts: response.memory_prompts,
     parseMode: response.parse_mode,
     raw: result,
@@ -344,7 +403,7 @@ function isOpenClawTimeout(error) {
   return /timeout/i.test(error instanceof Error ? error.message : String(error));
 }
 
-async function getArkChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending}) {
+async function getArkChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext}) {
   const ai = await callArkChat({
     timeoutMs: Number(process.env.LIFEPILOT_XIAOWANG_ARK_TIMEOUT_MS || 12000),
     maxTokens: 700,
@@ -357,7 +416,7 @@ async function getArkChatReply({message, session, pendingCount, preferenceCount,
       },
       {
         role: "user",
-        content: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending}),
+        content: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext}),
       },
     ],
   });
@@ -375,6 +434,7 @@ async function getArkChatReply({message, session, pendingCount, preferenceCount,
   return {
     content: response.message,
     skillCalls: response.skill_calls,
+    skillResultCards: response.skill_result_cards || [],
     memoryPrompts: response.memory_prompts,
     parseMode: response.parse_mode,
     raw: ai,
@@ -383,6 +443,8 @@ async function getArkChatReply({message, session, pendingCount, preferenceCount,
 
 function fallbackSkillCards(message) {
   return [
+    wantsMerchantCompareSkill(message) ? skillCard("merchant_compare") : null,
+    wantsMerchantIntelSkill(message) ? skillCard("merchant_intel") : null,
     wantsMealSkill(message) ? skillCard("meal_swipe") : null,
     wantsDiarySkill(message) ? skillCard("diary_review") : null,
   ].filter(Boolean);
@@ -390,6 +452,7 @@ function fallbackSkillCards(message) {
 
 function skillCardsFromCalls(skillCalls = []) {
   return normalizeSkillCalls(skillCalls)
+    .filter((call) => !["merchant_intel", "merchant_compare"].includes(call.skill))
     .map((call) => skillCard(call.skill))
     .filter(Boolean);
 }
@@ -551,6 +614,139 @@ function memoryPromptsFromCalls({skillCalls = [], memoryPrompts = [], message}) 
   return prompts;
 }
 
+function ratingText(reputation = {}) {
+  const rating = reputation.rating?.value;
+  const count = reputation.review_stats?.review_count || 0;
+  if (!rating) return "暂无评分证据";
+  return `${rating}/${reputation.rating?.scale || 5} · ${count} 条评价量级`;
+}
+
+function topEvidenceTags(reputation = {}, limit = 3) {
+  return (reputation.reputation_tags || [])
+    .slice(0, limit)
+    .map((tag) => ({
+      label: tag.tag,
+      value: `${Math.round((tag.mention_ratio || 0) * 100)}%`,
+      text: tag.evidence_text || `${tag.mention_count || 0} 条提到 ${tag.tag}`,
+      sentiment: tag.sentiment,
+    }));
+}
+
+function merchantIntelCard(context = {}) {
+  const reputation = context.merchant_reputation || {};
+  const dishes = (context.merchant?.specialties || context.merchant_reputation?.signature_dishes?.map((item) => item.name) || []).slice(0, 5);
+  const risks = (context.merchant_reputation?.negative_signals || []).slice(0, 3).map((item) => item.signal);
+  return {
+    type: "merchant_intel_card",
+    skill: "merchant_intel",
+    title: context.merchant?.name || "商家理解",
+    subtitle: ratingText(reputation),
+    summary: context.reputation_summary?.text || "",
+    primary_points: [
+      dishes.length ? `特色菜：${dishes.join("、")}` : "",
+      context.merchant?.scene ? `适合场景：${context.merchant.scene}` : "",
+      risks.length ? `需要留意：${risks.join("、")}` : "",
+    ].filter(Boolean),
+    evidence_chips: topEvidenceTags(reputation),
+    source_type: reputation.source_type || "",
+    note: "评分和评论分布若标记为 demo_constructed，仅用于产品原型和 OpenClaw skill 评测。",
+  };
+}
+
+function merchantCompareCard(context = {}) {
+  const merchants = context.merchants || [];
+  return {
+    type: "merchant_compare_card",
+    skill: "merchant_compare",
+    title: "商家对比证据",
+    subtitle: merchants.map((item) => item.merchant?.name).filter(Boolean).join(" vs "),
+    merchants: merchants.map((item) => ({
+      merchant_id: item.merchant?.merchant_id,
+      name: item.merchant?.name,
+      rating: ratingText(item.merchant_reputation || {}),
+      scene: item.merchant?.scene || "",
+      tags: topEvidenceTags(item.merchant_reputation || {}, 2),
+      specialties: (item.merchant?.specialties || []).slice(0, 4),
+      risks: (item.merchant_reputation?.negative_signals || []).slice(0, 2).map((signal) => signal.signal),
+    })),
+    note: "后端没有选择 winner；小汪会基于这些证据和你的偏好说明取舍。",
+  };
+}
+
+function currentMerchantIdFromContext(context = {}) {
+  const current = compactCurrentContext(context);
+  return current?.current_merchant?.merchant_id || "";
+}
+
+async function merchantIdsFromSkillCall({call, message, currentContext}) {
+  const args = call.args || {};
+  const ids = [
+    ...(Array.isArray(args.merchant_ids || args.merchantIds) ? (args.merchant_ids || args.merchantIds) : []),
+    args.merchant_id || args.merchantId,
+    currentMerchantIdFromContext(currentContext),
+    ...(await resolveMerchantIdsFromText([
+      message,
+      args.merchant_name || args.merchantName || "",
+      args.left_merchant_name || args.leftMerchantName || "",
+      args.right_merchant_name || args.rightMerchantName || "",
+    ].filter(Boolean).join(" "))),
+  ].filter(Boolean);
+  return [...new Set(ids)];
+}
+
+async function executeMerchantSkillCalls({skillCalls = [], message, userId, dayId, currentContext}) {
+  const resultCards = [];
+  const traces = [];
+  for (const call of skillCalls) {
+    if (call.skill === "merchant_intel") {
+      const [merchantId] = await merchantIdsFromSkillCall({call, message, currentContext});
+      if (!merchantId) {
+        resultCards.push({
+          type: "merchant_intel_card",
+          skill: "merchant_intel",
+          title: "小汪还不知道是哪家店",
+          subtitle: "可以点开商家卡后再问“这家有什么特色菜”。",
+          primary_points: ["也可以直接说店名，比如“川香楼有什么特色菜？”"],
+          evidence_chips: [],
+        });
+        traces.push({skill: call.skill, ok: false, error: "missing_merchant_id"});
+        continue;
+      }
+      const context = await buildMerchantIntelContext({
+        userId,
+        merchantId,
+        sessionId: currentContext?.meal_session_id || currentContext?.mealSessionId || "",
+        question: message,
+      });
+      if (context.ok) resultCards.push(merchantIntelCard(context));
+      traces.push({skill: call.skill, ok: Boolean(context.ok), merchant_ids: [merchantId], tool: context.tool || "", error: context.error || ""});
+    }
+    if (call.skill === "merchant_compare") {
+      const merchantIds = (await merchantIdsFromSkillCall({call, message, currentContext})).slice(0, 4);
+      if (merchantIds.length < 2) {
+        resultCards.push({
+          type: "merchant_compare_card",
+          skill: "merchant_compare",
+          title: "小汪需要至少两家店才能比较",
+          subtitle: "你可以说“汪记豆花和川香楼怎么选”。",
+          merchants: [],
+        });
+        traces.push({skill: call.skill, ok: false, error: "need_two_merchants"});
+        continue;
+      }
+      const context = await buildMerchantCompareContext({
+        userId,
+        merchantIds,
+        sessionId: currentContext?.meal_session_id || currentContext?.mealSessionId || "",
+        question: message,
+      });
+      if (context.ok) resultCards.push(merchantCompareCard(context));
+      traces.push({skill: call.skill, ok: Boolean(context.ok), merchant_ids: merchantIds, tool: context.tool || "", error: context.error || ""});
+    }
+  }
+  return {resultCards, traces};
+}
+
 async function createMemoryCandidatesFromPrompts({userId, sessionId, dayId, message, skillCalls = [], memoryPrompts = []}) {
   const prompts = memoryPromptsFromCalls({skillCalls, memoryPrompts, message})
     .map((item) => ({
@@ -596,6 +792,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
   const preferences = await listConfirmedPreferences({userId, status: "active"});
   const dayId = body.day_id || body.dayId || createDayId(userId, new Date());
   const dayContext = await getDayContext(dayId);
+  const currentContext = compactCurrentContext(body.current_context || body.currentContext || {});
   const mealSessionsForSummary = (dayContext?.meal_sessions || []).map(xiaowangMealDiaryItem);
   const latestDreamJob = await getLatestOpenClawJobForDay({userId, dayId});
   const diarySummary = buildDiarySummary({
@@ -607,6 +804,8 @@ export async function handleXiaowangChat({body = {}} = {}) {
   let skillCards = [];
   let skillCalls = [];
   let memoryPrompts = [];
+  let skillResultCards = [];
+  let skillTrace = [];
   let memoryResult = {created_count: 0, candidates: []};
   let content = "";
   let mode = "openclaw_gateway_client";
@@ -622,10 +821,15 @@ export async function handleXiaowangChat({body = {}} = {}) {
         diarySummary,
         preferences: preferences.preferences || [],
         pending: pending.candidates || [],
+        currentContext,
       });
       content = openclawReply.content;
       skillCalls = openclawReply.skillCalls || [];
       skillCards = skillCardsFromCalls(skillCalls);
+      skillResultCards = openclawReply.skillResultCards || [];
+      const executed = await executeMerchantSkillCalls({skillCalls, message, userId, dayId, currentContext});
+      skillResultCards = [...skillResultCards, ...executed.resultCards];
+      skillTrace = executed.traces;
       memoryPrompts = memoryPromptsFromCalls({
         skillCalls,
         memoryPrompts: openclawReply.memoryPrompts || [],
@@ -646,6 +850,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
         status: openclawReply.raw?.status || "",
         run_id: openclawReply.raw?.runId || "",
         parse_mode: openclawReply.parseMode || "",
+        skill_trace: skillTrace,
       };
     } catch (error) {
       if (isOpenClawTimeout(error)) resetOpenClawGatewayClient();
@@ -661,10 +866,15 @@ export async function handleXiaowangChat({body = {}} = {}) {
           diarySummary,
           preferences: preferences.preferences || [],
           pending: pending.candidates || [],
+          currentContext,
         });
         content = arkReply.content;
         skillCalls = arkReply.skillCalls || [];
         skillCards = skillCardsFromCalls(skillCalls);
+        skillResultCards = arkReply.skillResultCards || [];
+        const executed = await executeMerchantSkillCalls({skillCalls, message, userId, dayId, currentContext});
+        skillResultCards = [...skillResultCards, ...executed.resultCards];
+        skillTrace = executed.traces;
         memoryPrompts = memoryPromptsFromCalls({
           skillCalls,
           memoryPrompts: arkReply.memoryPrompts || [],
@@ -686,9 +896,14 @@ export async function handleXiaowangChat({body = {}} = {}) {
           model: arkReply.raw?.model || "",
           parse_mode: arkReply.parseMode || "",
           timing: arkReply.raw?.timing || null,
+          skill_trace: skillTrace,
         };
       } catch (arkError) {
         skillCards = fallbackSkillCards(message);
+        skillCalls = normalizeSkillCalls(skillCards.map((card) => ({skill: card.skill, args: {}})));
+        const executed = await executeMerchantSkillCalls({skillCalls, message, userId, dayId, currentContext});
+        skillResultCards = executed.resultCards;
+        skillTrace = executed.traces;
         if (wantsMemoryCandidate(message)) {
           memoryResult = await createMemoryCandidatesFromOpenClaw({
             userId,
@@ -729,6 +944,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
     content,
     mode,
     skill_cards: skillCards,
+    skill_result_cards: skillResultCards,
     agent_skill_calls: skillCalls,
     memory_prompts: memoryPrompts,
     memory_candidate_created_count: memoryResult.created_count || 0,
