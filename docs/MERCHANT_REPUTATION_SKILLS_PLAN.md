@@ -737,7 +737,8 @@ pending memory candidates
 目标：
 
 ```text
-OpenClaw 小汪能基于后端证据做商家理解和两店比较。
+OpenClaw 小汪能在一次 agent loop 中调用 LifePilot 工具获取后端证据，
+再基于证据、长期偏好和当前场景生成商家理解和两店比较。
 ```
 
 要做：
@@ -746,8 +747,29 @@ OpenClaw 小汪能基于后端证据做商家理解和两店比较。
 更新 lifepilot-xiaowang/SKILL.md
 更新 SOUL.md
 更新 AGENTS.md
-让 /api/xiaowang/chat 支持返回 skill_result_cards
+让 /api/xiaowang/chat-async 负责启动/等待 OpenClaw agent run，而不是在后端执行商户判断
+将 merchant_intel_context / merchant_compare_context 暴露为 OpenClaw 可调用工具或脚本
+让 OpenClaw 的最终 JSON 返回 message、skill_result_cards 和 tool trace
 新增 merchant_intel_card / merchant_compare_card 前端展示
+```
+
+关键边界：
+
+```text
+LifePilot 后端负责：
+- 提供商户证据、评分、评论分布、特色菜、用户记忆和当前场景 context
+- 做数据校验、权限边界、候选记忆写入守门和前端渲染传输
+
+OpenClaw 负责：
+- 判断是否调用 merchant_intel / merchant_compare
+- 调用工具并读取工具结果
+- 结合长期偏好生成最终小汪回复
+- 决定“更适合今天/更适合主人/更适合多人局”的解释
+
+禁止：
+- 后端根据 merchant card 拼接小汪推荐语
+- 后端生成 winner 后让 OpenClaw 只复述
+- OpenClaw 在没有工具证据时编评分、评论数或平台事实
 ```
 
 验收：
@@ -755,7 +777,7 @@ OpenClaw 小汪能基于后端证据做商家理解和两店比较。
 ```text
 问“瑞幸和幸运咖选哪个”，小汪能区分场景并引用量化证据。
 问“这家有什么特色菜”，小汪能输出特色菜和证据。
-开发轨迹显示来源为 AI · OpenClaw，skill 为 merchant_compare 或 merchant_intel。
+开发轨迹显示 OpenClaw agent run、tool start/end、tool result 和最终 assistant 回复。
 ```
 
 ### Step 3：party_ordering 与最终确认页小抄
