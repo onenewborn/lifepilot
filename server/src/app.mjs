@@ -28,7 +28,7 @@ import {
   writeMealSessionSummaryToEvermind,
 } from "./evermind-sync.mjs";
 import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
-import { buildMerchantCompareContext, buildMerchantIntelContext } from "./merchant-tools.mjs";
+import { buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantsFromText } from "./merchant-tools.mjs";
 import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
 import { runOpenClawDreamAgent } from "./openclaw-runner.mjs";
 import { getXiaowangChatJob, handleXiaowangChat, listXiaowangSkills, readXiaowangDiary, startXiaowangChatJob } from "./xiaowang-store.mjs";
@@ -368,6 +368,16 @@ async function handleMerchantCompareContext(req, res) {
     fail(res, 404, payload.error || "merchant_not_found", payload.error || "Merchant not found.", payload);
     return;
   }
+  ok(res, payload);
+}
+
+async function handleMerchantResolve(req, res, url) {
+  const body = req.method === "POST" ? await readBody(req) : {};
+  const query = body.query || body.text || body.merchant_name || body.merchantName || url.searchParams.get("query") || url.searchParams.get("text") || "";
+  const limit = body.limit || url.searchParams.get("limit") || 4;
+  const payload = await resolveMerchantsFromText(query, {
+    limit,
+  });
   ok(res, payload);
 }
 
@@ -756,6 +766,10 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/tools/merchant-compare-context") {
       await handleMerchantCompareContext(req, res);
+      return;
+    }
+    if ((req.method === "GET" || req.method === "POST") && url.pathname === "/api/tools/merchant-resolve") {
+      await handleMerchantResolve(req, res, url);
       return;
     }
     if (req.method === "GET" && url.pathname.startsWith("/api/day-context/")) {

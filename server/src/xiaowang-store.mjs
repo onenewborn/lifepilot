@@ -332,6 +332,7 @@ function compactCurrentContext(context = {}) {
 
 function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = [], currentContext = null}) {
   const context = recentChatContext(session.messages || []);
+  const openClawApiBase = (process.env.LIFEPILOT_OPENCLAW_API_BASE || process.env.LIFEPILOT_PUBLIC_API_BASE || `http://${config.host}:${config.port}`).replace(/\/$/, "");
   const skills = SKILL_REGISTRY.map((skill) => (
     `- ${skill.skill}: ${skill.description} action=${skill.action} cta=${skill.cta} status=${skill.status}`
   )).join("\n");
@@ -348,17 +349,18 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     "请只输出 JSON，不要加 Markdown，不要解释 JSON。",
     "",
     "JSON schema:",
-    "{\"message\":\"小汪要发给用户的一段自然回复，最多 3 句。\",\"skill_calls\":[{\"skill\":\"merchant_intel\",\"action\":\"show_merchant_intel\",\"reason\":\"\",\"args\":{\"merchant_id\":\"m_futian_006\"}}],\"memory_prompts\":[]}",
+    "{\"message\":\"小汪要发给用户的一段自然回复，最多 3 句。\",\"skill_calls\":[],\"skill_result_cards\":[],\"memory_prompts\":[]}",
     "",
     "可用 LifePilot tool ids（当前 JSON 兼容层仍使用 snake_case；OpenClaw skill 目录使用 hyphen 命名）:",
     skills,
     "",
     "不要暴露 gateway、runner、transport、schema、OpenClaw 等内部实现。",
     "如果用户表达长期偏好或要求记住，使用 memory_capture，并在 memory_prompts 中给出待确认文本。",
-    "如果用户问某家店的特色菜、口味、排队、适合几个人吃，使用 merchant_intel。",
-    "如果用户问两家或多家店怎么选、哪家更好吃、类似店对比，使用 merchant_compare。",
-    "merchant_intel / merchant_compare 的最终解释应由 OpenClaw 基于工具证据生成，不要让 LifePilot 后端替你下结论。",
-    "商户评分、评论数和口碑分布必须来自 LifePilot 工具证据；如果当前运行环境只能返回 skill_calls，这是临时兼容层，不是最终架构。",
+    `OpenClaw 工具调用 LifePilot API 时必须使用这个 api base：${openClawApiBase}`,
+    "如果用户问某家店的特色菜、口味、排队、适合几个人吃，优先调用 merchant-intel skill 的脚本：python3 skills/merchant-intel/scripts/merchant_intel_tool.py --api-base 上面的_api_base ...，读取工具结果后再生成 message。",
+    "如果用户问两家或多家店怎么选、哪家更好吃、类似店对比，优先调用 merchant-compare skill 的脚本：python3 skills/merchant-compare/scripts/merchant_compare_tool.py --api-base 上面的_api_base ...，读取工具结果后再生成 message。",
+    "merchant_intel / merchant_compare 的最终解释应由 OpenClaw 基于工具证据生成，不要让 LifePilot 后端替你下结论；使用脚本拿到证据后，最终 JSON 里 skill_calls 应尽量返回空数组，skill_result_cards 放脚本返回的证据卡。",
+    "商户评分、评论数和口碑分布必须来自 LifePilot 工具证据；只有当工具调用不可用时，才用 skill_calls 作为临时兼容层。",
     "如果当前上下文里有 current_merchant，用户说“这家/这店”时优先使用它的 merchant_id。",
     "如果不需要 skill，skill_calls 返回空数组。",
     "",

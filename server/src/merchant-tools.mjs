@@ -43,6 +43,26 @@ export async function resolveMerchantIdsFromText(text = "", {limit = 4} = {}) {
   return [...new Set(matches)].slice(0, limit);
 }
 
+export async function resolveMerchantsFromText(text = "", {limit = 4} = {}) {
+  const ids = await resolveMerchantIdsFromText(text, {limit});
+  const merchants = await readMerchants();
+  return {
+    ok: true,
+    tool: "merchant_resolve",
+    query: String(text || ""),
+    merchants: ids.map((merchantId) => {
+      const merchant = merchants.get(merchantId) || {};
+      return {
+        merchant_id: merchantId,
+        name: merchant.name || "",
+        scene: merchant.scene || "",
+        neighborhood: merchant.neighborhood || "",
+        specialties: merchant.specialties || [],
+      };
+    }),
+  };
+}
+
 async function readOffers() {
   if (!cachedOffers) {
     cachedOffers = JSON.parse(await readFile(OFFERS_PATH, "utf8")).offers || [];
