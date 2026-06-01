@@ -44,6 +44,11 @@ function buildChatDebugTrace(message) {
   if (message.openclaw && message.openclaw.error) {
     lines.push(`OpenClaw 异常：${message.openclaw.error}`);
   }
+  if (message.openclaw && Array.isArray(message.openclaw.progress)) {
+    message.openclaw.progress.forEach((item) => {
+      if (item) lines.push(`进度：${item}`);
+    });
+  }
   if (message.openclaw && Array.isArray(message.openclaw.skill_trace) && message.openclaw.skill_trace.length) {
     message.openclaw.skill_trace.forEach((trace) => {
       const skill = trace.skill || "skill";
@@ -982,17 +987,27 @@ Page({
       )
     });
     try {
-      const payload = await xiaowangApi.chat({
+      const payload = await xiaowangApi.chatAsync({
         user_id: DEFAULT_USER_ID,
         session_id: this.data.chatSessionId,
         message: text,
         current_context: currentChatContext(this.data)
       });
+      const pendingAssistant = payload.pending_assistant || {
+        ...thinkingMessage,
+        content: "小汪开始思考了...",
+        isThinking: false,
+        mode: "openclaw_pending",
+        openclaw: { status: "running", progress: ["已提交后台任务"] }
+      };
       this.setData({
-        chatSessionId: payload.session && payload.session.session_id ? payload.session.session_id : this.data.chatSessionId,
-        chatMessages: decorateChatMessages(payload.messages || this.data.chatMessages.concat(payload.assistant || [])),
-        diary: null
+        chatMessages: this.data.chatMessages.map((item) => (
+          item.id === thinkingMessage.id ? decorateChatMessage({ ...pendingAssistant, isThinking: false }) : item
+        )),
+        diary: null,
+        isChatSubmitting: false
       });
+      if (payload.job_id) this.pollXiaowangChatJob(payload.job_id, thinkingMessage.id, Date.now());
     } catch (error) {
       const messages = this.data.chatMessages.map((item) => (
         item.id === thinkingMessage.id
@@ -1008,8 +1023,77 @@ Page({
       });
       wx.showToast({ title: "问小汪失败", icon: "none" });
     } finally {
-      this.setData({ isChatSubmitting: false });
+      if (!this.activeChatJobId) this.setData({ isChatSubmitting: false });
     }
+  },
+
+  pollXiaowangChatJob(jobId, pendingMessageId, startedAt) {
+    this.activeChatJobId = jobId;
+    const maxMs = 120000;
+    const tick = async () => {
+      if (this.activeChatJobId !== jobId) return;
+      try {
+        const payload = await xiaowangApi.getChatJob(jobId);
+        if (payload.status === "completed" && payload.result) {
+          this.activeChatJobId = "";
+          this.setData({
+            chatSessionId: payload.result.session && payload.result.session.session_id ? payload.result.session.session_id : this.data.chatSessionId,
+            chatMessages: decorateChatMessages(payload.result.messages || this.data.chatMessages),
+            diary: null,
+            isChatSubmitting: false
+          });
+          return;
+        }
+        if (payload.status === "failed") {
+          throw new Error(payload.error || "问小汪后台任务失败");
+        }
+        if (Date.now() - startedAt > maxMs) {
+          throw new Error("小汪这次思考太久了，先停在这里");
+        }
+        const elapsed = Math.round((Date.now() - startedAt) / 1000);
+        this.setData({
+          chatMessages: this.data.chatMessages.map((item) => (
+            item.id === pendingMessageId || item.id === `pending_${jobId}`
+              ? decorateChatMessage({
+                ...item,
+                isThinking: false,
+                openclaw: {
+                  ...(item.openclaw || {}),
+                  status: "running",
+                  progress: [
+                    "OpenClaw 仍在处理",
+                    `${elapsed}s：等待 skill 判断或工具结果`
+                  ]
+                }
+              })
+              : item
+          ))
+        });
+        setTimeout(tick, 2000);
+      } catch (error) {
+        this.activeChatJobId = "";
+        this.setData({
+          chatMessages: this.data.chatMessages.map((item) => (
+            item.id === pendingMessageId || item.id === `pending_${jobId}`
+              ? decorateChatMessage({
+                ...item,
+                content: error.message || "问小汪失败",
+                isThinking: false,
+                mode: "openclaw_pending_failed",
+                openclaw: {
+                  ...(item.openclaw || {}),
+                  status: "failed",
+                  error: error.message || "poll_failed"
+                }
+              })
+              : item
+          )),
+          isChatSubmitting: false
+        });
+        wx.showToast({ title: "问小汪失败", icon: "none" });
+      }
+    };
+    setTimeout(tick, 1200);
   },
 
   runChatSkill(event) {

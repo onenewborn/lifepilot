@@ -4,6 +4,14 @@ function chat(data) {
   return request("/api/xiaowang/chat", { data, timeout: 70000 });
 }
 
+function chatAsync(data) {
+  return request("/api/xiaowang/chat-async", { data, timeout: 10000 });
+}
+
+function getChatJob(jobId) {
+  return request(`/api/xiaowang/chat-jobs/${encodeURIComponent(jobId)}`, { method: "GET", timeout: 10000 });
+}
+
 function getDiary(params = {}) {
   const query = Object.keys(params)
     .filter((key) => params[key] !== undefined && params[key] !== null && params[key] !== "")
@@ -18,6 +26,8 @@ function runDreaming(data = {}) {
 
 module.exports = {
   chat,
+  chatAsync,
+  getChatJob,
   getDiary,
   runDreaming
 };

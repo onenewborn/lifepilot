@@ -13,6 +13,7 @@ import { buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchant
 const DEFAULT_USER_ID = "demo_weiyingru";
 const CHAT_SCHEMA = "lifepilot.xiaowang_chat.v1";
 const DIARY_TIME_ZONE = "Asia/Shanghai";
+const chatJobs = new Map();
 const SKILL_REGISTRY = [
   {
     skill: "meal_swipe",
@@ -980,6 +981,80 @@ export async function handleXiaowangChat({body = {}} = {}) {
     assistant,
     messages: session.messages,
   };
+}
+
+function createPendingAssistant({jobId, message}) {
+  return {
+    id: `pending_${jobId}`,
+    role: "assistant",
+    content: wantsMerchantCompareSkill(message)
+      ? "小汪开始对比商家证据了：先识别店名，再调口碑工具。"
+      : wantsMerchantIntelSkill(message)
+        ? "小汪开始看这家店的特色和口碑证据了。"
+        : "小汪开始思考了：先理解你的问题，再判断要不要调用工具。",
+    mode: "openclaw_pending",
+    skill_cards: [],
+    skill_result_cards: [],
+    agent_skill_calls: [],
+    openclaw: {
+      status: "running",
+      parse_mode: "pending",
+      progress: [
+        "收到消息",
+        "准备调用 OpenClaw Gateway client",
+        "等待 OpenClaw 判断是否需要 skill",
+      ],
+    },
+    created_at: nowIso(),
+  };
+}
+
+export function startXiaowangChatJob({body = {}} = {}) {
+  const jobId = `xwj_${Date.now()}_${randomUUID().slice(0, 8)}`;
+  const createdAt = nowIso();
+  const pendingAssistant = createPendingAssistant({jobId, message: body.message || ""});
+  const job = {
+    ok: true,
+    job_id: jobId,
+    status: "running",
+    created_at: createdAt,
+    updated_at: createdAt,
+    pending_assistant: pendingAssistant,
+    result: null,
+    error: null,
+  };
+  chatJobs.set(jobId, job);
+  handleXiaowangChat({body})
+    .then((result) => {
+      chatJobs.set(jobId, {
+        ...job,
+        status: "completed",
+        updated_at: nowIso(),
+        result,
+      });
+    })
+    .catch((error) => {
+      chatJobs.set(jobId, {
+        ...job,
+        status: "failed",
+        updated_at: nowIso(),
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  return {
+    ok: true,
+    job_id: jobId,
+    status: "running",
+    pending_assistant: pendingAssistant,
+  };
+}
+
+export function getXiaowangChatJob(jobId) {
+  const job = chatJobs.get(jobId);
+  if (!job) {
+    return {ok: false, error: "chat_job_not_found"};
+  }
+  return job;
 }
 
 export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date} = {}) {

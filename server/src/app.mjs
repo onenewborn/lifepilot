@@ -31,7 +31,7 @@ import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
 import { buildMerchantCompareContext, buildMerchantIntelContext } from "./merchant-tools.mjs";
 import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
 import { runOpenClawDreamAgent } from "./openclaw-runner.mjs";
-import { handleXiaowangChat, listXiaowangSkills, readXiaowangDiary } from "./xiaowang-store.mjs";
+import { getXiaowangChatJob, handleXiaowangChat, listXiaowangSkills, readXiaowangDiary, startXiaowangChatJob } from "./xiaowang-store.mjs";
 
 let latestLocationProbe = null;
 
@@ -660,6 +660,20 @@ async function handleXiaowangChatRoute(req, res) {
   ok(res, payload);
 }
 
+async function handleXiaowangChatAsyncRoute(req, res) {
+  const body = await readBody(req);
+  ok(res, startXiaowangChatJob({body}), 202);
+}
+
+async function handleXiaowangChatJobRoute(res, jobId) {
+  const payload = getXiaowangChatJob(jobId);
+  if (!payload.ok) {
+    fail(res, 404, payload.error || "chat_job_not_found", payload.error || "Chat job not found.");
+    return;
+  }
+  ok(res, payload);
+}
+
 async function handleXiaowangDiaryRoute(res, url) {
   const payload = await readXiaowangDiary({
     userId: url.searchParams.get("user_id") || url.searchParams.get("userId") || "demo_weiyingru",
@@ -762,6 +776,14 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/xiaowang/chat") {
       await handleXiaowangChatRoute(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/xiaowang/chat-async") {
+      await handleXiaowangChatAsyncRoute(req, res);
+      return;
+    }
+    if (req.method === "GET" && url.pathname.startsWith("/api/xiaowang/chat-jobs/")) {
+      await handleXiaowangChatJobRoute(res, decodeURIComponent(url.pathname.slice("/api/xiaowang/chat-jobs/".length)));
       return;
     }
     if (req.method === "GET" && url.pathname === "/api/xiaowang/diary") {

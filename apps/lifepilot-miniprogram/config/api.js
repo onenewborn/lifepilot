@@ -1,6 +1,6 @@
 const DEVTOOLS_API_BASE_URL = "http://127.0.0.1:4331";
 const LAN_API_BASE_URL = "http://127.0.0.1:4331";
-const TUNNEL_API_BASE_URL = "https://contribution-acquisition-contains-partial.trycloudflare.com";
+const TUNNEL_API_BASE_URL = "https://cincinnati-assumptions-addressing-belongs.trycloudflare.com";
 
 // 手机真机预览时用 tunnel；本机开发者工具调试时可以改成 local。
 const API_MODE = "tunnel"; // "local" | "lan" | "tunnel"
