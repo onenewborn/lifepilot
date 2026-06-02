@@ -99,7 +99,15 @@ function decorateChatMessage(message) {
           ...merchant,
           specialtiesText: Array.isArray(merchant.specialties) ? merchant.specialties.join("、") : ""
         }))
-        : card.merchants
+        : card.merchants,
+      deals: Array.isArray(card.deals)
+        ? card.deals.map((deal) => ({
+          ...deal,
+          includedText: Array.isArray(deal.included_items) ? deal.included_items.join("、") : "",
+          bestForText: Array.isArray(deal.best_for) ? deal.best_for.join("、") : "",
+          restrictionsText: Array.isArray(deal.restrictions) ? deal.restrictions.join("、") : ""
+        }))
+        : card.deals
     }))
     : message.skill_result_cards;
   return {

@@ -9,9 +9,11 @@ import { getSession } from "./session-store.mjs";
 const DATA_ROOT = path.join(REPO_ROOT, "data/synthetic_food_futian");
 const MERCHANTS_PATH = path.join(DATA_ROOT, "merchants.json");
 const OFFERS_PATH = path.join(DATA_ROOT, "offers.json");
+const DEALS_PATH = path.join(DATA_ROOT, "deals.json");
 
 let cachedMerchants = null;
 let cachedOffers = null;
+let cachedDeals = null;
 
 async function readMerchants() {
   if (!cachedMerchants) {
@@ -70,6 +72,13 @@ async function readOffers() {
   return cachedOffers;
 }
 
+async function readDeals() {
+  if (!cachedDeals) {
+    cachedDeals = JSON.parse(await readFile(DEALS_PATH, "utf8")).deals || [];
+  }
+  return cachedDeals;
+}
+
 function evidencePolicy() {
   return {
     final_judgment_owner: "openclaw",
@@ -120,6 +129,51 @@ function compactOffer(offer = {}) {
   };
 }
 
+function compactDeal(deal = {}, {offer = null, partySize = null} = {}) {
+  const dealPrice = numberOrNull(deal.deal_price);
+  const originalPrice = numberOrNull(deal.original_price);
+  const partyMin = numberOrNull(deal.party_size_min);
+  const partyMax = numberOrNull(deal.party_size_max);
+  const effectivePartySize = partySize || partyMin || partyMax || 1;
+  const dealPerPerson = dealPrice !== null && effectivePartySize ? Math.round((dealPrice / effectivePartySize) * 10) / 10 : null;
+  const originalPerPerson = originalPrice !== null && effectivePartySize ? Math.round((originalPrice / effectivePartySize) * 10) / 10 : null;
+  const offerPerPerson = numberOrNull(offer?.price_per_person);
+  const referencePerPerson = originalPerPerson ?? offerPerPerson;
+  const estimatedSavings = referencePerPerson !== null && dealPerPerson !== null
+    ? Math.round((referencePerPerson - dealPerPerson) * 10) / 10
+    : null;
+  const discountRate = originalPrice && dealPrice !== null
+    ? Math.round((1 - dealPrice / originalPrice) * 100)
+    : null;
+  return {
+    deal_id: deal.deal_id,
+    merchant_id: deal.merchant_id,
+    offer_id: deal.offer_id || "",
+    platform: deal.platform || "",
+    external_shop_name: deal.external_shop_name || "",
+    deal_type: deal.deal_type || "",
+    title: deal.title || "",
+    deal_price: dealPrice,
+    original_price: originalPrice,
+    deal_price_per_person: dealPerPerson,
+    original_price_per_person: originalPerPerson,
+    reference_offer_price_per_person: offerPerPerson,
+    estimated_savings_per_person: estimatedSavings,
+    discount_rate_percent: discountRate,
+    party_size_min: partyMin,
+    party_size_max: partyMax,
+    included_items: deal.included_items || [],
+    best_for: deal.best_for || [],
+    restrictions: deal.restrictions || [],
+    valid_time: deal.valid_time || "",
+    source_type: deal.source_type || "",
+    source_label: deal.source_label || "",
+    source_url: deal.source_url || "",
+    data_checked_at: deal.data_checked_at || "",
+    confidence: numberOrNull(deal.confidence),
+  };
+}
+
 async function merchantContext({merchantId, merchant, userId, merchantFeedback, offers}) {
   const reputation = await getMerchantReputation({merchantId});
   return {
@@ -153,9 +207,77 @@ function notFound(merchantIds = []) {
   };
 }
 
+function dealEvidencePolicy() {
+  return {
+    final_judgment_owner: "openclaw",
+    backend_role: "deal_evidence_retrieval_and_price_math",
+    backend_must_not_claim_realtime_platform_access: true,
+    backend_must_not_claim_coupon_can_be_redeemed: true,
+    source_policy: "第一版只返回 LifePilot 可控种子优惠线索，不代表真实平台实时库存、可领取状态或可核销状态。",
+    note: "后端返回优惠证据和价格估算；最终推荐、取舍和提醒由 OpenClaw skill 完成。",
+  };
+}
+
 function numberOrNull(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
+}
+
+function positiveNumberOrNull(value) {
+  const number = numberOrNull(value);
+  return number !== null && number > 0 ? number : null;
+}
+
+function normalizeMerchantIds(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).map((item) => String(item));
+  if (value === undefined || value === null || value === "") return [];
+  return [String(value)];
+}
+
+function scoreDeal({deal, offer = null, partySize = null, budget = null, question = ""}) {
+  let score = Math.round((numberOrNull(deal.confidence) ?? 0.5) * 100);
+  const reasons = [];
+  const caveats = [];
+  const partyMin = positiveNumberOrNull(deal.party_size_min);
+  const partyMax = positiveNumberOrNull(deal.party_size_max);
+  const dealPrice = positiveNumberOrNull(deal.deal_price);
+  const effectivePartySize = partySize || partyMin || partyMax || 1;
+  const dealPerPerson = dealPrice ? dealPrice / effectivePartySize : null;
+  if (partySize && partyMin && partyMax) {
+    if (partySize >= partyMin && partySize <= partyMax) {
+      score += 28;
+      reasons.push(`适合 ${partyMin === partyMax ? partyMin : `${partyMin}-${partyMax}`} 人`);
+    } else {
+      score -= 35;
+      caveats.push(`这条更适合 ${partyMin === partyMax ? partyMin : `${partyMin}-${partyMax}`} 人，当前 ${partySize} 人未必划算`);
+    }
+  }
+  if (budget && dealPerPerson !== null) {
+    if (dealPerPerson <= budget) {
+      score += 18;
+      reasons.push(`券后人均约 ${Math.round(dealPerPerson)} 元，在预算内`);
+    } else {
+      score -= 20;
+      caveats.push(`券后人均约 ${Math.round(dealPerPerson)} 元，超过预算 ${budget} 元`);
+    }
+  }
+  if (/一人|一个人|独食|单人/.test(question) && partyMax === 1) {
+    score += 12;
+    reasons.push("命中单人/独食场景");
+  }
+  if (/两人|二人|双人|朋友|约会/.test(question) && partyMin && partyMin <= 2 && partyMax && partyMax >= 2) {
+    score += 12;
+    reasons.push("命中双人场景");
+  }
+  if (/便宜|划算|省钱|优惠|团购|券后|预算/.test(question)) {
+    score += 8;
+    reasons.push("命中省钱/优惠问题");
+  }
+  if (offer?.price_per_person && dealPerPerson !== null && dealPerPerson < offer.price_per_person) {
+    score += Math.min(18, Math.max(4, Math.round(offer.price_per_person - dealPerPerson)));
+    reasons.push(`比当前参考人均低约 ${Math.round(offer.price_per_person - dealPerPerson)} 元`);
+  }
+  return {score, reasons, caveats};
 }
 
 const ORDERED_LEVELS = {
@@ -434,6 +556,113 @@ export async function buildMerchantCompareContext({userId = "demo_weiyingru", me
       no_backend_winner: true,
       openclaw_should_compare: ["口味质量", "特色菜命中", "排队/速度", "预算", "用户长期偏好", "当前场景"],
       cite_at_least_one_quantitative_item_per_merchant: true,
+    },
+  };
+}
+
+export async function buildDealSearchContext({
+  userId = "demo_weiyingru",
+  merchantId = "",
+  merchantIds = [],
+  merchantNames = [],
+  sessionId = "",
+  question = "",
+  partySize = null,
+  budget = null,
+  mealTime = "",
+  currentMerchantId = "",
+} = {}) {
+  const resolvedIds = normalizeMerchantIds(merchantIds);
+  if (merchantId) resolvedIds.unshift(String(merchantId));
+  if (currentMerchantId) resolvedIds.push(String(currentMerchantId));
+  const names = normalizeArray(merchantNames);
+  if (names.length) {
+    const fromNames = await resolveMerchantIdsFromText(names.join(" "), {limit: 4});
+    resolvedIds.push(...fromNames);
+  }
+  if (!resolvedIds.length && question) {
+    const fromQuestion = await resolveMerchantIdsFromText(question, {limit: 4});
+    resolvedIds.push(...fromQuestion);
+  }
+
+  const targetIds = [...new Set(resolvedIds.filter(Boolean))].slice(0, 4);
+  if (!targetIds.length) {
+    return {
+      ok: false,
+      error: "merchant_required",
+      tool: "deal_search_context",
+      question,
+      evidence_policy: dealEvidencePolicy(),
+      hint: "需要先提供 merchant_id、店名，或在当前商家卡上下文里追问“这家有优惠吗”。",
+    };
+  }
+
+  const merchants = await readMerchants();
+  const missing = targetIds.filter((id) => !merchants.has(id));
+  if (missing.length) return notFound(missing);
+
+  const [offers, deals, memoryContext, session] = await Promise.all([
+    readOffers(),
+    readDeals(),
+    readRecommendationMemoryContext({userId, query: question || targetIds.join(" "), includeEvermind: false}),
+    sessionId ? getSession(sessionId) : null,
+  ]);
+  const offerById = new Map(offers.map((offer) => [offer.offer_id, offer]));
+  const party = positiveNumberOrNull(partySize);
+  const budgetPerPerson = positiveNumberOrNull(budget);
+  const merchantContexts = targetIds.map((targetId) => {
+    const merchantDeals = deals
+      .filter((deal) => deal.merchant_id === targetId)
+      .map((deal) => {
+        const offer = offerById.get(deal.offer_id);
+        const scored = scoreDeal({deal, offer, partySize: party, budget: budgetPerPerson, question});
+        return {
+          ...compactDeal(deal, {offer, partySize: party}),
+          match_score: scored.score,
+          match_reasons: scored.reasons,
+          caveats: scored.caveats,
+        };
+      })
+      .sort((left, right) => right.match_score - left.match_score || (right.confidence || 0) - (left.confidence || 0));
+    const merchantOffers = offers.filter((offer) => offer.merchant_id === targetId).slice(0, 4).map(compactOffer);
+    const bestDeal = merchantDeals[0] || null;
+    return {
+      merchant: compactMerchant(merchants.get(targetId)),
+      deals: merchantDeals,
+      reference_offers: merchantOffers,
+      best_value_hint: bestDeal ? {
+        deal_id: bestDeal.deal_id,
+        title: bestDeal.title,
+        deal_price_per_person: bestDeal.deal_price_per_person,
+        estimated_savings_per_person: bestDeal.estimated_savings_per_person,
+        confidence: bestDeal.confidence,
+        caveats: bestDeal.caveats || [],
+      } : null,
+      deal_count: merchantDeals.length,
+      no_deal_note: merchantDeals.length ? "" : "当前种子证据库里暂无这家店的优惠线索；不能据此判断真实平台没有优惠。",
+    };
+  });
+
+  return {
+    ok: true,
+    tool: "deal_search_context",
+    user_id: userId,
+    question,
+    inputs: {
+      merchant_ids: targetIds,
+      party_size: party,
+      budget_per_person: budgetPerPerson,
+      meal_time: mealTime || "",
+    },
+    evidence_policy: dealEvidencePolicy(),
+    current_need: sessionNeed(session),
+    user_memory: memoryContext,
+    merchants: merchantContexts,
+    deal_contract: {
+      no_realtime_claim: true,
+      no_coupon_claiming: true,
+      coupon_wallet_is_separate_skill: true,
+      openclaw_should_explain: ["券后人均", "适合人数", "限制条件", "来源时间", "置信度"],
     },
   };
 }

@@ -29,7 +29,7 @@ import {
 } from "./evermind-sync.mjs";
 import { executeMemoryManageOperation } from "./memory-manager.mjs";
 import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
-import { buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantsFromText, searchMerchantCandidates } from "./merchant-tools.mjs";
+import { buildDealSearchContext, buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantsFromText, searchMerchantCandidates } from "./merchant-tools.mjs";
 import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
 import { runOpenClawDreamAgent } from "./openclaw-runner.mjs";
 import { getXiaowangChatJob, handleXiaowangChat, listXiaowangSkills, readXiaowangDiary, startXiaowangChatJob } from "./xiaowang-store.mjs";
@@ -367,6 +367,28 @@ async function handleMerchantCompareContext(req, res) {
   });
   if (!payload.ok) {
     fail(res, 404, payload.error || "merchant_not_found", payload.error || "Merchant not found.", payload);
+    return;
+  }
+  ok(res, payload);
+}
+
+async function handleDealSearchContext(req, res) {
+  const body = await readBody(req);
+  const current = body.current_merchant || body.currentMerchant || {};
+  const payload = await buildDealSearchContext({
+    userId: body.user_id || body.userId || "demo_weiyingru",
+    merchantId: body.merchant_id || body.merchantId || "",
+    merchantIds: body.merchant_ids || body.merchantIds || [],
+    merchantNames: body.merchant_names || body.merchantNames || body.merchant_name || body.merchantName || [],
+    sessionId: body.session_id || body.sessionId || "",
+    question: body.question || body.query || "",
+    partySize: body.party_size || body.partySize,
+    budget: body.budget || body.budget_per_person || body.budgetPerPerson || body.max_price_per_person || body.maxPricePerPerson,
+    mealTime: body.meal_time || body.mealTime || "",
+    currentMerchantId: current.merchant_id || current.merchantId || "",
+  });
+  if (!payload.ok) {
+    fail(res, payload.error === "merchant_not_found" ? 404 : 422, payload.error || "deal_search_failed", payload.hint || payload.error || "Deal search failed.", payload);
     return;
   }
   ok(res, payload);
@@ -791,6 +813,10 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/tools/merchant-compare-context") {
       await handleMerchantCompareContext(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/tools/deal-search-context") {
+      await handleDealSearchContext(req, res);
       return;
     }
     if ((req.method === "GET" || req.method === "POST") && url.pathname === "/api/tools/merchant-candidate-search") {

@@ -1616,6 +1616,82 @@ button::after {
   color: #ff6334;
 }
 
+.deal-list {
+  margin-top: 14rpx;
+}
+
+.deal-item {
+  padding: 16rpx 0;
+  border-top: 1rpx solid rgba(125, 78, 44, 0.1);
+}
+
+.deal-item-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+}
+
+.deal-item-title {
+  flex: 1;
+  min-width: 0;
+  color: #2d2118;
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1.28;
+}
+
+.deal-price {
+  flex-shrink: 0;
+  color: #ff6334;
+  font-size: 29rpx;
+  font-weight: 950;
+  line-height: 1.15;
+}
+
+.deal-meta-row,
+.deal-source-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 10rpx;
+}
+
+.deal-meta,
+.deal-source {
+  max-width: 100%;
+  padding: 6rpx 9rpx;
+  border-radius: 8rpx;
+  background: rgba(87, 51, 30, 0.07);
+  color: rgba(75, 50, 31, 0.66);
+  font-size: 19rpx;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.deal-saving {
+  background: rgba(255, 99, 52, 0.12);
+  color: #ff6334;
+}
+
+.deal-line,
+.deal-caveat {
+  margin-top: 8rpx;
+  color: rgba(45, 33, 24, 0.72);
+  font-size: 21rpx;
+  font-weight: 760;
+  line-height: 1.38;
+}
+
+.deal-caveat {
+  color: rgba(75, 50, 31, 0.52);
+}
+
+.deal-source {
+  background: rgba(75, 50, 31, 0.05);
+  color: rgba(75, 50, 31, 0.48);
+  font-size: 18rpx;
+}
+
 .compare-merchant-list {
   margin-top: 12rpx;
 }

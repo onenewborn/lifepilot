@@ -9,7 +9,7 @@ import { executeMemoryManageOperations } from "./memory-manager.mjs";
 import { requestOpenClawAgent, resetOpenClawGatewayClient } from "./openclaw-gateway-client.mjs";
 import { callArkChat } from "./ai/ark-provider.mjs";
 import { getLatestOpenClawJobForDay } from "./openclaw-store.mjs";
-import { buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantIdsFromText } from "./merchant-tools.mjs";
+import { buildDealSearchContext, buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantIdsFromText } from "./merchant-tools.mjs";
 
 const DEFAULT_USER_ID = "demo_weiyingru";
 const CHAT_SCHEMA = "lifepilot.xiaowang_chat.v1";
@@ -83,6 +83,16 @@ const SKILL_REGISTRY = [
     trigger_examples: ["这两家怎么选", "哪家更好吃", "汪记豆花和川香楼比一下"],
     action: "show_merchant_compare",
     cta: "看对比证据",
+    runtime: "openclaw_gateway_client",
+    status: "available",
+  },
+  {
+    skill: "deal_search",
+    title: "优惠和团购",
+    description: "查询 LifePilot 可控优惠证据，估算券后人均、适合人数、省多少钱和限制条件。",
+    trigger_examples: ["这家有团购吗", "两个人怎么吃更划算", "有没有优惠券"],
+    action: "show_deals",
+    cta: "看优惠证据",
     runtime: "openclaw_gateway_client",
     status: "available",
   },
@@ -178,6 +188,10 @@ function wantsMerchantIntelSkill(text) {
 
 function wantsMerchantCompareSkill(text) {
   return /(对比|比较|哪家|哪个更|谁更|怎么选|二选一|两家|三家|排名|榜)/.test(text);
+}
+
+function wantsDealSearchSkill(text) {
+  return /(团购|优惠|优惠券|券后|套餐|省钱|划算|便宜|怎么吃更值|怎么吃更省|怎么买更划算|领券)/.test(text);
 }
 
 function skillByName(name) {
@@ -371,7 +385,9 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     `OpenClaw 工具调用 LifePilot API 时必须使用这个 api base：${openClawApiBase}`,
     "如果用户问某家店的特色菜、口味、排队、适合几个人吃，优先调用 merchant-intel skill 的脚本：python3 skills/merchant-intel/scripts/merchant_intel_tool.py --api-base 上面的_api_base ...，读取工具结果后再生成 message。",
     "如果用户问两家或多家店怎么选、哪家更好吃、类似店对比，优先调用 merchant-compare skill 的脚本：python3 skills/merchant-compare/scripts/merchant_compare_tool.py --api-base 上面的_api_base ...，读取工具结果后再生成 message。",
-    "merchant_intel / merchant_compare 的最终解释应由 OpenClaw 基于工具证据生成，不要让 LifePilot 后端替你下结论；使用脚本拿到证据后，最终 JSON 里 skill_calls 应尽量返回空数组，skill_result_cards 放脚本返回的证据卡。",
+    "如果用户问团购、优惠、券后、人均、省钱、怎么吃更划算，优先调用 deal-search skill 的脚本：python3 skills/deal-search/scripts/deal_search_tool.py --api-base 上面的_api_base ...，读取工具结果后再生成 message。",
+    "deal_search 只查询 LifePilot 可控优惠证据，不代表真实平台实时库存、可领取或可核销；如果用户说“帮我领券”，说明当前只能查看优惠线索，领券是后续独立 coupon-wallet 能力。",
+    "merchant_intel / merchant_compare / deal_search 的最终解释应由 OpenClaw 基于工具证据生成，不要让 LifePilot 后端替你下结论；使用脚本拿到证据后，最终 JSON 里 skill_calls 应尽量返回空数组，skill_result_cards 放脚本返回的证据卡。",
     "商户评分、评论数和口碑分布必须来自 LifePilot 工具证据；只有当工具调用不可用时，才用 skill_calls 作为临时兼容层。",
     "如果当前上下文里有 current_merchant，用户说“这家/这店”时优先使用它的 merchant_id。",
     "如果不需要 skill，skill_calls 返回空数组。",
@@ -459,6 +475,7 @@ async function getArkChatReply({message, session, pendingCount, preferenceCount,
 
 function fallbackSkillCards(message) {
   return [
+    wantsDealSearchSkill(message) ? skillCard("deal_search") : null,
     wantsMerchantCompareSkill(message) ? skillCard("merchant_compare") : null,
     wantsMerchantIntelSkill(message) ? skillCard("merchant_intel") : null,
     wantsMealSkill(message) ? skillCard("meal_swipe") : null,
@@ -468,7 +485,7 @@ function fallbackSkillCards(message) {
 
 function skillCardsFromCalls(skillCalls = []) {
   return normalizeSkillCalls(skillCalls)
-    .filter((call) => !["merchant_intel", "merchant_compare", "memory_manage"].includes(call.skill))
+    .filter((call) => !["merchant_intel", "merchant_compare", "deal_search", "memory_manage"].includes(call.skill))
     .map((call) => skillCard(call.skill))
     .filter(Boolean);
 }
@@ -689,6 +706,72 @@ function merchantCompareCard(context = {}) {
   };
 }
 
+function moneyText(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? `¥${Math.round(number * 10) / 10}` : "";
+}
+
+function dealPartyText(deal = {}) {
+  const min = deal.party_size_min;
+  const max = deal.party_size_max;
+  if (min && max && min === max) return `${min} 人`;
+  if (min && max) return `${min}-${max} 人`;
+  if (min) return `${min} 人起`;
+  if (max) return `最多 ${max} 人`;
+  return "";
+}
+
+function dealSearchCard(context = {}) {
+  const merchants = context.merchants || [];
+  const allDeals = merchants.flatMap((item) => (item.deals || []).map((deal) => ({
+    ...deal,
+    merchant_name: item.merchant?.name || "",
+  }))).slice(0, 5);
+  const topDeal = allDeals[0] || null;
+  const noDealNotes = merchants.map((item) => item.no_deal_note).filter(Boolean);
+  return {
+    type: "deal_card",
+    skill: "deal_search",
+    title: topDeal ? "优惠和团购证据" : "暂无可用优惠证据",
+    subtitle: merchants.map((item) => item.merchant?.name).filter(Boolean).join("、") || "需要先选定商家",
+    summary: topDeal
+      ? `${topDeal.title}：券后约 ${moneyText(topDeal.deal_price_per_person) || moneyText(topDeal.deal_price)} / 人。`
+      : (noDealNotes[0] || "当前种子证据库里没有查到匹配优惠。"),
+    primary_points: [
+      topDeal?.estimated_savings_per_person !== null && topDeal?.estimated_savings_per_person !== undefined ? `预计每人省 ${moneyText(topDeal.estimated_savings_per_person)}` : "",
+      topDeal ? `适合人数：${dealPartyText(topDeal) || "需到店前确认"}` : "",
+      topDeal?.confidence ? `证据置信度：${Math.round(topDeal.confidence * 100)}%` : "",
+    ].filter(Boolean),
+    evidence_chips: topDeal ? [
+      {label: "来源", value: topDeal.source_label || topDeal.source_type || "种子优惠"},
+      {label: "更新时间", value: topDeal.data_checked_at || ""},
+      {label: "类型", value: topDeal.deal_type || ""},
+    ].filter((item) => item.value) : [],
+    deals: allDeals.map((deal) => ({
+      deal_id: deal.deal_id,
+      merchant_id: deal.merchant_id,
+      merchant_name: deal.merchant_name,
+      title: deal.title,
+      deal_type: deal.deal_type,
+      deal_price: moneyText(deal.deal_price),
+      original_price: moneyText(deal.original_price),
+      deal_price_per_person: moneyText(deal.deal_price_per_person),
+      estimated_savings_per_person: moneyText(deal.estimated_savings_per_person),
+      party_text: dealPartyText(deal),
+      included_items: (deal.included_items || []).slice(0, 4),
+      best_for: (deal.best_for || []).slice(0, 3),
+      restrictions: (deal.restrictions || []).slice(0, 3),
+      source_label: deal.source_label || deal.source_type || "",
+      data_checked_at: deal.data_checked_at || "",
+      confidence_text: deal.confidence ? `${Math.round(deal.confidence * 100)}%` : "",
+      caveats: (deal.caveats || []).slice(0, 2),
+    })),
+    no_deal_notes: noDealNotes,
+    source_type: topDeal?.source_type || "",
+    note: "这是 LifePilot 可控优惠线索，不代表真实平台实时库存、可领取或可核销；下单前仍需二次确认。",
+  };
+}
+
 function currentMerchantIdFromContext(context = {}) {
   const current = compactCurrentContext(context);
   return current?.current_merchant?.merchant_id || "";
@@ -696,8 +779,12 @@ function currentMerchantIdFromContext(context = {}) {
 
 async function merchantIdsFromSkillCall({call, message, currentContext}) {
   const args = call.args || {};
+  const merchantNameList = Array.isArray(args.merchant_names || args.merchantNames)
+    ? (args.merchant_names || args.merchantNames)
+    : [];
   const rawMerchantRefs = [
     ...(Array.isArray(args.merchant_ids || args.merchantIds) ? (args.merchant_ids || args.merchantIds) : []),
+    ...merchantNameList,
     args.merchant_id || args.merchantId,
     args.merchant_name || args.merchantName || "",
     args.left_merchant_name || args.leftMerchantName || "",
@@ -762,6 +849,37 @@ async function executeMerchantSkillCalls({skillCalls = [], message, userId, dayI
       });
       if (context.ok) resultCards.push(merchantCompareCard(context));
       traces.push({skill: call.skill, ok: Boolean(context.ok), merchant_ids: merchantIds, tool: context.tool || "", error: context.error || ""});
+    }
+    if (call.skill === "deal_search") {
+      const args = call.args || {};
+      const merchantIds = (await merchantIdsFromSkillCall({call, message, currentContext})).slice(0, 4);
+      const contextMerchantId = currentMerchantIdFromContext(currentContext);
+      if (!merchantIds.length && !contextMerchantId) {
+        resultCards.push({
+          type: "deal_card",
+          skill: "deal_search",
+          title: "小汪还不知道要查哪家店",
+          subtitle: "可以点开商家卡后问“这家有优惠吗”，或者直接说店名。",
+          primary_points: ["如果你问的是“附近哪家更划算”，小汪需要先有候选商家列表。"],
+          deals: [],
+          note: "当前不做真实平台实时搜索，也不会编造团购。",
+        });
+        traces.push({skill: call.skill, ok: false, error: "missing_merchant_id"});
+        continue;
+      }
+      const context = await buildDealSearchContext({
+        userId,
+        merchantIds,
+        merchantNames: args.merchant_names || args.merchantNames || args.merchant_name || args.merchantName || [],
+        sessionId: currentContext?.meal_session_id || currentContext?.mealSessionId || "",
+        question: message,
+        partySize: args.party_size || args.partySize,
+        budget: args.budget || args.budget_per_person || args.budgetPerPerson || args.max_price_per_person || args.maxPricePerPerson,
+        mealTime: args.meal_time || args.mealTime || "",
+        currentMerchantId: contextMerchantId,
+      });
+      if (context.ok) resultCards.push(dealSearchCard(context));
+      traces.push({skill: call.skill, ok: Boolean(context.ok), merchant_ids: merchantIds.length ? merchantIds : [contextMerchantId].filter(Boolean), tool: context.tool || "", error: context.error || ""});
     }
   }
   return {resultCards, traces};
