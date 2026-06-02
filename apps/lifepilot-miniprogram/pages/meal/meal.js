@@ -750,7 +750,13 @@ Page({
         dwell_ms: Date.now() - this.currentStartedAt
       });
     } catch (error) {
+      this.isCommittingSwipe = false;
+      this.setData({
+        ...swipeGesture.resetStyles(),
+        errorText: error.message || "滑卡同步失败"
+      });
       wx.showToast({ title: error.message || "滑卡同步失败", icon: "none" });
+      return;
     }
 
     if (card.cardType === "direction") {

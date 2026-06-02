@@ -561,6 +561,51 @@ try {
   assert.equal(queue.payload.ok, true);
   assert.equal(queue.payload.provider, "mock");
 
+  const recoveryStarted = await request("/api/session/start", {
+    method: "POST",
+    body: {
+      session_id: "smoke_finalize_recovery_session",
+      user_id: "smoke_user",
+      entry_form: {
+        raw_query: "今天中午想吃热乎一点，别太贵。",
+        party_size: 1,
+        budget_per_person_max: 60,
+      },
+      local_only: true,
+    },
+  });
+  assert.equal(recoveryStarted.status, 200);
+  const recoveryCard = recoveryStarted.payload.session.current_cards[0];
+  const recoverySwipe = await request("/api/session/swipe", {
+    method: "POST",
+    body: {
+      session_id: "smoke_finalize_recovery_session",
+      action: "keep",
+      card_id: recoveryCard.card_id,
+    },
+  });
+  assert.equal(recoverySwipe.status, 200);
+  const recoverySummary = await request("/api/session/advance", {
+    method: "POST",
+    body: {
+      session_id: "smoke_finalize_recovery_session",
+      local_only: true,
+    },
+  });
+  assert.equal(recoverySummary.status, 200);
+  assert.equal(recoverySummary.payload.session.stage, "direction_summary");
+  const recoveredFinalize = await request("/api/session/finalize", {
+    method: "POST",
+    body: {
+      session_id: "smoke_finalize_recovery_session",
+      sync_evermind_session: false,
+    },
+  });
+  assert.equal(recoveredFinalize.status, 200);
+  assert.equal(recoveredFinalize.payload.session.stage, "final");
+  assert.equal(recoveredFinalize.payload.result.hasSelection, true);
+  assert.equal(recoveredFinalize.payload.meta.recovered_from_stage, "direction_summary");
+
   const invalidAdvance = await request("/api/session/advance", {
     method: "POST",
     body: {
@@ -578,7 +623,7 @@ try {
 
   console.log(JSON.stringify({
     ok: true,
-    assertions: 172,
+    assertions: 187,
     cards: directions.payload.cards.length,
     marker: health.marker,
   }, null, 2));

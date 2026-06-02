@@ -316,6 +316,25 @@ async function handleSessionFinalize(req, res) {
     fail(res, 404, "session_not_found", "Session not found.");
     return;
   }
+  if (session.stage === "final") {
+    ok(res, {
+      session: publicSession(session),
+      result: session.result || selectFinalDecision(session),
+      evermind_session_summary: {
+        ok: false,
+        skipped: "already_finalized",
+        status: null,
+        error: null,
+      },
+    });
+    return;
+  }
+  let recoveredFrom = "";
+  if (session.stage === "direction_summary") {
+    const offerPayload = await buildFoodOffers({session, body, limit: body.limit || 10});
+    await applyOfferCards(session, offerPayload);
+    recoveredFrom = "direction_summary";
+  }
   if (session.stage !== "offer") {
     fail(res, 409, "invalid_session_transition", "Session can only finalize from offer in P3.", {stage: session.stage});
     return;
@@ -333,6 +352,9 @@ async function handleSessionFinalize(req, res) {
       skipped: evermindSummary.skipped || null,
       status: evermindSummary.status || null,
       error: evermindSummary.error || null,
+    },
+    meta: {
+      recovered_from_stage: recoveredFrom || null,
     },
   });
 }
