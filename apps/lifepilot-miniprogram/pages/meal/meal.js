@@ -663,11 +663,6 @@ Page({
     });
   },
 
-  stopGalleryControlTouch() {
-    this.touchStart = null;
-    this.verticalTouching = false;
-  },
-
   previewOfferGallery() {
     const currentCard = this.data.currentCard || {};
     const urls = (Array.isArray(currentCard.galleryImages) ? currentCard.galleryImages : []).filter(Boolean);

@@ -218,14 +218,6 @@
                 style="animation-duration: {{item.duration}}s; animation-delay: {{item.delay}}s;"
               >{{item.text}}</cover-view>
             </cover-view>
-            <cover-view
-              wx:if="{{currentCard.hasGalleryImages && currentCard.galleryImages.length > 1}}"
-              class="offer-gallery-button"
-              catchtap="previewOfferGallery"
-              catchtouchstart="stopGalleryControlTouch"
-              catchtouchmove="stopGalleryControlTouch"
-              catchtouchend="stopGalleryControlTouch"
-            >相册 {{currentCard.galleryImages.length}} 张</cover-view>
             <view class="offer-media-gradient" catchtap="toggleVideoPlay"></view>
             <cover-view wx:if="{{videoPaused}}" class="pause-badge offer-pause-badge" catchtap="toggleVideoPlay">⏸</cover-view>
           </view>
@@ -236,6 +228,11 @@
             enhanced
             show-scrollbar="{{false}}"
           >
+            <button
+              wx:if="{{currentCard.hasGalleryImages && currentCard.galleryImages.length > 1}}"
+              class="offer-gallery-button"
+              bindtap="previewOfferGallery"
+            >相册 {{currentCard.galleryImages.length}} 张</button>
             <view class="offer-title-row">
               <image class="offer-thumb" src="{{currentCard.coverThumbUrl}}" mode="aspectFill" binderror="onImageError" />
               <view class="offer-title-copy">
