@@ -27,6 +27,7 @@ import {
   syncPreferenceReplaceToEvermind,
   writeMealSessionSummaryToEvermind,
 } from "./evermind-sync.mjs";
+import { executeMemoryManageOperation } from "./memory-manager.mjs";
 import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
 import { buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantsFromText, searchMerchantCandidates } from "./merchant-tools.mjs";
 import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
@@ -612,6 +613,19 @@ async function handleMemoryCandidateReject(req, res, candidateId) {
   ok(res, payload);
 }
 
+async function handleMemoryManage(req, res) {
+  const body = await readBody(req);
+  const payload = await executeMemoryManageOperation({body});
+  if (!payload.ok) {
+    fail(res, 422, payload.error || "memory_manage_failed", payload.error || "Memory operation failed.", {
+      operation: payload.operation || body.operation || body.op || "",
+      user_id: payload.user_id || body.user_id || body.userId || "demo_weiyingru",
+    });
+    return;
+  }
+  ok(res, payload);
+}
+
 async function handleOpenClawDreamInput(res, url) {
   const payload = await buildOpenClawDreamInput({
     userId: userIdFromUrl(url),
@@ -837,6 +851,10 @@ async function route(req, res) {
     }
     if (req.method === "GET" && url.pathname === "/api/memory/ledger") {
       await handleMemoryLedger(res, url);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/memory/manage") {
+      await handleMemoryManage(req, res);
       return;
     }
     if (req.method === "GET" && url.pathname === "/api/memory/candidates") {

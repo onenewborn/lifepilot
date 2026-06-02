@@ -75,6 +75,14 @@ function buildChatDebugTrace(message) {
   if (message.memory_candidate_created_count) {
     lines.push(`记忆候选：${message.memory_candidate_created_count} 条`);
   }
+  const memoryOperation = message.memory_operation_result || {};
+  if (Array.isArray(memoryOperation.results) && memoryOperation.results.length) {
+    memoryOperation.results.forEach((result) => {
+      const op = result.operation || "memory";
+      const state = result.ok ? (result.result_summary || "完成") : (result.error || "异常");
+      lines.push(`记忆操作：${op} ${state}`);
+    });
+  }
   return lines.length ? {
     source_label: sourceLabel,
     lines

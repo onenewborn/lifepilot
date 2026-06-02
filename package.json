@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node server/src/index.mjs",
     "start": "node server/src/index.mjs",
-    "check": "node --check server/src/index.mjs && node --check tests/smoke-session.mjs",
-    "smoke:session": "node tests/smoke-session.mjs"
+    "check": "node --check server/src/index.mjs && node --check tests/smoke-session.mjs && node --check tests/smoke-memory-manager.mjs",
+    "smoke:session": "node tests/smoke-session.mjs",
+    "smoke:memory": "node tests/smoke-memory-manager.mjs"
   }
 }

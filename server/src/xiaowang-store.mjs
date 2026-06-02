@@ -5,6 +5,7 @@ import path from "node:path";
 import { config } from "./config.mjs";
 import { createDayId, getDayContext } from "./session-store.mjs";
 import { createMemoryCandidatesFromOpenClaw, listConfirmedPreferences, listMemoryCandidates } from "./memory-store.mjs";
+import { executeMemoryManageOperations } from "./memory-manager.mjs";
 import { requestOpenClawAgent, resetOpenClawGatewayClient } from "./openclaw-gateway-client.mjs";
 import { callArkChat } from "./ai/ark-provider.mjs";
 import { getLatestOpenClawJobForDay } from "./openclaw-store.mjs";
@@ -33,6 +34,16 @@ const SKILL_REGISTRY = [
     action: "review_memory",
     cta: "查看待确认",
     runtime: "local",
+    status: "available",
+  },
+  {
+    skill: "memory_manage",
+    title: "管理记忆",
+    description: "把用户在聊天里明确表达的记忆确认、新增、修改、删除、暂停或查询意图转成结构化 memory ledger 操作。",
+    trigger_examples: ["可以确认下来", "刚刚那条别记了", "把排队久那条改一下"],
+    action: "memory_manage",
+    cta: "已处理",
+    runtime: "openclaw_gateway_client",
     status: "available",
   },
   {
@@ -155,10 +166,6 @@ async function readChatSession(sessionId) {
 
 function wantsMealSkill(text) {
   return /(滑卡|选饭|吃什么|推荐|帮我选|饭点|挑饭|不知道吃啥|不知道吃什么)/.test(text);
-}
-
-function wantsMemoryCandidate(text) {
-  return /(记住|以后|下次|多推荐|少推荐|别推|不要推)/.test(text);
 }
 
 function wantsDiarySkill(text) {
@@ -355,7 +362,12 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     skills,
     "",
     "不要暴露 gateway、runner、transport、schema、OpenClaw 等内部实现。",
-    "如果用户表达长期偏好或要求记住，使用 memory_capture，并在 memory_prompts 中给出待确认文本。",
+    "记忆规则：自然语言理解和目标选择由你完成；LifePilot 后端只执行结构化 memory_manage，不会帮你用规则猜用户意思。",
+    "如果用户只是表达可能的长期偏好、但没有明确要求确认/写入，用 memory_capture 生成待确认候选，并在 memory_prompts 中给出待确认文本。",
+    "如果用户明确说可以确认、记住、改一下、删掉、暂停、先不记、或查询记忆，使用 memory_manage。不要让用户再去汪记本点确认。",
+    "memory_manage args.operation 支持 list_memory、create_confirmed_preference、confirm_pending、confirm_latest_pending、reject_pending、update_preference、delete_preference、pause_preference。",
+    "memory_manage args.target 可带 candidate_id/preference_id/match_text；如果用户说“刚刚那条/可以确认下来”，优先用 confirm_latest_pending。",
+    "无待确认候选且用户明确要求记住某个偏好时，用 create_confirmed_preference，并给出 confirmation_text 或 statement。",
     `OpenClaw 工具调用 LifePilot API 时必须使用这个 api base：${openClawApiBase}`,
     "如果用户问某家店的特色菜、口味、排队、适合几个人吃，优先调用 merchant-intel skill 的脚本：python3 skills/merchant-intel/scripts/merchant_intel_tool.py --api-base 上面的_api_base ...，读取工具结果后再生成 message。",
     "如果用户问两家或多家店怎么选、哪家更好吃、类似店对比，优先调用 merchant-compare skill 的脚本：python3 skills/merchant-compare/scripts/merchant_compare_tool.py --api-base 上面的_api_base ...，读取工具结果后再生成 message。",
@@ -456,7 +468,7 @@ function fallbackSkillCards(message) {
 
 function skillCardsFromCalls(skillCalls = []) {
   return normalizeSkillCalls(skillCalls)
-    .filter((call) => !["merchant_intel", "merchant_compare"].includes(call.skill))
+    .filter((call) => !["merchant_intel", "merchant_compare", "memory_manage"].includes(call.skill))
     .map((call) => skillCard(call.skill))
     .filter(Boolean);
 }
@@ -780,6 +792,43 @@ async function createMemoryCandidatesFromPrompts({userId, sessionId, dayId, mess
   });
 }
 
+async function executeMemoryManageSkillCalls({skillCalls = [], userId}) {
+  const memoryCalls = skillCalls.filter((item) => item.skill === "memory_manage");
+  if (!memoryCalls.length) {
+    return {ok: true, count: 0, success_count: 0, results: []};
+  }
+  return executeMemoryManageOperations({userId, operations: memoryCalls});
+}
+
+function memoryManageTrace(memoryOperation = {}) {
+  return (memoryOperation.results || []).map((result) => ({
+    skill: "memory_manage",
+    ok: Boolean(result.ok),
+    operation: result.operation || "",
+    result_summary: result.result_summary || "",
+    error: result.error || "",
+    preference_id: result.preference?.preference_id || "",
+    candidate_id: result.candidate?.candidate_id || "",
+  }));
+}
+
+function contentAfterMemoryOperation(content, memoryOperation = {}) {
+  const results = memoryOperation.results || [];
+  if (!results.length) return content;
+  const failed = results.find((item) => !item.ok);
+  if (failed) {
+    return `这次记忆操作没成功：${failed.error || "后端没有写入成功"}。你可以换个说法，或者去汪记本里手动处理。`;
+  }
+  const latest = results[results.length - 1];
+  if (latest?.operation === "list_memory") {
+    return content;
+  }
+  if (latest?.result_summary) {
+    return `好，${latest.result_summary}。`;
+  }
+  return content;
+}
+
 export async function handleXiaowangChat({body = {}} = {}) {
   const userId = body.user_id || body.userId || DEFAULT_USER_ID;
   const message = String(body.message || "").trim();
@@ -815,6 +864,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
   let skillResultCards = [];
   let skillTrace = [];
   let memoryResult = {created_count: 0, candidates: []};
+  let memoryOperation = {ok: true, count: 0, success_count: 0, results: []};
   let content = "";
   let mode = "openclaw_gateway_client";
   let openclawMeta = null;
@@ -838,6 +888,8 @@ export async function handleXiaowangChat({body = {}} = {}) {
       const executed = await executeMerchantSkillCalls({skillCalls, message, userId, dayId, currentContext});
       skillResultCards = [...skillResultCards, ...executed.resultCards];
       skillTrace = executed.traces;
+      memoryOperation = await executeMemoryManageSkillCalls({skillCalls, userId});
+      skillTrace = [...skillTrace, ...memoryManageTrace(memoryOperation)];
       memoryPrompts = memoryPromptsFromCalls({
         skillCalls,
         memoryPrompts: openclawReply.memoryPrompts || [],
@@ -853,6 +905,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
           memoryPrompts,
         });
       }
+      content = contentAfterMemoryOperation(content, memoryOperation);
       mode = "openclaw_gateway_client";
       openclawMeta = {
         status: openclawReply.raw?.status || "",
@@ -877,7 +930,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
           currentContext,
         });
         content = arkReply.content;
-        skillCalls = arkReply.skillCalls || [];
+        skillCalls = (arkReply.skillCalls || []).filter((item) => item.skill !== "memory_manage");
         skillCards = skillCardsFromCalls(skillCalls);
         skillResultCards = arkReply.skillResultCards || [];
         const executed = await executeMerchantSkillCalls({skillCalls, message, userId, dayId, currentContext});
@@ -912,14 +965,6 @@ export async function handleXiaowangChat({body = {}} = {}) {
         const executed = await executeMerchantSkillCalls({skillCalls, message, userId, dayId, currentContext});
         skillResultCards = executed.resultCards;
         skillTrace = executed.traces;
-        if (wantsMemoryCandidate(message)) {
-          memoryResult = await createMemoryCandidatesFromOpenClaw({
-            userId,
-            dreamId: "",
-            dayId,
-            candidates: [candidateFromChat({message, userId, sessionId: session.session_id})],
-          });
-        }
         content = buildAssistantReply({
           message,
           pendingCount: pending.count || 0,
@@ -957,6 +1002,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
     memory_prompts: memoryPrompts,
     memory_candidate_created_count: memoryResult.created_count || 0,
     memory_candidates: memoryResult.candidates || [],
+    memory_operation_result: memoryOperation,
     openclaw: openclawMeta,
     ai: aiMeta,
     created_at: createdAt,
