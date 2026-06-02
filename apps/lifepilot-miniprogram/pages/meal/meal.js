@@ -663,6 +663,25 @@ Page({
     });
   },
 
+  stopGalleryControlTouch() {
+    this.touchStart = null;
+    this.verticalTouching = false;
+  },
+
+  previewOfferGallery() {
+    const currentCard = this.data.currentCard || {};
+    const urls = (Array.isArray(currentCard.galleryImages) ? currentCard.galleryImages : []).filter(Boolean);
+    if (!urls.length) return;
+    wx.previewImage({
+      urls,
+      current: this.data.currentImageUrl || urls[0],
+      fail: (error) => {
+        console.warn("[LifePilot] preview gallery failed", error);
+        wx.showToast({ title: "图片预览失败", icon: "none" });
+      }
+    });
+  },
+
   switchOfferVideoSource(event) {
     const index = Number(event.currentTarget.dataset.index || 0);
     const currentCard = this.data.currentCard;
@@ -723,17 +742,6 @@ Page({
 
   onTouchStart(event) {
     if (this.isCommittingSwipe || !this.data.currentCard) return;
-    if (
-      this.data.stage === "offer"
-      && this.data.currentCard.cardType === "offer"
-      && !this.data.currentCard.hasVideoSources
-      && Array.isArray(this.data.currentCard.galleryImages)
-      && this.data.currentCard.galleryImages.length > 1
-    ) {
-      this.touchStart = null;
-      this.verticalTouching = false;
-      return;
-    }
     const touch = event.touches[0];
     this.touchStart = { x: touch.clientX, y: touch.clientY };
     this.verticalTouching = false;

@@ -691,12 +691,6 @@ button::after {
   height: 100%;
 }
 
-.offer-media-swiper,
-.offer-media-slide {
-  width: 100%;
-  height: 100%;
-}
-
 .offer-video-source-switch {
   position: absolute;
   left: 22rpx;
@@ -723,6 +717,24 @@ button::after {
 .offer-video-source-pill.active {
   background: rgba(255, 255, 255, 0.92);
   color: #2d2118;
+}
+
+.offer-gallery-button {
+  position: absolute;
+  right: 22rpx;
+  top: 22rpx;
+  z-index: 6;
+  min-width: 138rpx;
+  height: 50rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.92);
+  color: #2d2118;
+  font-size: 22rpx;
+  font-weight: 900;
+  line-height: 50rpx;
+  text-align: center;
+  box-shadow: 0 8rpx 18rpx rgba(31, 36, 40, 0.16);
 }
 
 .offer-danmaku-layer {
