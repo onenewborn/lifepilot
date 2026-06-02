@@ -721,6 +721,26 @@ function dealPartyText(deal = {}) {
   return "";
 }
 
+function discountText(deal = {}) {
+  const title = String(deal.title || "");
+  const matched = title.match(/满\s*(\d+(?:\.\d+)?)\s*减\s*(\d+(?:\.\d+)?)/);
+  if (matched) return `满 ${matched[1]} 减 ${matched[2]}`;
+  const original = Number(deal.original_price);
+  const price = Number(deal.deal_price);
+  if (Number.isFinite(original) && Number.isFinite(price) && original > price) {
+    return `省 ${moneyText(original - price)}`;
+  }
+  return deal.deal_type === "set_meal" ? "套餐优惠" : "优惠线索";
+}
+
+function dealRecommendation(deal = {}) {
+  const bestFor = (deal.best_for || []).find(Boolean);
+  const perPerson = moneyText(deal.deal_price_per_person) || moneyText(deal.deal_price);
+  if (bestFor && perPerson) return `${bestFor}，券后约 ${perPerson} / 人，去之前再确认可用状态。`;
+  if (bestFor) return `${bestFor}，去之前再确认可用状态。`;
+  return "适合想先把预算压住的一顿，去之前再确认可用状态。";
+}
+
 function dealSearchCard(context = {}) {
   const merchants = context.merchants || [];
   const allDeals = merchants.flatMap((item) => (item.deals || []).map((deal) => ({
@@ -732,27 +752,31 @@ function dealSearchCard(context = {}) {
   return {
     type: "deal_card",
     skill: "deal_search",
-    title: topDeal ? "优惠和团购证据" : "暂无可用优惠证据",
-    subtitle: merchants.map((item) => item.merchant?.name).filter(Boolean).join("、") || "需要先选定商家",
+    title: topDeal ? (topDeal.merchant_name || "优惠线索") : "暂无可用优惠",
+    merchant_name: topDeal?.merchant_name || merchants.map((item) => item.merchant?.name).filter(Boolean).join("、") || "需要先选定商家",
+    poster_url: topDeal?.poster_url || topDeal?.image_url || "",
+    image_url: topDeal?.image_url || topDeal?.poster_url || "",
+    discount_text: topDeal ? discountText(topDeal) : "",
+    deal_price_text: topDeal ? (moneyText(topDeal.deal_price_per_person) || moneyText(topDeal.deal_price)) : "",
+    menu_text: topDeal ? (topDeal.included_items || []).slice(0, 4).join("、") : "",
+    recommendation: topDeal ? dealRecommendation(topDeal) : (noDealNotes[0] || "当前没有查到可展示的优惠线索。"),
+    subtitle: "",
     summary: topDeal
-      ? `${topDeal.title}：券后约 ${moneyText(topDeal.deal_price_per_person) || moneyText(topDeal.deal_price)} / 人。`
+      ? `${discountText(topDeal)} · 券后约 ${moneyText(topDeal.deal_price_per_person) || moneyText(topDeal.deal_price)} / 人`
       : (noDealNotes[0] || "当前种子证据库里没有查到匹配优惠。"),
-    primary_points: [
-      topDeal?.estimated_savings_per_person !== null && topDeal?.estimated_savings_per_person !== undefined ? `预计每人省 ${moneyText(topDeal.estimated_savings_per_person)}` : "",
-      topDeal ? `适合人数：${dealPartyText(topDeal) || "需到店前确认"}` : "",
-      topDeal?.confidence ? `证据置信度：${Math.round(topDeal.confidence * 100)}%` : "",
-    ].filter(Boolean),
-    evidence_chips: topDeal ? [
-      {label: "来源", value: topDeal.source_label || topDeal.source_type || "种子优惠"},
-      {label: "更新时间", value: topDeal.data_checked_at || ""},
-      {label: "类型", value: topDeal.deal_type || ""},
-    ].filter((item) => item.value) : [],
+    primary_points: [],
+    evidence_chips: [],
     deals: allDeals.map((deal) => ({
       deal_id: deal.deal_id,
       merchant_id: deal.merchant_id,
       merchant_name: deal.merchant_name,
       title: deal.title,
       deal_type: deal.deal_type,
+      poster_url: deal.poster_url || deal.image_url || "",
+      image_url: deal.image_url || deal.poster_url || "",
+      discount_text: discountText(deal),
+      menu_text: (deal.included_items || []).slice(0, 4).join("、"),
+      recommendation: dealRecommendation(deal),
       deal_price: moneyText(deal.deal_price),
       original_price: moneyText(deal.original_price),
       deal_price_per_person: moneyText(deal.deal_price_per_person),

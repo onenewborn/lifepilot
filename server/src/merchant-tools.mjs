@@ -129,6 +129,12 @@ function compactOffer(offer = {}) {
   };
 }
 
+function fallbackOfferImageUrl(offer = {}) {
+  const media = offer.media || {};
+  const fallbackDirection = media.inherit_from_direction || offer.direction_ids?.[0] || "dir_hot_soup_noodles";
+  return `/assets/food-directions/${fallbackDirection.replace(/^dir_/, "")}.png`;
+}
+
 function compactDeal(deal = {}, {offer = null, partySize = null} = {}) {
   const dealPrice = numberOrNull(deal.deal_price);
   const originalPrice = numberOrNull(deal.original_price);
@@ -171,6 +177,8 @@ function compactDeal(deal = {}, {offer = null, partySize = null} = {}) {
     source_url: deal.source_url || "",
     data_checked_at: deal.data_checked_at || "",
     confidence: numberOrNull(deal.confidence),
+    image_url: offer ? (offer.media?.image_url || offer.media?.poster_url || fallbackOfferImageUrl(offer)) : "",
+    poster_url: offer ? (offer.media?.poster_url || offer.media?.image_url || fallbackOfferImageUrl(offer)) : "",
   };
 }
 

@@ -94,6 +94,7 @@ function decorateChatMessage(message) {
   const skillResultCards = Array.isArray(message.skill_result_cards)
     ? message.skill_result_cards.map((card) => ({
       ...card,
+      isDealCard: card.type === "deal_card",
       merchants: Array.isArray(card.merchants)
         ? card.merchants.map((merchant) => ({
           ...merchant,
@@ -107,7 +108,12 @@ function decorateChatMessage(message) {
           bestForText: Array.isArray(deal.best_for) ? deal.best_for.join("、") : "",
           restrictionsText: Array.isArray(deal.restrictions) ? deal.restrictions.join("、") : ""
         }))
-        : card.deals
+        : card.deals,
+      menu_text: card.menu_text || (Array.isArray(card.deals) && card.deals[0] && Array.isArray(card.deals[0].included_items) ? card.deals[0].included_items.join("、") : ""),
+      recommendation: card.recommendation || (Array.isArray(card.deals) && card.deals[0] ? card.deals[0].recommendation : ""),
+      discount_text: card.discount_text || (Array.isArray(card.deals) && card.deals[0] ? card.deals[0].discount_text : ""),
+      deal_price_text: card.deal_price_text || (Array.isArray(card.deals) && card.deals[0] ? card.deals[0].deal_price_per_person || card.deals[0].deal_price : ""),
+      poster_url: card.poster_url || card.image_url || (Array.isArray(card.deals) && card.deals[0] ? card.deals[0].poster_url || card.deals[0].image_url : "")
     }))
     : message.skill_result_cards;
   return {

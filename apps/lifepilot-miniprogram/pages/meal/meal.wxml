@@ -469,53 +469,48 @@
           </view>
           <view wx:if="{{item.skill_result_cards && item.skill_result_cards.length}}" class="skill-result-list">
             <view wx:for="{{item.skill_result_cards}}" wx:for-item="result" wx:key="title" class="skill-result-card">
-              <view class="skill-result-title">{{result.title}}</view>
-              <view wx:if="{{result.subtitle}}" class="skill-result-subtitle">{{result.subtitle}}</view>
-              <view wx:if="{{result.summary}}" class="skill-result-summary">{{result.summary}}</view>
-              <view wx:if="{{result.primary_points && result.primary_points.length}}" class="skill-result-points">
-                <view wx:for="{{result.primary_points}}" wx:for-item="point" wx:key="*this" class="skill-result-point">{{point}}</view>
-              </view>
-              <view wx:if="{{result.evidence_chips && result.evidence_chips.length}}" class="evidence-chip-list">
-                <view wx:for="{{result.evidence_chips}}" wx:for-item="chip" wx:key="label" class="evidence-chip">
-                  <text>{{chip.label}}</text>
-                  <text wx:if="{{chip.value}}" class="evidence-chip-value">{{chip.value}}</text>
+              <block wx:if="{{result.isDealCard}}">
+                <view wx:if="{{result.poster_url || result.image_url}}" class="deal-poster-wrap">
+                  <image class="deal-poster" src="{{result.poster_url || result.image_url}}" mode="aspectFill" binderror="onImageError" />
                 </view>
-              </view>
-              <view wx:if="{{result.deals && result.deals.length}}" class="deal-list">
-                <view wx:for="{{result.deals}}" wx:for-item="deal" wx:key="deal_id" class="deal-item">
-                  <view class="deal-item-head">
-                    <view class="deal-item-title">{{deal.title}}</view>
-                    <view wx:if="{{deal.deal_price_per_person || deal.deal_price}}" class="deal-price">{{deal.deal_price_per_person || deal.deal_price}}</view>
+                <view class="deal-simple-body">
+                  <view class="deal-shop-name">{{result.merchant_name || result.title}}</view>
+                  <view wx:if="{{result.discount_text || result.deal_price_text}}" class="deal-simple-offer">
+                    <text wx:if="{{result.discount_text}}" class="deal-discount-pill">{{result.discount_text}}</text>
+                    <text wx:if="{{result.deal_price_text}}" class="deal-simple-price">{{result.deal_price_text}}</text>
                   </view>
-                  <view class="deal-meta-row">
-                    <text wx:if="{{deal.original_price}}" class="deal-meta">原价 {{deal.original_price}}</text>
-                    <text wx:if="{{deal.estimated_savings_per_person}}" class="deal-meta deal-saving">人均省 {{deal.estimated_savings_per_person}}</text>
-                    <text wx:if="{{deal.party_text}}" class="deal-meta">{{deal.party_text}}</text>
-                  </view>
-                  <view wx:if="{{deal.included_items && deal.included_items.length}}" class="deal-line">包含：{{deal.includedText}}</view>
-                  <view wx:if="{{deal.best_for && deal.best_for.length}}" class="deal-line">适合：{{deal.bestForText}}</view>
-                  <view wx:if="{{deal.restrictions && deal.restrictions.length}}" class="deal-caveat">限制：{{deal.restrictionsText}}</view>
-                  <view class="deal-source-row">
-                    <text wx:if="{{deal.source_label}}" class="deal-source">{{deal.source_label}}</text>
-                    <text wx:if="{{deal.data_checked_at}}" class="deal-source">更新 {{deal.data_checked_at}}</text>
-                    <text wx:if="{{deal.confidence_text}}" class="deal-source">置信 {{deal.confidence_text}}</text>
+                  <view wx:if="{{result.menu_text}}" class="deal-menu-line">可吃：{{result.menu_text}}</view>
+                  <view wx:if="{{result.recommendation}}" class="deal-recommendation">{{result.recommendation}}</view>
+                </view>
+              </block>
+              <block wx:else>
+                <view class="skill-result-title">{{result.title}}</view>
+                <view wx:if="{{result.subtitle}}" class="skill-result-subtitle">{{result.subtitle}}</view>
+                <view wx:if="{{result.summary}}" class="skill-result-summary">{{result.summary}}</view>
+                <view wx:if="{{result.primary_points && result.primary_points.length}}" class="skill-result-points">
+                  <view wx:for="{{result.primary_points}}" wx:for-item="point" wx:key="*this" class="skill-result-point">{{point}}</view>
+                </view>
+                <view wx:if="{{result.evidence_chips && result.evidence_chips.length}}" class="evidence-chip-list">
+                  <view wx:for="{{result.evidence_chips}}" wx:for-item="chip" wx:key="label" class="evidence-chip">
+                    <text>{{chip.label}}</text>
+                    <text wx:if="{{chip.value}}" class="evidence-chip-value">{{chip.value}}</text>
                   </view>
                 </view>
-              </view>
-              <view wx:if="{{result.merchants && result.merchants.length}}" class="compare-merchant-list">
-                <view wx:for="{{result.merchants}}" wx:for-item="merchant" wx:key="merchant_id" class="compare-merchant">
-                  <view class="compare-merchant-head">
-                    <text class="compare-merchant-name">{{merchant.name}}</text>
-                    <text class="compare-merchant-rating">{{merchant.rating}}</text>
-                  </view>
-                  <view wx:if="{{merchant.scene}}" class="compare-merchant-scene">{{merchant.scene}}</view>
-                  <view wx:if="{{merchant.specialtiesText}}" class="compare-merchant-tags">招牌：{{merchant.specialtiesText}}</view>
-                  <view wx:if="{{merchant.tags && merchant.tags.length}}" class="compare-evidence-row">
-                    <text wx:for="{{merchant.tags}}" wx:for-item="tag" wx:key="label" class="compare-evidence-chip">{{tag.label}} {{tag.value}}</text>
+                <view wx:if="{{result.merchants && result.merchants.length}}" class="compare-merchant-list">
+                  <view wx:for="{{result.merchants}}" wx:for-item="merchant" wx:key="merchant_id" class="compare-merchant">
+                    <view class="compare-merchant-head">
+                      <text class="compare-merchant-name">{{merchant.name}}</text>
+                      <text class="compare-merchant-rating">{{merchant.rating}}</text>
+                    </view>
+                    <view wx:if="{{merchant.scene}}" class="compare-merchant-scene">{{merchant.scene}}</view>
+                    <view wx:if="{{merchant.specialtiesText}}" class="compare-merchant-tags">招牌：{{merchant.specialtiesText}}</view>
+                    <view wx:if="{{merchant.tags && merchant.tags.length}}" class="compare-evidence-row">
+                      <text wx:for="{{merchant.tags}}" wx:for-item="tag" wx:key="label" class="compare-evidence-chip">{{tag.label}} {{tag.value}}</text>
+                    </view>
                   </view>
                 </view>
-              </view>
-              <view wx:if="{{result.note}}" class="skill-result-note">{{result.note}}</view>
+                <view wx:if="{{result.note}}" class="skill-result-note">{{result.note}}</view>
+              </block>
             </view>
           </view>
         </view>
