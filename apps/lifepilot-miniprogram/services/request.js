@@ -1,12 +1,13 @@
-const { getApiBaseUrl } = require("../config/api");
+const { getApiBaseUrl, getApiMode } = require("../config/api");
 
 function request(path, options = {}) {
   const method = options.method || "POST";
   const timeout = options.timeout || 70000;
   const data = options.data || {};
+  const apiBaseUrl = getApiBaseUrl();
   return new Promise((resolve, reject) => {
     wx.request({
-      url: `${getApiBaseUrl()}${path}`,
+      url: `${apiBaseUrl}${path}`,
       method,
       data,
       timeout,
@@ -17,7 +18,10 @@ function request(path, options = {}) {
           reject({
             statusCode,
             payload,
-            message: payload.error && payload.error.message ? payload.error.message : "后端接口返回异常"
+            message: payload.error && payload.error.message ? payload.error.message : "后端接口返回异常",
+            apiBaseUrl,
+            apiMode: getApiMode(),
+            path
           });
           return;
         }
@@ -27,7 +31,10 @@ function request(path, options = {}) {
         reject({
           statusCode: 0,
           payload: null,
-          message: error && error.errMsg ? error.errMsg : "后端连接失败"
+          message: error && error.errMsg ? error.errMsg : "后端连接失败",
+          apiBaseUrl,
+          apiMode: getApiMode(),
+          path
         });
       }
     });

@@ -1,13 +1,15 @@
 const DEVTOOLS_API_BASE_URL = "http://127.0.0.1:4331";
 const LAN_API_BASE_URL = "http://127.0.0.1:4331";
+const CLOUD_API_BASE_URL = "http://110.42.208.125";
 const TUNNEL_API_BASE_URL = "https://cincinnati-assumptions-addressing-belongs.trycloudflare.com";
 
-// 手机真机预览时用 tunnel；本机开发者工具调试时可以改成 local。
-const API_MODE = "tunnel"; // "local" | "lan" | "tunnel"
+// 比赛调试阶段默认走云服务器；本机开发者工具调试时可以改成 local。
+const API_MODE = "cloud"; // "local" | "lan" | "cloud" | "tunnel"
 
 const API_BASE_URLS = {
   local: DEVTOOLS_API_BASE_URL,
   lan: LAN_API_BASE_URL,
+  cloud: CLOUD_API_BASE_URL,
   tunnel: TUNNEL_API_BASE_URL,
 };
 
@@ -23,6 +25,7 @@ module.exports = {
   API_MODE,
   DEVTOOLS_API_BASE_URL,
   LAN_API_BASE_URL,
+  CLOUD_API_BASE_URL,
   TUNNEL_API_BASE_URL,
   getApiMode,
   getApiBaseUrl

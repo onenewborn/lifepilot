@@ -121,6 +121,17 @@ function decorateChatMessages(messages = []) {
   return (Array.isArray(messages) ? messages : []).map(decorateChatMessage);
 }
 
+function latestActionFromChatMessages(messages = [], action) {
+  const list = Array.isArray(messages) ? messages : [];
+  for (let index = list.length - 1; index >= 0; index -= 1) {
+    const message = list[index];
+    if (!message || message.role === "user") continue;
+    const skillCards = Array.isArray(message.skill_cards) ? message.skill_cards : [];
+    return skillCards.find((item) => item && item.action === action) || null;
+  }
+  return null;
+}
+
 function todayDayId(userId) {
   const now = new Date();
   const year = now.getFullYear();
@@ -1013,7 +1024,7 @@ Page({
         item.id === thinkingMessage.id
           ? {
             ...item,
-            content: error.message || "小汪暂时连不上后端。",
+            content: this.formatRequestError(error, "小汪暂时连不上后端。"),
             isThinking: false
           }
           : item
@@ -1036,11 +1047,14 @@ Page({
         const payload = await xiaowangApi.getChatJob(jobId);
         if (payload.status === "completed" && payload.result) {
           this.activeChatJobId = "";
+          const nextMessages = decorateChatMessages(payload.result.messages || this.data.chatMessages);
           this.setData({
             chatSessionId: payload.result.session && payload.result.session.session_id ? payload.result.session.session_id : this.data.chatSessionId,
-            chatMessages: decorateChatMessages(payload.result.messages || this.data.chatMessages),
+            chatMessages: nextMessages,
             diary: null,
             isChatSubmitting: false
+          }, () => {
+            this.handleCompletedChatActions(nextMessages);
           });
           return;
         }
@@ -1077,7 +1091,7 @@ Page({
             item.id === pendingMessageId || item.id === `pending_${jobId}`
               ? decorateChatMessage({
                 ...item,
-                content: error.message || "问小汪失败",
+                content: this.formatRequestError(error, "问小汪失败"),
                 isThinking: false,
                 mode: "openclaw_pending_failed",
                 openclaw: {
@@ -1094,6 +1108,21 @@ Page({
       }
     };
     setTimeout(tick, 1200);
+  },
+
+  formatRequestError(error, fallback) {
+    const message = error && error.message ? error.message : fallback;
+    if (error && error.apiBaseUrl) {
+      return `${message}\nAPI: ${error.apiBaseUrl}`;
+    }
+    return message;
+  },
+
+  handleCompletedChatActions(messages) {
+    const startMealCard = latestActionFromChatMessages(messages, "start_meal");
+    if (startMealCard) {
+      this.startMealSkill();
+    }
   },
 
   runChatSkill(event) {
