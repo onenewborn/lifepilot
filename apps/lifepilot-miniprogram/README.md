@@ -11,9 +11,23 @@
 
 ## 本地调试
 
-1. 先启动 LifePilot 后端，确保接口监听 `http://127.0.0.1:4331`。
-2. 在微信开发者工具里导入这个目录：`apps/lifepilot-miniprogram`。
-3. 如果要在真机预览里访问本机后端，需要把 `config/api.js` 里的 `TUNNEL_API_BASE_URL` 配成可访问的隧道地址。
+1. 在微信开发者工具里导入这个目录：`apps/lifepilot-miniprogram`。
+2. 当前比赛调试默认连接云端后端：`http://110.42.208.125`。
+3. API 地址由 `config/api.js` 控制，当前默认是 `API_MODE = "cloud"`。
+4. 如果真机预览访问裸 IP / HTTP 失败，在微信开发者工具里开启“不校验合法域名、web-view、TLS 版本以及 HTTPS 证书”。
+
+## 后端连接模式
+
+`config/api.js` 支持四种模式：
+
+- `cloud`：当前默认模式，连接腾讯云后端 `http://110.42.208.125`。
+- `local`：开发者工具访问本机后端 `http://127.0.0.1:4331`。
+- `lan`：预留给局域网 IP 调试，当前仍指向 `127.0.0.1:4331`，使用前需要改成电脑局域网地址。
+- `tunnel`：临时隧道调试用，不是稳定入口；旧 Cloudflare tunnel 失效后会导致 `request:fail`。
+
+域名、备案、解析和 HTTPS 证书完成后，再把默认入口切到 `https://api.lifepilot-xiaowang.cn`，并同步配置微信小程序合法域名。
+
+更详细的云端连接和排错说明见 `docs/cloud-api-setup.md`。
 
 ## 文件分层
 
@@ -21,3 +35,4 @@
 - `services/`：后端 API 调用封装。
 - `utils/`：卡片归一化、滑卡手势、展示格式化。
 - `config/`：后端地址和 COS 资产地址。
+- `docs/`：小程序工程内的运行配置和调试说明。

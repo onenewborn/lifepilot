@@ -1,6 +1,8 @@
 const DEVTOOLS_API_BASE_URL = "http://127.0.0.1:4331";
 const LAN_API_BASE_URL = "http://127.0.0.1:4331";
+// 当前比赛调试入口：腾讯云 LifePilot 后端公网地址。
 const CLOUD_API_BASE_URL = "http://110.42.208.125";
+// 只用于临时排障。旧 Cloudflare tunnel 可能随时失效，不要作为默认入口。
 const TUNNEL_API_BASE_URL = "https://cincinnati-assumptions-addressing-belongs.trycloudflare.com";
 
 // 比赛调试阶段默认走云服务器；本机开发者工具调试时可以改成 local。
