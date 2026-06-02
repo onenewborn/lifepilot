@@ -140,6 +140,17 @@ function latestActionFromChatMessages(messages = [], action) {
   return null;
 }
 
+function latestUserChatText(messages = []) {
+  const list = Array.isArray(messages) ? messages : [];
+  for (let index = list.length - 1; index >= 0; index -= 1) {
+    const message = list[index];
+    if (message && message.role === "user" && String(message.content || "").trim()) {
+      return String(message.content || "").trim();
+    }
+  }
+  return "";
+}
+
 function todayDayId(userId) {
   const now = new Date();
   const year = now.getFullYear();
@@ -1149,15 +1160,20 @@ Page({
   },
 
   startMealSkill() {
-    this.setData({
+    const latestUserText = latestUserChatText(this.data.chatMessages);
+    const next = {
       activeTab: "meal",
       stageLabel: this.labelForStage(this.data.stage),
       stageSubtitle: this.subtitleForStage(this.data.stage)
-    }, () => {
-      if (this.data.stage === "entry") {
-        this.startMealFlow();
-      }
-    });
+    };
+    if (this.data.stage === "entry" && latestUserText) {
+      next.entryForm = {
+        ...this.data.entryForm,
+        text: latestUserText
+      };
+      next.editableGoal = this.entrySummary(next.entryForm);
+    }
+    this.setData(next);
   },
 
   async loadXiaowangDiary() {
