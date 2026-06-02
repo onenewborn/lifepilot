@@ -38,4 +38,7 @@ export const config = {
   storage: {
     runtimeRoot: process.env.LIFEPILOT_RUNTIME_ROOT || path.join(REPO_ROOT, "data", "runtime"),
   },
+  admin: {
+    token: process.env.LIFEPILOT_ADMIN_TOKEN || "",
+  },
 };

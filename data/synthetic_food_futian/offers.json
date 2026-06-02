@@ -9,10 +9,10 @@
       "direction_ids": [
         "dir_hot_soup_noodles"
       ],
-      "title": "客家猪肉汤 + 猪油渣炒菜心",
-      "display_title": "何三仙客家菜 · 客家猪肉汤 + 猪油渣炒菜心",
-      "hook": "热汤、青菜、客家味，比普通快餐更像认真吃了一顿。",
-      "price_per_person": 58,
+      "title": "蒸饺 + 馄炖",
+      "display_title": "沙县小吃 · 蒸饺 + 馄炖",
+      "hook": "踏实的碳水，沙县大酒店永远值得信赖",
+      "price_per_person": 14,
       "oil_level": "low",
       "spice_level": "none",
       "solo_friendly": true,
@@ -24,7 +24,8 @@
       "environment_note": "车公庙地铁口小吃快餐店，翻台快，适合快速解决一顿。",
       "avoid_for": [
         "想吃精致正餐",
-        "想慢慢聊天"
+        "想慢慢聊天",
+        "有减脂需求"
       ],
       "media": {
         "type": "image",
@@ -58,7 +59,9 @@
       "satisfaction_level": "steady",
       "flavor_label": "沙县小吃日常快餐",
       "decision_tags": [
-        "客家菜",
+        "适合独食",
+        "一人食",
+        "方便",
         "热汤",
         "两三人更合适",
         "下饭",
@@ -78,19 +81,18 @@
       "direction_ids": [
         "dir_hot_soup_noodles"
       ],
-      "title": "客家酿豆腐饭 + 猪肉汤",
-      "display_title": "何三仙客家菜 · 客家酿豆腐饭 + 猪肉汤",
-      "hook": "想一个人吃客家菜时，这个组合比大桌点菜更轻。",
-      "price_per_person": 42,
+      "title": "炒粉 + 炒饭",
+      "display_title": "沙县小吃 · 炒粉 + 炒饭",
+      "hook": "方便快捷",
+      "price_per_person": 20,
       "oil_level": "medium",
       "spice_level": "none",
       "solo_friendly": true,
       "signature_items": [
-        "客家酿豆腐饭",
-        "客家猪肉汤",
-        "青菜"
+        "炒粉",
+        "炒饭"
       ],
-      "environment_note": "沙县小吃式快餐环境，座位周转快，饭点可能有一点排队。",
+      "environment_note": "沙县小吃式快餐环境，座位周转快。",
       "avoid_for": [
         "想吃精致环境",
         "想聊天久坐"
@@ -127,10 +129,10 @@
       "satisfaction_level": "steady",
       "flavor_label": "沙县小吃热乎简餐",
       "decision_tags": [
-        "客家酿豆腐",
+        "炒粉",
+        "炒饭",
         "一个人可吃",
-        "热汤",
-        "不太油"
+        "方便\\m不等位"
       ],
       "danmaku": [
         "蒸饺配炖罐，朴素但很稳",
@@ -147,7 +149,7 @@
         "dir_hot_soup_noodles"
       ],
       "title": "兰州牛肉面",
-      "display_title": "马记永·兰州牛肉面 · 兰州牛肉面",
+      "display_title": "辣子王兰州牛肉面 · 兰州牛肉面",
       "hook": "热乎、快，牛肉面方向明确，适合想吃面的一顿。",
       "price_per_person": 32,
       "oil_level": "medium",
@@ -199,7 +201,8 @@
         "出餐快",
         "独食友好"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": ""
     },
     {
       "offer_id": "off_futian_002_wonton",
@@ -209,7 +212,7 @@
         "dir_hot_soup_noodles"
       ],
       "title": "优质牛肉面 + 凉拌牛肉",
-      "display_title": "马记永·兰州牛肉面 · 优质牛肉面 + 凉拌牛肉",
+      "display_title": "辣子王兰州牛肉面 · 优质牛肉面 + 凉拌牛肉",
       "hook": "比普通牛肉面更扎实，适合下班饿了但还想吃快一点。",
       "price_per_person": 45,
       "oil_level": "low",
@@ -259,7 +262,8 @@
         "热乎",
         "快餐"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": ""
     },
     {
       "offer_id": "off_futian_003_two_dish_rice",

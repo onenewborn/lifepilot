@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LifePilot 数据管理台</title>
+  <style>
+    :root { --bg:#f7f5f0; --panel:#fffdf8; --line:#ded7cc; --text:#27221d; --muted:#746a5f; --accent:#176b5b; --danger:#9b2f22; --soft:#eef5f2; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    header { position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 18px; background:rgba(255,253,248,.96); border-bottom:1px solid var(--line); backdrop-filter:blur(10px); }
+    h1 { margin:0; font-size:18px; }
+    button { min-height:34px; border:1px solid var(--line); border-radius:8px; padding:0 12px; background:#fff; color:var(--text); font:inherit; font-weight:800; cursor:pointer; }
+    button:hover { border-color:var(--accent); }
+    input, select, textarea { width:100%; min-height:36px; border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:#fff; color:var(--text); font:inherit; }
+    textarea { min-height:76px; resize:vertical; }
+    main { display:grid; grid-template-columns:320px minmax(0,1fr); min-height:calc(100vh - 64px); }
+    aside { border-right:1px solid var(--line); background:#fbf8f1; overflow:auto; }
+    section { min-width:0; padding:18px 22px 48px; }
+    .tabs { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:12px; }
+    .tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .side-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 12px 12px; }
+    .danger { color:var(--danger); border-color:rgba(155,47,34,.35); }
+    .search { margin:0 12px 12px; width:calc(100% - 24px); }
+    .list { padding:0 8px 18px; }
+    .list-item { width:100%; margin:0 0 6px; padding:10px; text-align:left; background:transparent; border-color:transparent; }
+    .list-item.active { background:#fff; border-color:var(--line); box-shadow:0 1px 5px rgba(39,34,29,.08); }
+    .item-title { font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .item-subtitle { margin-top:3px; color:var(--muted); font-size:12px; }
+    .topbar { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:start; margin-bottom:14px; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .save { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .status { color:var(--muted); font-size:13px; }
+    .token-box { display:flex; gap:8px; align-items:center; min-width:360px; }
+    .token-box input { min-width:220px; }
+    .notice { margin:0 0 14px; padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:#fffaf1; color:var(--muted); }
+    .form { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; max-width:1220px; }
+    .field { min-width:0; }
+    .field.full { grid-column:1 / -1; }
+    label { display:block; margin-bottom:6px; font-weight:900; color:var(--text); }
+    .key { color:var(--muted); font-weight:700; font-size:12px; }
+    .help { margin-top:6px; color:var(--muted); font-size:12px; line-height:1.45; }
+    .required { display:inline-block; margin-left:6px; padding:1px 6px; border-radius:999px; background:#ead7d2; color:#8d2b20; font-size:11px; }
+    .repeat { grid-column:1 / -1; border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:12px; }
+    .repeat-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; }
+    .repeat-title { font-weight:900; }
+    .repeat-row { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)) auto; gap:8px; align-items:end; padding:10px 0; border-top:1px solid var(--line); }
+    .repeat-row:first-of-type { border-top:0; }
+    .upload-line { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; }
+    .repeat-upload-line { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; }
+    .repeat-upload-line button { padding:0 8px; font-size:12px; white-space:nowrap; }
+    .relation { margin-top:16px; max-width:1220px; padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:var(--soft); color:var(--muted); }
+    .empty { grid-column:1 / -1; padding:48px; text-align:center; color:var(--muted); }
+    @media (max-width:920px) { main{grid-template-columns:1fr;} aside{border-right:0;border-bottom:1px solid var(--line);max-height:44vh;} .form{grid-template-columns:1fr;} .topbar{grid-template-columns:1fr;} .token-box{min-width:0; width:100%;} .repeat-row{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>LifePilot 数据管理台</h1>
+      <div class="status" id="status">正在加载云端/本地后端数据</div>
+    </div>
+    <div class="token-box">
+      <input id="adminToken" placeholder="云端后台口令（如已配置）">
+      <button id="saveToken">保存口令</button>
+    </div>
+  </header>
+  <main>
+    <aside>
+      <div class="tabs" id="tabs"></div>
+      <div class="side-actions">
+        <button id="newButton">新增</button>
+        <button class="danger" id="deleteButton">删除</button>
+      </div>
+      <input class="search" id="search" placeholder="搜索中文名、商圈、ID、标签">
+      <div class="list" id="list"></div>
+    </aside>
+    <section>
+      <div class="notice">
+        这里保存会直接写入当前后端正在使用的 JSON：本机启动就是改本机，云端部署就是改云端。媒体上传第一版只上传到当前后端服务器的 <strong>assets/</strong> 目录，并自动回填 <strong>/assets/...</strong>；生产小程序要看到媒体，还需要把同路径文件同步到腾讯 COS。
+      </div>
+      <div class="topbar">
+        <div>
+          <strong id="editorTitle">选择一个条目</strong>
+          <div class="status" id="editorSubtitle">字段名以中文为主，括号里是底层 JSON key。</div>
+        </div>
+        <div class="actions">
+          <button id="reloadButton">重新加载</button>
+          <button class="save" id="saveButton">保存</button>
+        </div>
+      </div>
+      <div id="form" class="form"></div>
+      <div class="relation" id="relationBox"></div>
+    </section>
+  </main>
+  <script>
+    const state = {mode:"directions", catalog:null, selectedId:"", dirty:false};
+    const $ = (id) => document.getElementById(id);
+    const modes = [
+      ["directions","方向","direction_id"],
+      ["merchants","商家","merchant_id"],
+      ["offers","吃法/Offer","offer_id"],
+      ["deals","优惠","deal_id"],
+      ["reputations","口碑","merchant_id"],
+    ];
+    const modeMap = Object.fromEntries(modes.map(([key,label,id]) => [key,{label,id,path:`/api/admin/${key}`}]));
+    const repeatColumns = {
+      reputation_tags: [{key:"tag",label:"标签",example:"出餐快"},{key:"sentiment",label:"倾向",options:() => opt("sentiment")},{key:"mention_count",label:"提及数",example:"168"},{key:"mention_ratio",label:"提及比例",example:"0.58"},{key:"evidence_text",label:"证据文案",example:"168 条提到出餐快"},{key:"source",label:"来源",example:"manual_admin"}],
+      signature_dishes: [{key:"name",label:"菜名",example:"猪油渣炒菜心"},{key:"confidence",label:"置信度",example:"0.86"},{key:"source",label:"来源",example:"manual_admin"}],
+      negative_signals: [{key:"signal",label:"问题",example:"饭点出餐略慢"},{key:"severity",label:"严重程度",options:() => opt("severity")},{key:"mention_count",label:"提及数",example:"31"},{key:"mention_ratio",label:"提及比例",example:"0.08"}],
+      evidence: [{key:"type",label:"类型",example:"public_source_url"},{key:"url",label:"URL",example:"https://..."},{key:"note",label:"说明",example:"用于确认地址和菜品"}],
+      "media.video_sources": [{key:"key",label:"视频 ID",example:"official"},{key:"type",label:"类型",options:() => opt("video_source_type")},{key:"label",label:"展示名",example:"官方视频"},{key:"url",label:"视频路径",example:"/assets/offer-media/wangji_douhua/official.mp4",uploadKind:"offer_video"},{key:"poster_url",label:"封面路径",example:"/assets/offer-media/wangji_douhua/poster.jpg",uploadKind:"offer_poster"},{key:"has_sound",label:"有声音",options:() => [{value:"true",label:"是"},{value:"false",label:"否"}]}],
+    };
+    const help = {
+      id:"只能英文、数字、下划线、短横线。示例：m_futian_029。主键保存后不能修改。",
+      path:"推荐填写 /assets/... 相对路径。示例：/assets/offer-media/wangji_douhua/cover.jpg。也允许 https:// 完整地址。",
+      ratio:"填写 0 到 1 的小数。示例：0.78 表示 78%。",
+      price:"填写数字，单位元。示例：58。",
+      list:"一行一个，使用中文即可。保存后写入数组。",
+    };
+    function token() { return localStorage.getItem("lifepilot_admin_token") || ""; }
+    function setStatus(text) { $("status").textContent = text; }
+    function cfg() { return modeMap[state.mode]; }
+    function idOf(item) { return item?.[cfg().id] || ""; }
+    function items() { return state.catalog?.[state.mode] || []; }
+    function selected() { return items().find((item) => idOf(item) === state.selectedId); }
+    function opt(key) { return state.catalog?.options?.[key] || []; }
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        ...options,
+        headers: {"content-type":"application/json", "x-lifepilot-admin-token": token(), ...(options.headers || {})},
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok === false) {
+        const err = payload.error?.message || payload.error || response.statusText;
+        throw new Error(err);
+      }
+      return payload;
+    }
+    function esc(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+    function listText(value) { return Array.isArray(value) ? value.join("\\n") : (value || ""); }
+    function cleanName(name) { return String(name || "").replace(/^合成候选·/, ""); }
+    function title(item) {
+      if (!item) return "";
+      if (state.mode === "directions") return item.title || item.direction_id;
+      if (state.mode === "merchants") return cleanName(item.name) || item.merchant_id;
+      if (state.mode === "offers") return item.title || item.offer_id;
+      if (state.mode === "deals") return item.title || item.deal_id;
+      return item.merchant_name_display || item.merchant_name || item.merchant_id;
+    }
+    function subtitle(item) {
+      if (state.mode === "directions") return `${item.direction_id} · ${(item.tags||[]).slice(0,3).join("、")}`;
+      if (state.mode === "merchants") return `${item.merchant_id} · ${item.neighborhood || ""}`;
+      if (state.mode === "offers") return `${item.offer_id} · ${item.merchant_name || item.merchant_id}`;
+      if (state.mode === "deals") return `${item.deal_id} · ${item.merchant_name || item.merchant_id}`;
+      return `${item.merchant_id} · ${item.rating?.value || "暂无评分"} · ${item.review_stats?.review_count || 0} 条`;
+    }
+    function renderTabs() {
+      $("tabs").innerHTML = modes.map(([key,label]) => `<button class="tab ${state.mode === key ? "active" : ""}" data-mode="${key}">${label}</button>`).join("");
+      $("tabs").querySelectorAll("button").forEach((btn) => btn.onclick = () => switchMode(btn.dataset.mode));
+    }
+    function renderList() {
+      const query = $("search").value.trim().toLowerCase();
+      $("list").innerHTML = items().filter((item) => !query || JSON.stringify(item).toLowerCase().includes(query)).map((item) => {
+        const id = idOf(item);
+        return `<button class="list-item ${id === state.selectedId ? "active" : ""}" data-id="${esc(id)}"><div class="item-title">${esc(title(item))}</div><div class="item-subtitle">${esc(subtitle(item))}</div></button>`;
+      }).join("");
+      $("list").querySelectorAll("button").forEach((btn) => btn.onclick = () => { state.selectedId = btn.dataset.id; state.dirty = false; render(); });
+    }
+    function field(path, label, value, {type="text", required=false, options=null, note="", example="", full=false, readonly=false, upload=null} = {}) {
+      const cls = full || type === "textarea" || upload ? "field full" : "field";
+      const opts = options ? options.map((o) => `<option value="${esc(o.value ?? o)}" ${String(value ?? "") === String(o.value ?? o) ? "selected" : ""}>${esc(o.label ?? o)}</option>`).join("") : "";
+      const input = options
+        ? `<select data-path="${esc(path)}" ${readonly ? "disabled" : ""}>${opts}</select>`
+        : type === "textarea"
+          ? `<textarea data-path="${esc(path)}" ${readonly ? "readonly" : ""}>${esc(listText(value))}</textarea>`
+          : `<input data-path="${esc(path)}" type="${type}" value="${esc(value ?? "")}" ${readonly ? "readonly" : ""}>`;
+      const uploadHtml = upload
+        ? type === "textarea"
+          ? `<div class="upload-line"><textarea data-path="${esc(path)}" ${readonly ? "readonly" : ""}>${esc(listText(value))}</textarea><button data-upload-append="${esc(path)}" data-kind="${esc(upload.kind)}" data-slug="${esc(upload.slug || "")}">上传并追加</button></div>`
+          : `<div class="upload-line"><input data-path="${esc(path)}" value="${esc(value ?? "")}" ${readonly ? "readonly" : ""}><button data-upload="${esc(path)}" data-kind="${esc(upload.kind)}" data-slug="${esc(upload.slug || "")}">上传并回填</button></div>`
+        : input;
+      return `<div class="${cls}"><label>${label} <span class="key">(${path})</span>${required ? '<span class="required">必填</span>' : ""}</label>${uploadHtml}<div class="help">${esc(note)}${example ? ` 示例：${esc(example)}。` : ""}</div></div>`;
+    }
+    function infoBlock(titleText, bodyText) {
+      return `<div class="notice field full"><strong>${esc(titleText)}</strong><div class="help">${esc(bodyText)}</div></div>`;
+    }
+    function repeat(path, titleText, columns, rows = []) {
+      const body = (rows || []).map((row, i) => repeatRow(path, columns, row, i)).join("");
+      return `<div class="repeat" data-repeat="${esc(path)}"><div class="repeat-head"><div><div class="repeat-title">${titleText} <span class="key">(${path})</span></div><div class="help">点击新增一行；每行都会保存成数组里的一个对象。</div></div><button data-add-row="${esc(path)}">新增一行</button></div><div data-repeat-body="${esc(path)}">${body}</div></div>`;
+    }
+    function repeatRow(path, columns, row, index) {
+      const cells = columns.map((c) => {
+        const value = row?.[c.key] ?? "";
+        if (c.options) {
+          return `<div><label>${c.label}</label><select data-rpath="${esc(path)}" data-index="${index}" data-key="${esc(c.key)}">${c.options.map((o) => `<option value="${esc(o.value ?? o)}" ${String(value) === String(o.value ?? o) ? "selected" : ""}>${esc(o.label ?? o)}</option>`).join("")}</select></div>`;
+        }
+        if (c.uploadKind) {
+          return `<div><label>${c.label}</label><div class="repeat-upload-line"><input data-rpath="${esc(path)}" data-index="${index}" data-key="${esc(c.key)}" value="${esc(value)}" placeholder="${esc(c.example || "")}"><button data-upload-repeat="${esc(path)}" data-index="${index}" data-key="${esc(c.key)}" data-kind="${esc(c.uploadKind)}" data-slug="${esc(selected()?.merchant_id || "")}">上传</button></div></div>`;
+        }
+        return `<div><label>${c.label}</label><input data-rpath="${esc(path)}" data-index="${index}" data-key="${esc(c.key)}" value="${esc(value)}" placeholder="${esc(c.example || "")}"></div>`;
+      }).join("");
+      return `<div class="repeat-row" data-row="${index}">${cells}<button class="danger" data-remove-row="${esc(path)}" data-index="${index}">删除</button></div>`;
+    }
+    function merchantOptions() { return (state.catalog?.merchants || []).map((m) => ({value:m.merchant_id, label:`${cleanName(m.name)} (${m.merchant_id})`})); }
+    function directionOptions() { return (state.catalog?.directions || []).map((d) => ({value:d.direction_id, label:`${d.title} (${d.direction_id})`})); }
+    function offerOptions() { return (state.catalog?.offers || []).map((o) => ({value:o.offer_id, label:`${o.title} (${o.offer_id})`})); }
+    function resolveRepeatColumn(column) {
+      return {...column, options: typeof column.options === "function" ? column.options() : column.options};
+    }
+    function renderForm(item) {
+      if (!item) return '<div class="empty">左侧选择一条数据，或点击“新增”。</div>';
+      if (state.mode === "directions") return [
+        field("direction_id","方向 ID",item.direction_id,{required:true,readonly:true,note:help.id}),
+        field("title","方向标题",item.title,{required:true,note:"第一阶段方向卡展示名，用中文写清楚想吃的方向。",example:"下班热汤粉面"}),
+        field("budget_band","预算带",item.budget_band,{required:true,note:"展示给用户看的预算范围。",example:"30-50"}),
+        field("hook","一句话卖点",item.hook,{type:"textarea",required:true,note:"说明这个方向适合什么心情或场景。",example:"热乎、快，一个人吃不用想太多"}),
+        field("tags","标签",item.tags,{type:"textarea",note:help.list,example:"独食友好"}),
+        field("fit","适合场景",item.fit,{type:"textarea",note:help.list,example:"工作日晚餐"}),
+        field("avoid_for","不适合",item.avoid_for,{type:"textarea",note:help.list,example:"想聊天久坐"}),
+        field("match_rules.cuisine_tags","匹配菜系标签",item.match_rules?.cuisine_tags,{type:"textarea",note:"英文 snake_case，一行一个，影响方向召回 Offer。",example:"rice_noodle"}),
+        field("match_rules.spice_level_min","最低辣度",item.match_rules?.spice_level_min,{options:[{value:"",label:"不限制"},...opt("spice_level")],note:"影响方向筛选规则。"}),
+        field("match_rules.oil_level_max","最高油量",item.match_rules?.oil_level_max,{options:[{value:"",label:"不限制"},...opt("oil_level")],note:"影响方向筛选规则。"}),
+        field("match_rules.budget_max","最高预算",item.match_rules?.budget_max,{type:"number",note:"数字，单位元。",example:"50"}),
+        field("media.url","方向封面图",item.media?.url,{upload:{kind:"direction_cover"},note:help.path}),
+        field("media.poster_url","方向视频封面",item.media?.poster_url,{upload:{kind:"direction_cover"},note:help.path}),
+        field("media.video_url","方向视频",item.media?.video_url,{upload:{kind:"direction_video"},note:help.path}),
+        field("media.video_version","视频版本",item.media?.video_version,{note:"缓存刷新用。",example:"2026-06-02-a"}),
+        field("media.has_sound","视频有声音",String(Boolean(item.media?.has_sound)),{options:[{value:"false",label:"否"},{value:"true",label:"是"}],note:"小程序是否显示声音相关控制。"}),
+      ].join("");
+      if (state.mode === "merchants") return [
+        field("merchant_id","商家 ID",item.merchant_id,{required:true,readonly:true,note:help.id}),
+        field("name","商家名称",item.name,{required:true,note:"商家卡和小汪解释展示名。",example:"汪记豆花"}),
+        field("area","城市区域",item.area,{note:"城市 + 大区域。",example:"深圳福田"}),
+        field("neighborhood","商圈",item.neighborhood,{required:true,note:"用于搜索和距离语境。",example:"车公庙"}),
+        field("scene","场景说明",item.scene,{type:"textarea",note:"自然语言说明商家适合什么场景。",example:"适合下班后两个人吃热菜"}),
+        field("address","地址",item.address,{note:"尽量写完整门牌。"}),
+        field("distance_km","距离 km",item.distance_km,{type:"number",note:"数字，单位公里。",example:"0.8"}),
+        field("queue_risk","排队风险",item.queue_risk,{options:opt("queue_risk"),note:"中文下拉，保存 low/medium/high。"}),
+        field("meal_service_type","服务类型",item.meal_service_type,{options:opt("meal_service_type"),note:"影响排队和场景判断。"}),
+        field("reservation_mode","预约模式",item.reservation_mode,{options:opt("reservation_mode"),note:"影响是否提示提前预约。"}),
+        field("subway_walk_min","步行分钟",item.subway_walk_min,{type:"number",note:"0-60 的整数。",example:"8"}),
+        field("opening_hours.weekday","工作日营业时间",item.opening_hours?.weekday,{type:"textarea",note:"一行一个，最多两行：开始时间、结束时间。",example:"10:30\\n22:00"}),
+        field("opening_hours.weekend","周末营业时间",item.opening_hours?.weekend,{type:"textarea",note:"一行一个，最多两行。",example:"10:30\\n22:00"}),
+        field("environment.space_type","空间类型",item.environment?.space_type,{note:"中文描述。",example:"普通堂食店"}),
+        field("environment.noise_level","噪音水平",item.environment?.noise_level,{options:opt("noise_level"),note:"影响聊天/久坐判断。"}),
+        field("environment.solo_friendly","一人友好",String(Boolean(item.environment?.solo_friendly)),{options:[{value:"true",label:"是"},{value:"false",label:"否"}],note:"影响独食场景。"}),
+        field("environment.chat_friendly","适合聊天",String(Boolean(item.environment?.chat_friendly)),{options:[{value:"true",label:"是"},{value:"false",label:"否"}],note:"影响两人聊天场景。"}),
+        field("environment.comfort_level","舒适度",item.environment?.comfort_level,{options:opt("comfort_level"),note:"影响坐下吃/约会等解释。"}),
+        field("location.latitude","纬度",item.location?.latitude,{type:"number",note:"GCJ02 坐标，深圳约 22.x。"}),
+        field("location.longitude","经度",item.location?.longitude,{type:"number",note:"GCJ02 坐标，深圳约 114.x。"}),
+        field("specialties","特色菜",item.specialties,{type:"textarea",note:help.list,example:"猪油渣炒菜心"}),
+        field("public_sources","公开来源 URL",item.public_sources,{type:"textarea",note:"一行一个 URL，用于证据追溯。"}),
+        field("media.poster_url","商家视频封面",item.media?.poster_url,{upload:{kind:"offer_poster",slug:item.merchant_id},note:`${help.path} 商家级视频默认封面；小程序商家卡会优先使用。`}),
+        repeat("media.video_sources","商家视频列表",repeatColumns["media.video_sources"].map(resolveRepeatColumn), item.media?.video_sources || []),
+        field("media.image_urls","商家/菜品多图",item.media?.image_urls,{type:"textarea",upload:{kind:"offer_cover",slug:item.merchant_id},note:`${help.list} 每行必须是 /assets/... 或 https://...。点击上传会把新图片路径追加到下一行；没有视频时小程序会用这些图片做左右滑轮播。`,example:"/assets/offer-media/wangji_douhua/cover.jpg"}),
+        field("media.danmaku","轻量弹幕文案",item.media?.danmaku,{type:"textarea",note:"一行一条中文短句，建议 6-14 个字；会叠加在商家视频上循环飘过。",example:"豆花看起来很稳"}),
+        field("data_checked_at","数据检查日期",item.data_checked_at,{note:"YYYY-MM-DD。",example:"2026-06-02"}),
+      ].join("");
+      if (state.mode === "offers") return [
+        field("offer_id","Offer ID",item.offer_id,{required:true,readonly:true,note:help.id}),
+        field("merchant_id","所属商家",item.merchant_id,{required:true,options:merchantOptions(),note:"选择这个吃法属于哪家店。"}),
+        field("direction_ids","关联方向",item.direction_ids,{type:"textarea",required:true,note:"一行一个 direction_id，影响第二阶段召回。也可从左侧复制方向 ID。"}),
+        field("title","吃法标题",item.title,{required:true,example:"客家猪肉汤 + 猪油渣炒菜心"}),
+        field("display_title","展示标题",item.display_title,{required:true,example:"何三仙客家菜 · 客家猪肉汤"}),
+        field("price_per_person","人均价格",item.price_per_person,{type:"number",required:true,note:help.price}),
+        field("hook","一句话卖点",item.hook,{type:"textarea",required:true,note:"展示在卡片里的推荐理由。"}),
+        field("oil_level","油量",item.oil_level,{options:opt("oil_level"),note:"中文下拉，保存英文值。"}),
+        field("spice_level","辣度",item.spice_level,{options:opt("spice_level"),note:"中文下拉，保存英文值。"}),
+        field("meal_style","用餐风格",item.meal_style,{options:opt("meal_style")}),
+        field("service_speed","出餐速度",item.service_speed,{options:opt("service_speed")}),
+        field("portion_size","份量",item.portion_size,{options:opt("portion_size")}),
+        field("temperature","冷热",item.temperature,{options:opt("temperature")}),
+        field("satisfaction_level","满足感",item.satisfaction_level,{options:opt("satisfaction_level")}),
+        field("solo_friendly","一人友好",String(item.solo_friendly !== false),{options:[{value:"true",label:"是"},{value:"false",label:"否"}]}),
+        field("signature_items","招牌/包含菜品",item.signature_items,{type:"textarea",note:help.list}),
+        field("decision_tags","决策标签",item.decision_tags,{type:"textarea",note:help.list}),
+        field("cuisine_tags","菜系标签",item.cuisine_tags,{type:"textarea",note:"英文 snake_case，一行一个。",example:"hakka_food"}),
+        field("avoid_for","不适合",item.avoid_for,{type:"textarea",note:help.list}),
+        field("environment_note","环境说明",item.environment_note,{type:"textarea"}),
+        field("flavor_label","风味标签",item.flavor_label,{example:"客家菜日常热菜"}),
+        infoBlock("媒体统一在商家页维护", "封面、多图、官方视频、用户探店视频和弹幕请到“商家”tab 的商家媒体区填写。旧 Offer 里的 media/video_url/danmaku 仍会被后端兼容读取作为兜底，但常规运营不再从这里编辑，避免同一家店多套媒体互相打架。"),
+      ].join("");
+      if (state.mode === "deals") return [
+        field("deal_id","优惠 ID",item.deal_id,{required:true,readonly:true,note:help.id}),
+        field("merchant_id","所属商家",item.merchant_id,{required:true,options:merchantOptions()}),
+        field("offer_id","关联 Offer",item.offer_id,{options:[{value:"",label:"不关联"},...offerOptions()]}),
+        field("platform","平台",item.platform,{options:opt("platform")}),
+        field("external_shop_name","外部平台店名",item.external_shop_name,{example:"美团上的店铺名"}),
+        field("deal_type","优惠类型",item.deal_type,{options:opt("deal_type")}),
+        field("title","优惠标题",item.title,{required:true,example:"双人套餐线索"}),
+        field("deal_price","团购/券后价",item.deal_price,{type:"number",note:help.price}),
+        field("original_price","原价",item.original_price,{type:"number",note:help.price}),
+        field("party_size_min","最少人数",item.party_size_min,{type:"number",example:"2"}),
+        field("party_size_max","最多人数",item.party_size_max,{type:"number",example:"2"}),
+        field("included_items","包含内容",item.included_items,{type:"textarea",note:help.list}),
+        field("best_for","适合场景",item.best_for,{type:"textarea",note:help.list}),
+        field("restrictions","限制说明",item.restrictions,{type:"textarea",note:help.list}),
+        field("valid_time","可用时间",item.valid_time,{example:"午市/晚市通用线索"}),
+        field("source_type","来源类型",item.source_type,{options:opt("source_type")}),
+        field("source_label","来源展示名",item.source_label,{example:"LifePilot 可控种子优惠"}),
+        field("source_url","来源 URL",item.source_url,{note:"可为空；如果填写，必须是 https:// 或 /assets/...。"}),
+        field("data_checked_at","检查日期",item.data_checked_at,{example:"2026-06-02"}),
+        field("confidence","置信度",item.confidence,{type:"number",note:"0-1 的小数，越高越可信。",example:"0.72"}),
+      ].join("");
+      return [
+        field("merchant_id","商家 ID",item.merchant_id,{required:true,readonly:true,note:"口碑用 merchant_id 作为主键，必须对应商家。"}),
+        field("merchant_name","商家名称",item.merchant_name,{required:true}),
+        field("source_type","来源类型",item.source_type,{options:opt("source_type")}),
+        field("evidence_confidence","证据置信度",item.evidence_confidence,{options:opt("evidence_confidence")}),
+        field("rating.value","评分",item.rating?.value,{type:"number",note:"0-5，例如 4.6。"}),
+        field("rating.scale","评分满分",item.rating?.scale || 5,{type:"number",example:"5"}),
+        field("rating.source","评分来源",item.rating?.source,{example:"manual_admin"}),
+        field("review_stats.review_count","评论数",item.review_stats?.review_count,{type:"number",example:"386"}),
+        field("review_stats.positive_count","好评数",item.review_stats?.positive_count,{type:"number"}),
+        field("review_stats.positive_ratio","好评比例",item.review_stats?.positive_ratio,{type:"number",note:help.ratio}),
+        field("review_stats.neutral_count","中评数",item.review_stats?.neutral_count,{type:"number"}),
+        field("review_stats.neutral_ratio","中评比例",item.review_stats?.neutral_ratio,{type:"number",note:help.ratio}),
+        field("review_stats.negative_count","差评数",item.review_stats?.negative_count,{type:"number"}),
+        field("review_stats.negative_ratio","差评比例",item.review_stats?.negative_ratio,{type:"number",note:help.ratio}),
+        repeat("reputation_tags","口碑标签",repeatColumns.reputation_tags.map(resolveRepeatColumn), item.reputation_tags),
+        repeat("signature_dishes","招牌菜",repeatColumns.signature_dishes.map(resolveRepeatColumn), item.signature_dishes),
+        repeat("negative_signals","负面信号",repeatColumns.negative_signals.map(resolveRepeatColumn), item.negative_signals),
+        repeat("evidence","证据来源",repeatColumns.evidence.map(resolveRepeatColumn), item.evidence),
+        field("scenario_fit.solo","适合一人",String(Boolean(item.scenario_fit?.solo)),{options:[{value:"true",label:"是"},{value:"false",label:"否"}]}),
+        field("scenario_fit.friends","适合朋友",String(Boolean(item.scenario_fit?.friends)),{options:[{value:"true",label:"是"},{value:"false",label:"否"}]}),
+        field("scenario_fit.quick_meal","适合快吃",String(Boolean(item.scenario_fit?.quick_meal)),{options:[{value:"true",label:"是"},{value:"false",label:"否"}]}),
+        field("scenario_fit.reservation_preferred","建议预约",String(Boolean(item.scenario_fit?.reservation_preferred)),{options:[{value:"true",label:"是"},{value:"false",label:"否"}]}),
+        field("scenario_fit.queue_risk","口碑排队风险",item.scenario_fit?.queue_risk,{options:opt("queue_risk")}),
+        field("updated_at","更新时间",item.updated_at,{example:"2026-06-02T12:00:00+08:00"}),
+      ].join("");
+    }
+    function getValue(path) {
+      const input = $form().querySelector(`[data-path="${CSS.escape(path)}"]`);
+      if (!input) return undefined;
+      return input.value;
+    }
+    function $form() { return $("form"); }
+    function setDeep(obj, path, value) {
+      const parts = path.split(".");
+      let cur = obj;
+      parts.slice(0,-1).forEach((part) => cur = cur[part] ||= {});
+      cur[parts.at(-1)] = value;
+    }
+    function patchFromForm() {
+      const patch = {};
+      $form().querySelectorAll("[data-path]").forEach((input) => {
+        if (input.readOnly || input.disabled) return;
+        const value = input.tagName === "TEXTAREA" ? input.value.split(/\\n/).map((x) => x.trim()).filter(Boolean) : input.value;
+        setDeep(patch, input.dataset.path, value);
+      });
+      $form().querySelectorAll("[data-repeat]").forEach((box) => {
+        const path = box.dataset.repeat;
+        const rows = [];
+        box.querySelectorAll("[data-row]").forEach((row) => {
+          const item = {};
+          row.querySelectorAll("[data-key]").forEach((input) => item[input.dataset.key] = input.value);
+          rows.push(item);
+        });
+        setDeep(patch, path, rows);
+      });
+      return patch;
+    }
+    function bindForm() {
+      $form().querySelectorAll("input,select,textarea").forEach((input) => input.oninput = input.onchange = () => { state.dirty = true; setStatus("有未保存修改"); });
+      $form().querySelectorAll("[data-add-row]").forEach((btn) => btn.onclick = () => addRepeatRow(btn.dataset.addRow));
+      $form().querySelectorAll("[data-remove-row]").forEach((btn) => btn.onclick = () => { btn.closest("[data-row]").remove(); state.dirty = true; });
+      $form().querySelectorAll("[data-upload]").forEach((btn) => btn.onclick = (event) => chooseUpload(event, btn));
+      $form().querySelectorAll("[data-upload-repeat]").forEach((btn) => btn.onclick = (event) => chooseUpload(event, btn));
+      $form().querySelectorAll("[data-upload-append]").forEach((btn) => btn.onclick = (event) => chooseUpload(event, btn));
+    }
+    function addRepeatRow(path) {
+      const box = $form().querySelector(`[data-repeat="${CSS.escape(path)}"]`);
+      const cols = (repeatColumns[path] || []).map(resolveRepeatColumn);
+      const index = box.querySelectorAll("[data-row]").length;
+      const html = repeatRow(path, cols, {}, index);
+      box.querySelector("[data-repeat-body]").insertAdjacentHTML("beforeend", html);
+      bindForm();
+      state.dirty = true;
+    }
+    async function chooseUpload(event, btn) {
+      event.preventDefault();
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = btn.dataset.kind.includes("video") ? "video/*" : "image/*";
+      fileInput.onchange = async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        setStatus("上传中");
+        const dataUrl = await new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(file); });
+        const payload = await api("/api/admin/assets/upload", {method:"POST", body:JSON.stringify({filename:file.name, data_url:dataUrl, asset_kind:btn.dataset.kind, slug:btn.dataset.slug || selected()?.merchant_id || selected()?.direction_id || "general"})});
+        if (btn.dataset.uploadRepeat) {
+          const target = $form().querySelector(`[data-rpath="${CSS.escape(btn.dataset.uploadRepeat)}"][data-index="${CSS.escape(btn.dataset.index)}"][data-key="${CSS.escape(btn.dataset.key)}"]`);
+          target.value = payload.asset.path;
+        } else if (btn.dataset.uploadAppend) {
+          const target = $form().querySelector(`[data-path="${CSS.escape(btn.dataset.uploadAppend)}"]`);
+          const existing = target.value.split(/\n/).map((line) => line.trim()).filter(Boolean);
+          if (!existing.includes(payload.asset.path)) existing.push(payload.asset.path);
+          target.value = existing.join("\n");
+        } else {
+          const target = $form().querySelector(`[data-path="${CSS.escape(btn.dataset.upload)}"]`);
+          target.value = payload.asset.path;
+        }
+        state.dirty = true;
+        setStatus("上传成功，已回填路径；生产小程序仍需同步 COS");
+      };
+      fileInput.click();
+    }
+    function renderRelation(item) {
+      if (!item) { $("relationBox").textContent = ""; return; }
+      if (state.mode === "merchants") $("relationBox").textContent = `关联：${(state.catalog.offers||[]).filter((o)=>o.merchant_id===item.merchant_id).length} 个 Offer，${(state.catalog.deals||[]).filter((d)=>d.merchant_id===item.merchant_id).length} 个优惠，${(state.catalog.reputations||[]).filter((r)=>r.merchant_id===item.merchant_id).length} 条口碑。`;
+      else if (state.mode === "directions") $("relationBox").textContent = `关联 Offer：${(state.catalog.offers||[]).filter((o)=>(o.direction_ids||[]).includes(item.direction_id)).map((o)=>o.title).slice(0,8).join("、") || "暂无"}`;
+      else if (state.mode === "offers") $("relationBox").textContent = `关联优惠：${(state.catalog.deals||[]).filter((d)=>d.offer_id===item.offer_id).map((d)=>d.title).join("、") || "暂无"}`;
+      else $("relationBox").textContent = "保存后会直接影响当前后端的工具证据。";
+    }
+    function render() {
+      renderTabs();
+      renderList();
+      const item = selected();
+      $("editorTitle").textContent = item ? title(item) : "选择一个条目";
+      $("editorSubtitle").textContent = item ? `${cfg().label} · ${idOf(item)}` : "字段名以中文为主，括号里是底层 JSON key。";
+      $form().innerHTML = renderForm(item);
+      bindForm();
+      renderRelation(item);
+    }
+    async function load() {
+      state.catalog = await api("/api/admin/catalog");
+      if (!state.selectedId && items()[0]) state.selectedId = idOf(items()[0]);
+      render();
+      setStatus("已加载");
+    }
+    async function save() {
+      if (!state.selectedId) return;
+      setStatus("保存中");
+      const id = state.selectedId;
+      await api(`${cfg().path}/${encodeURIComponent(id)}`, {method:"PUT", body:JSON.stringify(patchFromForm())});
+      state.dirty = false;
+      await load();
+      state.selectedId = id;
+      render();
+      setStatus("已保存到当前后端 JSON");
+    }
+    async function createItem() {
+      const id = prompt(`请输入新的 ${cfg().label} ID（只能英文、数字、下划线、短横线）`);
+      if (!id) return;
+      const body = {[cfg().id]: id.trim()};
+      if (state.mode === "offers") {
+        body.merchant_id = state.catalog.merchants[0]?.merchant_id || "";
+        body.direction_ids = state.catalog.directions[0]?.direction_id || "";
+      }
+      if (state.mode === "deals") {
+        body.merchant_id = state.catalog.merchants[0]?.merchant_id || "";
+        body.offer_id = state.catalog.offers[0]?.offer_id || "";
+      }
+      if (state.mode === "reputations") body.merchant_name = state.catalog.merchants.find((m)=>m.merchant_id===id.trim())?.name || "";
+      const payload = await api(cfg().path, {method:"POST", body:JSON.stringify(body)});
+      const item = payload.direction || payload.merchant || payload.offer || payload.deal || payload.reputation;
+      state.selectedId = idOf(item) || id.trim();
+      await load();
+    }
+    async function deleteItem() {
+      if (!state.selectedId) return;
+      if (!confirm(`确定删除 ${state.selectedId}？有关联数据时后端会拒绝。`)) return;
+      await api(`${cfg().path}/${encodeURIComponent(state.selectedId)}`, {method:"DELETE"});
+      state.selectedId = "";
+      await load();
+      setStatus("已删除");
+    }
+    function switchMode(mode) {
+      state.mode = mode;
+      state.selectedId = "";
+      state.dirty = false;
+      if (items()[0]) state.selectedId = idOf(items()[0]);
+      render();
+    }
+    $("saveToken").onclick = () => { localStorage.setItem("lifepilot_admin_token", $("adminToken").value.trim()); load().catch((e)=>setStatus(e.message)); };
+    $("adminToken").value = token();
+    $("search").oninput = renderList;
+    $("saveButton").onclick = () => save().catch((e)=>setStatus(`保存失败：${e.message}`));
+    $("newButton").onclick = () => createItem().catch((e)=>setStatus(`新增失败：${e.message}`));
+    $("deleteButton").onclick = () => deleteItem().catch((e)=>setStatus(`删除失败：${e.message}`));
+    $("reloadButton").onclick = () => load().catch((e)=>setStatus(`加载失败：${e.message}`));
+    load().catch((e)=>setStatus(`加载失败：${e.message}`));
+  </script>
+</body>
+</html>

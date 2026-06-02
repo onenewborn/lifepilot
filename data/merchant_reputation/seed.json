@@ -29,61 +29,61 @@
       },
       "reputation_tags": [
         {
-          "tag": "客家味足",
+          "tag": "卫生干净，灯光明亮",
           "sentiment": "positive",
           "mention_count": 212,
           "mention_ratio": 0.55,
-          "evidence_text": "212 条左右评价提到“客家味足”，约占总评价 55%。",
+          "evidence_text": "212 条左右评价提到“卫生干净，灯光明亮”，约占总评价 55%。",
           "source": "demo_constructed_tag_summary"
         },
         {
-          "tag": "猪油渣炒菜心有记忆点",
+          "tag": "出餐快",
           "sentiment": "positive",
           "mention_count": 138,
           "mention_ratio": 0.36,
-          "evidence_text": "138 条左右评价提到“猪油渣炒菜心有记忆点”，约占总评价 36%。",
+          "evidence_text": "138 条左右评价提到“出餐快”，约占总评价 36%。",
           "source": "demo_constructed_tag_summary"
         },
         {
-          "tag": "适合两三人点热菜",
+          "tag": "国民小吃，接地气",
           "sentiment": "positive",
           "mention_count": 104,
           "mention_ratio": 0.27,
-          "evidence_text": "104 条左右评价提到“适合两三人点热菜”，约占总评价 27%。",
+          "evidence_text": "104 条左右评价提到“适合国民小吃，接地气”，约占总评价 27%。",
           "source": "demo_constructed_tag_summary"
         },
         {
-          "tag": "饭点出餐略慢",
+          "tag": "中规中矩，味道一般",
           "sentiment": "negative",
           "mention_count": 31,
           "mention_ratio": 0.08,
-          "evidence_text": "31 条左右评价提到“饭点出餐略慢”，约占总评价 8%。",
+          "evidence_text": "31 条左右评价提到“中规中矩，味道一般”，约占总评价 8%。",
           "source": "demo_constructed_tag_summary"
         }
       ],
       "signature_dishes": [
         {
-          "name": "猪油渣炒菜心",
+          "name": "炒粉",
           "confidence": 0.86,
           "source": "public_listing_or_menu_curation"
         },
         {
-          "name": "客家酸菜大肠",
+          "name": "炒面",
           "confidence": 0.86,
           "source": "public_listing_or_menu_curation"
         },
         {
-          "name": "茶皇虾",
+          "name": "鸡腿饭",
           "confidence": 0.86,
           "source": "public_listing_or_menu_curation"
         },
         {
-          "name": "客家猪肉汤",
+          "name": "鸭腿饭",
           "confidence": 0.72,
           "source": "public_listing_or_menu_curation"
         },
         {
-          "name": "客家全猪煲",
+          "name": "牛腩饭",
           "confidence": 0.72,
           "source": "public_listing_or_menu_curation"
         }
@@ -91,13 +91,13 @@
       "scenario_fit": {
         "solo": true,
         "friends": false,
-        "quick_meal": false,
+        "quick_meal": true,
         "reservation_preferred": false,
         "queue_risk": "medium"
       },
       "negative_signals": [
         {
-          "signal": "饭点出餐略慢",
+          "signal": "口味太淡，没味道",
           "severity": "medium",
           "mention_count": 31,
           "mention_ratio": 0.08
@@ -111,6 +111,7 @@
         },
         {
           "type": "demo_reputation_seed",
+          "url": "",
           "note": "评分、评论分布和标签计数用于产品原型与 OpenClaw skill 评测，未声明为实时平台评分。"
         }
       ],
@@ -118,7 +119,7 @@
     },
     {
       "merchant_id": "m_futian_002",
-      "merchant_name": "马记永·兰州牛肉面",
+      "merchant_name": "辣子王兰州牛肉面",
       "source_type": "mixed_public_and_demo_constructed",
       "evidence_confidence": "medium",
       "rating": {
@@ -220,6 +221,7 @@
         },
         {
           "type": "demo_reputation_seed",
+          "url": "",
           "note": "评分、评论分布和标签计数用于产品原型与 OpenClaw skill 评测，未声明为实时平台评分。"
         }
       ],

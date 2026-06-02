@@ -17,6 +17,12 @@ let cachedDirections = null;
 let cachedOffers = null;
 let cachedMerchants = null;
 
+export function resetFoodOfferCache() {
+  cachedDirections = null;
+  cachedOffers = null;
+  cachedMerchants = null;
+}
+
 const OIL_RANK = {low: 0, medium: 1, high: 2};
 const SPICE_RANK = {none: 0, low: 1, medium: 2, high: 3};
 const QUEUE_LABELS = {low: "排队风险低", medium: "饭点可能有一点排队", high: "饭点排队风险高"};
@@ -59,16 +65,55 @@ function distanceText(distanceKm) {
   return `${distanceKm.toFixed(1)}km`;
 }
 
-function mediaForOffer(offer = {}) {
+function normalizeMediaSource(source = {}, index = 0, fallbackPoster = "") {
+  const url = String(source.url || "").trim();
+  if (!url) return null;
+  return {
+    key: String(source.key || source.type || `video_${index + 1}`).trim(),
+    type: String(source.type || source.key || "video").trim(),
+    label: String(source.label || (source.type === "user_upload" ? "用户探店" : "官方视频")).trim(),
+    url,
+    poster_url: String(source.poster_url || fallbackPoster || "").trim(),
+    has_sound: Boolean(source.has_sound),
+    mobile_optimized: Boolean(source.mobile_optimized),
+  };
+}
+
+function mediaForOffer(offer = {}, merchant = {}) {
   const media = offer.media || {};
+  const merchantMedia = merchant.media || {};
   const fallbackDirection = media.inherit_from_direction || offer.direction_ids?.[0] || "dir_hot_soup_noodles";
   const fallbackImage = `/assets/food-directions/${fallbackDirection.replace(/^dir_/, "")}.png`;
+  const merchantImages = Array.isArray(merchantMedia.image_urls) ? merchantMedia.image_urls.filter(Boolean) : [];
+  const offerImages = Array.isArray(media.image_urls) ? media.image_urls.filter(Boolean) : [];
+  const imageUrls = [...merchantImages, ...offerImages, media.image_url, media.poster_url, fallbackImage].filter(Boolean);
+  const posterUrl = merchantMedia.poster_url || media.poster_url || media.image_url || imageUrls[0] || fallbackImage;
+  const merchantVideoSources = Array.isArray(merchantMedia.video_sources) ? merchantMedia.video_sources : [];
+  const offerVideoSources = Array.isArray(media.video_sources) ? media.video_sources : [];
+  const rawVideoSources = merchantVideoSources.length
+    ? merchantVideoSources
+    : (offerVideoSources.length ? offerVideoSources : (media.video_url ? [{
+      key: "offer_video",
+      type: "offer",
+      label: "店铺视频",
+      url: media.video_url,
+      poster_url: posterUrl,
+      has_sound: true,
+    }] : []));
+  const videoSources = rawVideoSources
+    .map((source, index) => normalizeMediaSource(source, index, posterUrl))
+    .filter(Boolean);
   return {
-    image_url: media.image_url || media.poster_url || fallbackImage,
-    video_url: media.video_url || "",
-    poster_url: media.poster_url || media.image_url || fallbackImage,
-    media_type: media.video_url ? "video" : (media.type || "image"),
-    video_sources: media.video_sources || [],
+    image_url: imageUrls[0] || fallbackImage,
+    image_urls: imageUrls,
+    video_url: videoSources[0]?.url || "",
+    poster_url: videoSources[0]?.poster_url || posterUrl,
+    media_type: videoSources.length ? "video" : (media.type || merchantMedia.type || "image"),
+    video_sources: videoSources,
+    danmaku: [
+      ...((Array.isArray(merchantMedia.danmaku) ? merchantMedia.danmaku : [])),
+      ...((Array.isArray(offer.danmaku) ? offer.danmaku : [])),
+    ].filter(Boolean).slice(0, 8),
   };
 }
 
@@ -254,7 +299,7 @@ function scoreOffer(offer, merchant, context) {
 }
 
 function normalizeOfferCard(offer, merchant, score, explanation, context = {}) {
-  const media = mediaForOffer(offer);
+  const media = mediaForOffer(offer, merchant);
   const distanceKm = distanceKmFromMerchant(merchant);
   const userFeedback = userFeedbackForOffer(offer, merchant, context);
   return {

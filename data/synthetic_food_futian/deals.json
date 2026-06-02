@@ -9,16 +9,26 @@
       "merchant_id": "m_futian_001",
       "offer_id": "off_futian_001_noodle_soup",
       "platform": "demo_group_buy",
-      "external_shop_name": "何三仙客家菜",
+      "external_shop_name": "沙县小吃",
       "deal_type": "set_meal",
-      "title": "客家热菜双人套餐线索",
-      "deal_price": 98,
-      "original_price": 136,
+      "title": "沙县小吃双人套餐线索",
+      "deal_price": 40,
+      "original_price": 50,
       "party_size_min": 2,
       "party_size_max": 2,
-      "included_items": ["客家猪肉汤", "猪油渣炒菜心", "客家酿豆腐"],
-      "best_for": ["两个人想吃热菜", "想控制人均但不想只吃快餐"],
-      "restrictions": ["原型优惠线索，需到店前二次确认", "饭点可能仍需排队"],
+      "included_items": [
+        "鸡腿饭",
+        "鸭腿饭",
+        "云吞"
+      ],
+      "best_for": [
+        "两个人想快速解决一顿饭",
+        "想控制人均",
+        "省钱目的"
+      ],
+      "restrictions": [
+        "原型优惠线索，需到店前二次确认"
+      ],
       "valid_time": "午市/晚市通用线索",
       "source_type": "demo_seed_deal",
       "source_label": "LifePilot 可控种子优惠",
@@ -38,9 +48,18 @@
       "original_price": 35,
       "party_size_min": 1,
       "party_size_max": 1,
-      "included_items": ["兰州牛肉面", "小菜/饮品可凑单"],
-      "best_for": ["一个人快速吃热汤面", "预算想压在 30 元上下"],
-      "restrictions": ["需要凑到券门槛才划算", "不代表实时可领取状态"],
+      "included_items": [
+        "兰州牛肉面",
+        "小菜/饮品可凑单"
+      ],
+      "best_for": [
+        "一个人快速吃热汤面",
+        "预算想压在 30 元上下"
+      ],
+      "restrictions": [
+        "需要凑到券门槛才划算",
+        "不代表实时可领取状态"
+      ],
       "valid_time": "工作日午晚餐线索",
       "source_type": "demo_seed_deal",
       "source_label": "LifePilot 可控种子优惠",
@@ -60,9 +79,18 @@
       "original_price": 31,
       "party_size_min": 1,
       "party_size_max": 1,
-      "included_items": ["鲜虾云吞面", "净云吞加购折扣"],
-      "best_for": ["一个人想吃清淡热汤", "不想花太久决策"],
-      "restrictions": ["原型优惠线索，需到店前二次确认", "适合轻一点，不适合重口味需求"],
+      "included_items": [
+        "鲜虾云吞面",
+        "净云吞加购折扣"
+      ],
+      "best_for": [
+        "一个人想吃清淡热汤",
+        "不想花太久决策"
+      ],
+      "restrictions": [
+        "原型优惠线索，需到店前二次确认",
+        "适合轻一点，不适合重口味需求"
+      ],
       "valid_time": "午市线索",
       "source_type": "demo_seed_deal",
       "source_label": "LifePilot 可控种子优惠",
@@ -82,9 +110,20 @@
       "original_price": 324,
       "party_size_min": 3,
       "party_size_max": 3,
-      "included_items": ["原味锅石锅鱼", "手制虾滑", "老油条", "时蔬"],
-      "best_for": ["两三个人认真吃热汤鱼", "想比单点更稳地控人均"],
-      "restrictions": ["两个人吃可能偏贵偏撑", "高峰期仍需确认等位"],
+      "included_items": [
+        "原味锅石锅鱼",
+        "手制虾滑",
+        "老油条",
+        "时蔬"
+      ],
+      "best_for": [
+        "两三个人认真吃热汤鱼",
+        "想比单点更稳地控人均"
+      ],
+      "restrictions": [
+        "两个人吃可能偏贵偏撑",
+        "高峰期仍需确认等位"
+      ],
       "valid_time": "晚市线索",
       "source_type": "demo_seed_deal",
       "source_label": "LifePilot 可控种子优惠",
@@ -104,9 +143,19 @@
       "original_price": 316,
       "party_size_min": 2,
       "party_size_max": 2,
-      "included_items": ["双人寿喜烧放题", "和牛", "蔬菜拼盘"],
-      "best_for": ["两个人想吃热锅和仪式感", "能接受人均 120 元以上"],
-      "restrictions": ["不适合赶时间", "原型线索不代表实时库存"],
+      "included_items": [
+        "双人寿喜烧放题",
+        "和牛",
+        "蔬菜拼盘"
+      ],
+      "best_for": [
+        "两个人想吃热锅和仪式感",
+        "能接受人均 120 元以上"
+      ],
+      "restrictions": [
+        "不适合赶时间",
+        "原型线索不代表实时库存"
+      ],
       "valid_time": "晚市线索",
       "source_type": "demo_seed_deal",
       "source_label": "LifePilot 可控种子优惠",
@@ -126,9 +175,19 @@
       "original_price": 148,
       "party_size_min": 2,
       "party_size_max": 2,
-      "included_items": ["烤串组合", "主食", "饮品券"],
-      "best_for": ["夜宵和朋友局", "想把人均控制在 60 元上下"],
-      "restrictions": ["不适合清淡需求", "夜宵时段可能等待更久"],
+      "included_items": [
+        "烤串组合",
+        "主食",
+        "饮品券"
+      ],
+      "best_for": [
+        "夜宵和朋友局",
+        "想把人均控制在 60 元上下"
+      ],
+      "restrictions": [
+        "不适合清淡需求",
+        "夜宵时段可能等待更久"
+      ],
       "valid_time": "晚市/夜宵线索",
       "source_type": "demo_seed_deal",
       "source_label": "LifePilot 可控种子优惠",
@@ -148,9 +207,18 @@
       "original_price": 30,
       "party_size_min": 1,
       "party_size_max": 1,
-      "included_items": ["麻婆豆腐饭", "加蛋/小菜凑单"],
-      "best_for": ["一个人想吃辣一点下饭", "预算想压在 30 元内"],
-      "restrictions": ["需要能接受麻辣", "不代表实时可领取状态"],
+      "included_items": [
+        "麻婆豆腐饭",
+        "加蛋/小菜凑单"
+      ],
+      "best_for": [
+        "一个人想吃辣一点下饭",
+        "预算想压在 30 元内"
+      ],
+      "restrictions": [
+        "需要能接受麻辣",
+        "不代表实时可领取状态"
+      ],
       "valid_time": "工作日午市线索",
       "source_type": "demo_seed_deal",
       "source_label": "LifePilot 可控种子优惠",
@@ -170,9 +238,18 @@
       "original_price": 28,
       "party_size_min": 1,
       "party_size_max": 1,
-      "included_items": ["烧鸭饭", "例汤"],
-      "best_for": ["一个人快速解决午餐", "想省钱但不想折腾"],
-      "restrictions": ["优惠幅度小，主要胜在稳", "不代表实时可领取状态"],
+      "included_items": [
+        "烧鸭饭",
+        "例汤"
+      ],
+      "best_for": [
+        "一个人快速解决午餐",
+        "想省钱但不想折腾"
+      ],
+      "restrictions": [
+        "优惠幅度小，主要胜在稳",
+        "不代表实时可领取状态"
+      ],
       "valid_time": "午市线索",
       "source_type": "demo_seed_deal",
       "source_label": "LifePilot 可控种子优惠",
@@ -192,9 +269,18 @@
       "original_price": 26,
       "party_size_min": 1,
       "party_size_max": 1,
-      "included_items": ["双蛋肉肠粉", "豆浆"],
-      "best_for": ["一个人想吃便宜热乎", "早餐或轻午餐"],
-      "restrictions": ["不适合想吃很饱的正餐", "原型优惠线索，需二次确认"],
+      "included_items": [
+        "双蛋肉肠粉",
+        "豆浆"
+      ],
+      "best_for": [
+        "一个人想吃便宜热乎",
+        "早餐或轻午餐"
+      ],
+      "restrictions": [
+        "不适合想吃很饱的正餐",
+        "原型优惠线索，需二次确认"
+      ],
       "valid_time": "早餐/午市线索",
       "source_type": "demo_seed_deal",
       "source_label": "LifePilot 可控种子优惠",

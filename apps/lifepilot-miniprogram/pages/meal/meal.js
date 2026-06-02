@@ -514,15 +514,32 @@ Page({
   },
 
   syncCards() {
-    const currentCard = this.data.cards[this.data.index] || null;
+    const cards = this.data.cards.slice();
+    let currentCard = cards[this.data.index] || null;
     const nextCard = this.data.cards[this.data.index + 1] || null;
+    if (currentCard && currentCard.cardType === "offer") {
+      const firstVideo = Array.isArray(currentCard.videoSources) ? currentCard.videoSources[0] : null;
+      currentCard = {
+        ...currentCard,
+        activeVideoIndex: 0,
+        videoUrl: firstVideo ? firstVideo.url : (currentCard.videoUrl || ""),
+        posterUrl: firstVideo ? (firstVideo.posterUrl || currentCard.posterUrl || currentCard.imageUrl) : (currentCard.posterUrl || currentCard.imageUrl),
+        currentVideoLabel: firstVideo ? (firstVideo.label || "") : "",
+        hasSound: firstVideo ? Boolean(firstVideo.hasSound) : Boolean(currentCard.hasSound)
+      };
+      cards[this.data.index] = currentCard;
+    }
+    const fallbackImage = currentCard && Array.isArray(currentCard.galleryImages) && currentCard.galleryImages[0]
+      ? currentCard.galleryImages[0]
+      : (currentCard ? currentCard.imageUrl : "");
     this.currentStartedAt = Date.now();
     this._videoContext = null;
     this.setData({
+      cards,
       currentCard,
       nextCard,
-      currentImageUrl: currentCard ? currentCard.imageUrl : "",
-      currentPosterUrl: currentCard ? (currentCard.posterUrl || currentCard.imageUrl) : "",
+      currentImageUrl: fallbackImage,
+      currentPosterUrl: currentCard ? (currentCard.posterUrl || fallbackImage) : "",
       cardStyle: "",
       keepFeedbackStyle: "",
       dislikeFeedbackStyle: "",
@@ -637,7 +654,42 @@ Page({
   },
 
   onVideoError() {
-    this.setData({ videoDisabled: true, videoReady: false });
+    const currentCard = this.data.currentCard || {};
+    const gallery = Array.isArray(currentCard.galleryImages) ? currentCard.galleryImages : [];
+    this.setData({
+      videoDisabled: true,
+      videoReady: false,
+      currentImageUrl: gallery[0] || currentCard.imageUrl || this.data.currentImageUrl
+    });
+  },
+
+  switchOfferVideoSource(event) {
+    const index = Number(event.currentTarget.dataset.index || 0);
+    const currentCard = this.data.currentCard;
+    if (!currentCard || currentCard.cardType !== "offer") return;
+    const sources = Array.isArray(currentCard.videoSources) ? currentCard.videoSources : [];
+    const source = sources[index];
+    if (!source || !source.url) return;
+    if (this.videoTimer) clearTimeout(this.videoTimer);
+    const nextCard = {
+      ...currentCard,
+      activeVideoIndex: index,
+      videoUrl: source.url,
+      posterUrl: source.posterUrl || currentCard.posterUrl || currentCard.imageUrl,
+      currentVideoLabel: source.label || "",
+      hasSound: Boolean(source.hasSound)
+    };
+    const cards = this.data.cards.slice();
+    cards[this.data.index] = nextCard;
+    this._videoContext = null;
+    this.setData({
+      cards,
+      currentCard: nextCard,
+      currentPosterUrl: nextCard.posterUrl || this.data.currentImageUrl,
+      videoDisabled: true,
+      videoReady: false,
+      videoPaused: false
+    }, () => this.enableVideoSoon());
   },
 
   toggleVideoMuted() {
@@ -671,6 +723,17 @@ Page({
 
   onTouchStart(event) {
     if (this.isCommittingSwipe || !this.data.currentCard) return;
+    if (
+      this.data.stage === "offer"
+      && this.data.currentCard.cardType === "offer"
+      && !this.data.currentCard.hasVideoSources
+      && Array.isArray(this.data.currentCard.galleryImages)
+      && this.data.currentCard.galleryImages.length > 1
+    ) {
+      this.touchStart = null;
+      this.verticalTouching = false;
+      return;
+    }
     const touch = event.touches[0];
     this.touchStart = { x: touch.clientX, y: touch.clientY };
     this.verticalTouching = false;

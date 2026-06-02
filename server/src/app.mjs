@@ -1,11 +1,16 @@
 import { createServer } from "node:http";
+import { createReadStream } from "node:fs";
+import { stat } from "node:fs/promises";
+import path from "node:path";
+import { getAdminCatalog, createAdminItem, updateAdminItem, deleteAdminItem, uploadAdminAsset, adminHttpError } from "./admin-data.mjs";
 import { buildFoodDirectionCards, filterFoodDirectionCards } from "./cards.mjs";
 import { config } from "./config.mjs";
+import { REPO_ROOT } from "./config.mjs";
 import { buildDirectionSummary } from "./direction-summary.mjs";
 import { parseEntry } from "./entry-parser.mjs";
 import { buildFoodOffers, explainOneOfferCard, selectFinalDecision } from "./offer-cards.mjs";
 import { queuePayload, routePayload, weatherPayload } from "./context-providers.mjs";
-import { fail, ok, readBody } from "./http.mjs";
+import { fail, ok, readBody, sendJson } from "./http.mjs";
 import { appendMemoryCandidatesToDayContext, appendSwipeEvent, applyDirectionSummary, applyFinalDecision, applyOfferCards, createSession, getDayContext, getSession, normalizeSwipeEvent, setSessionMemoryContext, updateCurrentOfferCard, updateSessionEntry } from "./session-store.mjs";
 import {
   confirmMemoryCandidate,
@@ -765,12 +770,140 @@ async function handleXiaowangSkillsRoute(res) {
   ok(res, listXiaowangSkills());
 }
 
+const MIME_TYPES = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".mp4": "video/mp4",
+  ".mov": "video/quicktime",
+  ".m4v": "video/x-m4v",
+};
+
+function adminTokenFromReq(req) {
+  const header = req.headers["x-lifepilot-admin-token"] || req.headers.authorization || "";
+  return String(header).replace(/^Bearer\s+/i, "").trim();
+}
+
+function requireAdmin(req, res) {
+  if (!config.admin.token) return true;
+  if (adminTokenFromReq(req) === config.admin.token) return true;
+  fail(res, 401, "admin_unauthorized", "需要正确的后台管理口令。");
+  return false;
+}
+
+function adminTypeFromPath(pathname, prefix) {
+  const suffix = pathname.slice(prefix.length);
+  const [type, ...rest] = suffix.split("/").filter(Boolean);
+  if (!["directions", "merchants", "offers", "deals", "reputations"].includes(type)) {
+    return null;
+  }
+  return {type, id: rest.length ? decodeURIComponent(rest.join("/")) : ""};
+}
+
+async function handleAdminCatalog(req, res) {
+  if (!requireAdmin(req, res)) return;
+  ok(res, await getAdminCatalog());
+}
+
+async function handleAdminAssetUpload(req, res) {
+  if (!requireAdmin(req, res)) return;
+  const body = await readBody(req);
+  ok(res, {asset: await uploadAdminAsset(body)}, 201);
+}
+
+async function handleAdminCollection(req, res, url) {
+  if (!requireAdmin(req, res)) return;
+  const match = adminTypeFromPath(url.pathname, "/api/admin/");
+  if (!match) {
+    fail(res, 404, "admin_collection_not_found", "未知后台数据集合。");
+    return;
+  }
+  const body = ["POST", "PUT", "PATCH"].includes(req.method || "") ? await readBody(req) : {};
+  if (req.method === "POST" && !match.id) {
+    ok(res, await createAdminItem(match.type, body), 201);
+    return;
+  }
+  if ((req.method === "PUT" || req.method === "PATCH") && match.id) {
+    ok(res, await updateAdminItem(match.type, match.id, body));
+    return;
+  }
+  if (req.method === "DELETE" && match.id) {
+    ok(res, await deleteAdminItem(match.type, match.id));
+    return;
+  }
+  fail(res, 405, "admin_method_not_allowed", "这个后台接口不支持当前请求方式。", {method: req.method, path: url.pathname});
+}
+
+async function serveFile(res, filePath) {
+  const fileStat = await stat(filePath);
+  if (!fileStat.isFile()) {
+    fail(res, 404, "static_not_found", "Static file not found.");
+    return;
+  }
+  const contentType = MIME_TYPES[path.extname(filePath).toLowerCase()] || "application/octet-stream";
+  res.writeHead(200, {
+    "content-type": contentType,
+    "content-length": fileStat.size,
+    "cache-control": "no-store",
+  });
+  createReadStream(filePath).pipe(res);
+}
+
+async function serveAdminStatic(res, pathname) {
+  const relative = pathname === "/admin" ? "merchant-admin.html" : pathname.slice("/admin/".length);
+  const safeRelative = path.normalize(relative).replace(/^(\.\.[/\\])+/, "");
+  const filePath = path.join(REPO_ROOT, "server", "public", "admin", safeRelative);
+  const root = path.join(REPO_ROOT, "server", "public", "admin");
+  if (!filePath.startsWith(root)) {
+    fail(res, 403, "static_forbidden", "Forbidden.");
+    return;
+  }
+  await serveFile(res, filePath);
+}
+
+async function serveAssetStatic(res, pathname) {
+  const safeRelative = path.normalize(pathname.slice("/assets/".length)).replace(/^(\.\.[/\\])+/, "");
+  const filePath = path.join(REPO_ROOT, "assets", safeRelative);
+  const root = path.join(REPO_ROOT, "assets");
+  if (!filePath.startsWith(root)) {
+    fail(res, 403, "static_forbidden", "Forbidden.");
+    return;
+  }
+  await serveFile(res, filePath);
+}
+
 async function route(req, res) {
   const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
 
   try {
     if (req.method === "GET" && url.pathname === "/api/health") {
       await handleHealth(res);
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/admin/catalog") {
+      await handleAdminCatalog(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/admin/assets/upload") {
+      await handleAdminAssetUpload(req, res);
+      return;
+    }
+    if (url.pathname.startsWith("/api/admin/")) {
+      await handleAdminCollection(req, res, url);
+      return;
+    }
+    if (req.method === "GET" && (url.pathname === "/admin" || url.pathname.startsWith("/admin/"))) {
+      await serveAdminStatic(res, url.pathname);
+      return;
+    }
+    if (req.method === "GET" && url.pathname.startsWith("/assets/")) {
+      await serveAssetStatic(res, url.pathname);
       return;
     }
     if (req.method === "GET" && url.pathname === "/api/food-directions") {
@@ -951,6 +1084,22 @@ async function route(req, res) {
   } catch (error) {
     if (error?.code === "invalid_json") {
       fail(res, 400, "invalid_json", "Invalid JSON body.");
+      return;
+    }
+    if (error?.code === "ENOENT") {
+      fail(res, 404, "static_not_found", "Static file not found.");
+      return;
+    }
+    if (error?.code && error?.status) {
+      const adminError = adminHttpError(error);
+      sendJson(res, adminError.status, {
+        ok: false,
+        error: {
+          code: adminError.code,
+          message: adminError.message,
+          details: adminError.details,
+        },
+      });
       return;
     }
     fail(res, 500, "internal_error", error instanceof Error ? error.message : String(error));

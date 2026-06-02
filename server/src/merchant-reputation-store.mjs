@@ -7,6 +7,10 @@ const SEED_PATH = path.join(REPO_ROOT, "data/merchant_reputation/seed.json");
 
 let cachedSeed = null;
 
+export function resetMerchantReputationCache() {
+  cachedSeed = null;
+}
+
 function numberOrNull(value) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;

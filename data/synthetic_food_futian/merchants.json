@@ -5,10 +5,10 @@
   "merchants": [
     {
       "merchant_id": "m_futian_001",
-      "name": "何三仙客家菜",
+      "name": "沙县小吃",
       "area": "深圳福田",
       "neighborhood": "车公庙",
-      "scene": "车公庙泰然四路客家菜，适合两三个人吃热菜",
+      "scene": "居民区楼下的连锁快餐店，出餐快卫生",
       "environment": {
         "space_type": "连锁小吃快餐店",
         "noise_level": "medium",
@@ -16,7 +16,7 @@
         "chat_friendly": false,
         "comfort_level": "basic"
       },
-      "queue_risk": "medium",
+      "queue_risk": "low",
       "subway_walk_min": 5,
       "opening_hours": {
         "weekday": [
@@ -29,7 +29,7 @@
         ]
       },
       "synthetic": false,
-      "meal_service_type": "standard_dine_in",
+      "meal_service_type": "quick_meal",
       "reservation_mode": "none",
       "address": "深圳市福田区车公庙泰然四路109号铺",
       "location": {
@@ -41,20 +41,38 @@
       "distance_km": 0.4,
       "source_type": "public_web_curated",
       "specialties": [
-        "猪油渣炒菜心",
-        "客家酸菜大肠",
-        "茶皇虾",
-        "客家猪肉汤",
-        "客家全猪煲"
+        "鸡腿饭",
+        "鸭腿饭",
+        "云吞面",
+        "炒米粉",
+        "炒面",
+        "蒸饺"
       ],
       "public_sources": [
         "https://www.openrice.com.cn/zh/shenzhen/r-%E4%BD%95%E4%B8%89%E4%BB%99%E5%AE%A2%E5%AE%B6%E8%8F%9C-%E8%BB%8A%E5%85%AC%E5%BB%9F-%E5%AE%A2%E5%AE%B6%E8%8F%9C-r9542991"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/shaxian-snacks/cover.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/shaxian-snacks/visit_voiceover.mobile.mp4",
+            "poster_url": "/assets/offer-media/shaxian-snacks/cover.jpg",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/shaxian-snacks/cover.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_002",
-      "name": "马记永·兰州牛肉面",
+      "name": "辣子王兰州牛肉面",
       "area": "深圳福田",
       "neighborhood": "车公庙",
       "scene": "车公庙博今广场的兰州牛肉面快餐",
@@ -99,7 +117,24 @@
       "public_sources": [
         "https://m.dianping.com/shop/1289265516?msource=applemaps"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/laziwang-lanzhou-noodles/cover.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/laziwang-lanzhou-noodles/visit_12s.mobile.mp4",
+            "poster_url": "/assets/offer-media/laziwang-lanzhou-noodles/cover.jpg",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/laziwang-lanzhou-noodles/cover.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_003",
@@ -197,7 +232,20 @@
       "public_sources": [
         "https://szgor.com/4238/"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "",
+        "video_sources": [],
+        "image_urls": [
+          "/assets/offer-media/weilu-malatang/img_3609.jpg",
+          "/assets/offer-media/weilu-malatang/img_3610.jpg",
+          "/assets/offer-media/weilu-malatang/img_3611.jpg",
+          "/assets/offer-media/weilu-malatang/img_3612.jpg",
+          "/assets/offer-media/weilu-malatang/img_3613.jpg",
+          "/assets/offer-media/weilu-malatang/img_3614.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_005",
@@ -246,7 +294,19 @@
       "public_sources": [
         "https://tw.trip.com/restaurant/china/shenzhen/detail/restaurant-15541633"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "",
+        "video_sources": [],
+        "image_urls": [
+          "/assets/offer-media/jieyang-xinheng-guotiao/img_3615.jpg",
+          "/assets/offer-media/jieyang-xinheng-guotiao/img_3616.jpg",
+          "/assets/offer-media/jieyang-xinheng-guotiao/img_3617.jpg",
+          "/assets/offer-media/jieyang-xinheng-guotiao/img_3618.jpg",
+          "/assets/offer-media/jieyang-xinheng-guotiao/img_3619.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_006",
@@ -295,7 +355,23 @@
       "public_sources": [
         "https://www.openrice.com.cn/zh/shenzhen/r-%E5%BF%97%E6%9D%83-%E7%B2%89%E9%9D%A2%E4%BA%91%E5%90%9E-%E7%A6%8F%E7%94%B0-%E7%B2%A4%E8%8F%9C-%E5%BB%A3%E6%9D%B1-r5776134"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "",
+        "video_sources": [],
+        "image_urls": [
+          "/assets/offer-media/zhiquan-fenmian-yuntun/img_3621.jpg",
+          "/assets/offer-media/zhiquan-fenmian-yuntun/img_3622.jpg",
+          "/assets/offer-media/zhiquan-fenmian-yuntun/img_3623.jpg",
+          "/assets/offer-media/zhiquan-fenmian-yuntun/img_3624.jpg",
+          "/assets/offer-media/zhiquan-fenmian-yuntun/img_3625.jpg",
+          "/assets/offer-media/zhiquan-fenmian-yuntun/img_3626.jpg",
+          "/assets/offer-media/zhiquan-fenmian-yuntun/img_3627.jpg",
+          "/assets/offer-media/zhiquan-fenmian-yuntun/img_3628.jpg",
+          "/assets/offer-media/zhiquan-fenmian-yuntun/img_3629.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_007",
@@ -344,7 +420,20 @@
       "public_sources": [
         "https://www.openrice.com.cn/zh-cn/shenzhen/r-%E9%B2%9C%E6%BD%AD%E8%92%B8%E6%B1%BD%E7%9F%B3%E9%94%85%E9%B1%BC-%E7%A6%8F%E7%94%B0%E4%B8%AD%E5%BF%83%E5%8C%BA-%E6%BB%87%E8%8F%9C-%E4%BA%91%E5%8D%97-%E7%81%AB%E9%94%85-r5978173"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "",
+        "video_sources": [],
+        "image_urls": [
+          "/assets/offer-media/xiantan-steam-fish/img_3630.jpg",
+          "/assets/offer-media/xiantan-steam-fish/img_3631.jpg",
+          "/assets/offer-media/xiantan-steam-fish/img_3633.jpg",
+          "/assets/offer-media/xiantan-steam-fish/img_3634.jpg",
+          "/assets/offer-media/xiantan-steam-fish/img_3635.jpg",
+          "/assets/offer-media/xiantan-steam-fish/img_3636.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_008",
@@ -493,7 +582,22 @@
         "https://www.zaoseo.com/place/1246651",
         "https://m.dianping.com/shop/1167998819?msource=applemaps"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/yixushouxishao/visit_15s.mobile.mp4",
+            "poster_url": "",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_011",
@@ -830,7 +934,24 @@
       "public_sources": [
         "https://www.openrice.com.cn/zh-cn/shenzhen/r-%E6%B7%B1%E4%BA%95%E7%83%A7%E9%B9%85-%E6%99%AF%E7%94%B0-%E7%83%A7%E8%85%8A-%E5%8D%A4%E5%91%B3-r6204161"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/yubainian-roast-meat/cover.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/yubainian-roast-meat/visit_11s.mobile.mp4",
+            "poster_url": "/assets/offer-media/yubainian-roast-meat/cover.jpg",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/yubainian-roast-meat/cover.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_018",
@@ -977,7 +1098,15 @@
       "public_sources": [
         "https://www.openrice.com.cn/zh/shenzhen/r-%E5%A4%A9%E6%A9%8B%E4%B8%8B%E8%85%B8%E7%B2%89-%E6%99%AF%E7%94%B0-%E7%B2%B5%E8%8F%9C-%E5%BB%A3%E6%9D%B1-r5759034"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "",
+        "video_sources": [],
+        "image_urls": [
+          "/assets/offer-media/tianqiaoxiachangfen/img_3597.png"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_021",
@@ -1220,7 +1349,24 @@
         "回锅肉"
       ],
       "public_sources": [],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/wangji_douhua/poster.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/wangji_douhua/visit_recut_8s.mp4",
+            "poster_url": "/assets/offer-media/wangji_douhua/poster.jpg",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/wangji_douhua/cover.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_026",
@@ -1267,7 +1413,24 @@
         "麻婆豆腐"
       ],
       "public_sources": [],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/chuanxianglou/cover.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/chuanxianglou/visit_12s.mp4",
+            "poster_url": "/assets/offer-media/chuanxianglou/cover.jpg",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/chuanxianglou/cover.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_027",
@@ -1316,7 +1479,24 @@
         "麻婆豆腐"
       ],
       "public_sources": [],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/rongchuancai/cover.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/rongchuancai/visit_8s.mp4",
+            "poster_url": "/assets/offer-media/rongchuancai/cover.jpg",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/rongchuancai/cover.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_028",
@@ -1363,7 +1543,24 @@
         "啤酒"
       ],
       "public_sources": [],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/menya-inoichi/cover.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/menya-inoichi/visit_final.mobile.mp4",
+            "poster_url": "/assets/offer-media/menya-inoichi/cover.jpg",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/menya-inoichi/cover.jpg"
+        ],
+        "danmaku": []
+      }
     }
   ]
 }

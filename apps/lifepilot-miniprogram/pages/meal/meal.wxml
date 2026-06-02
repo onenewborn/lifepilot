@@ -174,13 +174,31 @@
             catchtouchmove="onTouchMove"
             catchtouchend="onTouchEnd"
           >
-            <image
-              wx:if="{{videoDisabled || !currentCard.videoUrl}}"
-              class="offer-media-asset"
-              src="{{currentImageUrl}}"
-              mode="aspectFill"
-              binderror="onImageError"
-            />
+            <block wx:if="{{videoDisabled || !currentCard.videoUrl}}">
+              <swiper
+                wx:if="{{currentCard.hasGalleryImages}}"
+                class="offer-media-swiper"
+                indicator-dots="{{currentCard.galleryImages.length > 1}}"
+                circular="{{currentCard.galleryImages.length > 1}}"
+                autoplay="{{false}}"
+              >
+                <swiper-item wx:for="{{currentCard.galleryImages}}" wx:key="*this" class="offer-media-slide">
+                  <image
+                    class="offer-media-asset"
+                    src="{{item}}"
+                    mode="aspectFill"
+                    binderror="onImageError"
+                  />
+                </swiper-item>
+              </swiper>
+              <image
+                wx:else
+                class="offer-media-asset"
+                src="{{currentImageUrl}}"
+                mode="aspectFill"
+                binderror="onImageError"
+              />
+            </block>
             <video
               wx:else
               id="currentFoodVideo"
@@ -200,6 +218,23 @@
               bindloadedmetadata="onVideoReady"
               binderror="onVideoError"
             />
+            <cover-view wx:if="{{!videoDisabled && currentCard.videoSources.length > 1}}" class="offer-video-source-switch">
+              <cover-view
+                wx:for="{{currentCard.videoSources}}"
+                wx:key="key"
+                class="offer-video-source-pill {{currentCard.activeVideoIndex === index ? 'active' : ''}}"
+                data-index="{{index}}"
+                bindtap="switchOfferVideoSource"
+              >{{item.label}}</cover-view>
+            </cover-view>
+            <cover-view wx:if="{{!videoDisabled && currentCard.danmaku.length}}" class="offer-danmaku-layer">
+              <cover-view
+                wx:for="{{currentCard.danmaku}}"
+                wx:key="text"
+                class="offer-danmaku-item danmaku-row-{{item.row}}"
+                style="animation-duration: {{item.duration}}s; animation-delay: {{item.delay}}s;"
+              >{{item.text}}</cover-view>
+            </cover-view>
             <view class="offer-media-gradient" catchtap="toggleVideoPlay"></view>
             <cover-view wx:if="{{videoPaused}}" class="pause-badge offer-pause-badge" catchtap="toggleVideoPlay">⏸</cover-view>
           </view>

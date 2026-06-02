@@ -15,6 +15,12 @@ let cachedMerchants = null;
 let cachedOffers = null;
 let cachedDeals = null;
 
+export function resetMerchantToolCache() {
+  cachedMerchants = null;
+  cachedOffers = null;
+  cachedDeals = null;
+}
+
 async function readMerchants() {
   if (!cachedMerchants) {
     const rows = JSON.parse(await readFile(MERCHANTS_PATH, "utf8")).merchants || [];

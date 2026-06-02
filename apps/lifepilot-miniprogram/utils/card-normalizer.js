@@ -10,6 +10,76 @@ function versionedAssetUrl(path, version) {
   return `${url}${url.includes("?") ? "&" : "?"}v=${encodeURIComponent(version)}`;
 }
 
+function uniqueAssetUrls(values = []) {
+  const seen = {};
+  return values
+    .map((value) => assetUrl(value || ""))
+    .filter((url) => {
+      if (!url || seen[url]) return false;
+      seen[url] = true;
+      return true;
+    });
+}
+
+function normalizeVideoSources(card = {}) {
+  const rawSources = Array.isArray(card.video_sources)
+    ? card.video_sources
+    : (Array.isArray(card.videoSources) ? card.videoSources : []);
+  const normalized = rawSources.map((source, index) => {
+    const url = assetUrl(source.url || source.video_url || source.videoUrl || "");
+    if (!url) return null;
+    const type = source.type || (source.key === "official" ? "official" : "other");
+    return {
+      key: source.key || `video_${index + 1}`,
+      type,
+      label: source.label || (type === "official" ? "官方" : (type === "user_upload" ? "探店" : `视频 ${index + 1}`)),
+      url,
+      posterUrl: assetUrl(source.poster_url || source.posterUrl || card.poster_url || card.posterUrl || card.image_url || card.imageUrl || ""),
+      hasSound: Boolean(source.has_sound || source.hasSound)
+    };
+  }).filter(Boolean);
+  if (normalized.length) {
+    return normalized.sort((left, right) => {
+      if (left.type === "official" && right.type !== "official") return -1;
+      if (right.type === "official" && left.type !== "official") return 1;
+      return 0;
+    });
+  }
+  const legacyVideoUrl = assetUrl(card.video_url || card.videoUrl || "");
+  if (!legacyVideoUrl) return [];
+  return [{
+    key: "legacy_video",
+    type: "other",
+    label: "视频",
+    url: legacyVideoUrl,
+    posterUrl: assetUrl(card.poster_url || card.posterUrl || card.image_url || card.imageUrl || ""),
+    hasSound: Boolean(card.has_sound || card.hasSound)
+  }];
+}
+
+function normalizeGalleryImages(card = {}, fallbackImageUrl = "") {
+  return uniqueAssetUrls([
+    ...(Array.isArray(card.image_urls) ? card.image_urls : []),
+    ...(Array.isArray(card.imageUrls) ? card.imageUrls : []),
+    card.image_url,
+    card.imageUrl,
+    fallbackImageUrl
+  ]);
+}
+
+function normalizeDanmaku(lines = []) {
+  return (Array.isArray(lines) ? lines : [])
+    .map((line) => compactText(line, ""))
+    .filter(Boolean)
+    .slice(0, 5)
+    .map((text, index) => ({
+      text: text.length > 18 ? `${text.slice(0, 18)}...` : text,
+      row: index % 3,
+      duration: 10 + (index % 3) * 2,
+      delay: index * 1.4
+    }));
+}
+
 function normalizeDirectionCard(card = {}, order = 0) {
   const directionId = card.direction_id || card.directionId || card.card_id || `direction_${order}`;
   const manifestVideo = directionVideos[directionId] || {};
@@ -38,7 +108,14 @@ function normalizeOfferCard(card = {}, order = 0) {
   const facts = card.facts || {};
   const explanation = card.explanation || {};
   const imageUrl = assetUrl(card.image_url || card.imageUrl || facts.cover_url || facts.coverUrl || "");
-  const videoUrl = assetUrl(card.video_url || card.videoUrl || facts.video_url || facts.videoUrl || "");
+  const videoSources = normalizeVideoSources({
+    ...card,
+    video_url: card.video_url || card.videoUrl || facts.video_url || facts.videoUrl,
+    poster_url: card.poster_url || card.posterUrl || card.image_url || card.imageUrl || facts.cover_url || facts.coverUrl
+  });
+  const firstVideo = videoSources[0] || null;
+  const galleryImages = normalizeGalleryImages(card, imageUrl);
+  const danmaku = normalizeDanmaku(card.danmaku || []);
   const matched = explanation.matched || card.matched || [];
   const watchouts = explanation.watchouts || card.watchouts || [];
   const conflicts = explanation.conflicts || card.conflicts || [];
@@ -69,9 +146,16 @@ function normalizeOfferCard(card = {}, order = 0) {
     badge: compactText(card.badge, "深圳福田 · 商家卡"),
     imageUrl,
     coverThumbUrl: assetUrl(card.cover_thumb_url || card.coverThumbUrl || facts.cover_thumb_url || facts.coverThumbUrl || card.image_url || card.imageUrl || ""),
-    posterUrl: assetUrl(card.poster_url || card.posterUrl || card.image_url || card.imageUrl || ""),
-    videoUrl,
-    hasSound: Boolean(card.has_sound || card.hasSound),
+    posterUrl: (firstVideo && firstVideo.posterUrl) || assetUrl(card.poster_url || card.posterUrl || card.image_url || card.imageUrl || ""),
+    videoUrl: (firstVideo && firstVideo.url) || "",
+    videoSources,
+    activeVideoIndex: 0,
+    currentVideoLabel: (firstVideo && firstVideo.label) || "",
+    galleryImages,
+    danmaku,
+    hasVideoSources: videoSources.length > 0,
+    hasGalleryImages: galleryImages.length > 0,
+    hasSound: Boolean((firstVideo && firstVideo.hasSound) || card.has_sound || card.hasSound),
     tags,
     displayTags: tags,
     facts: storeFacts,

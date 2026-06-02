@@ -8,6 +8,10 @@ const DEFAULT_DIRECTION_LIMIT = 10;
 
 let cachedDirections = null;
 
+export function resetFoodDirectionCache() {
+  cachedDirections = null;
+}
+
 async function readDirectionsPayload() {
   if (!cachedDirections) {
     cachedDirections = JSON.parse(await readFile(DIRECTIONS_PATH, "utf8"));
