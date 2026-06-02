@@ -824,7 +824,7 @@ function contentAfterMemoryOperation(content, memoryOperation = {}) {
     return content;
   }
   if (latest?.result_summary) {
-    return `好，${latest.result_summary}。`;
+    return `好，${String(latest.result_summary).replace(/[。！？.!?]+$/u, "")}。`;
   }
   return content;
 }
