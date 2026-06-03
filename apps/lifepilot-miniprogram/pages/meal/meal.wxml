@@ -517,7 +517,7 @@
                 <view class="skill-card-title">{{skill.title}}</view>
                 <view class="skill-card-desc">{{skill.description}}</view>
               </view>
-              <button class="skill-card-button" data-action="{{skill.action}}" bindtap="runChatSkill">{{skill.cta}}</button>
+              <button class="skill-card-button" data-action="{{skill.action}}" data-payload="{{skill.payload}}" bindtap="runChatSkill">{{skill.cta}}</button>
             </view>
           </view>
           <view wx:if="{{item.skill_result_cards && item.skill_result_cards.length}}" class="skill-result-list">

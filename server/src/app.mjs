@@ -104,6 +104,122 @@ async function handleSessionStart(req, res) {
   });
 }
 
+function normalizeStringArray(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean);
+  if (value === undefined || value === null || value === "") return [];
+  return String(value).split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function mergeUnderstanding(base = {}, override = {}) {
+  if (!override || typeof override !== "object") return base;
+  return {
+    ...base,
+    ...override,
+    constraints: {
+      ...(base.constraints || {}),
+      ...(override.constraints || {}),
+    },
+    dimensions: {
+      ...(base.dimensions || {}),
+      ...(override.dimensions || {}),
+    },
+    hard_constraints: Array.isArray(override.hard_constraints || override.hardConstraints)
+      ? (override.hard_constraints || override.hardConstraints)
+      : (base.hard_constraints || []),
+    soft_preferences: Array.isArray(override.soft_preferences || override.softPreferences)
+      ? (override.soft_preferences || override.softPreferences)
+      : (base.soft_preferences || []),
+    special_signals: Array.isArray(override.special_signals || override.specialSignals)
+      ? (override.special_signals || override.specialSignals)
+      : (base.special_signals || []),
+    normalized_goal: override.normalized_goal || override.normalizedGoal || base.normalized_goal || "",
+    raw_entry_text: override.raw_entry_text || override.rawEntryText || base.raw_entry_text || "",
+  };
+}
+
+async function handleMealPrimitiveStartOffers(req, res) {
+  const body = await readBody(req);
+  const userId = body.user_id || body.userId || "demo_weiyingru";
+  const sourceMessage = String(body.source_message || body.sourceMessage || body.query || body.message || "").trim();
+  const entryForm = {
+    ...(body.entry_form || body.entryForm || {}),
+  };
+  if (sourceMessage && !entryForm.raw_query && !entryForm.rawQuery && !entryForm.text) {
+    entryForm.raw_query = sourceMessage;
+    entryForm.text = sourceMessage;
+  }
+  if (body.location || body.user_location || body.userLocation) {
+    entryForm.location = body.location || body.user_location || body.userLocation;
+  }
+  const parsedBase = await parseEntry({
+    entryForm,
+    timeoutMs: body.timeout_ms || body.timeoutMs,
+    forceLocal: body.local_only === true || body.localOnly === true,
+  });
+  const parsed = mergeUnderstanding(parsedBase, body.understanding || body.parsed || {});
+  const candidateMerchantIds = normalizeStringArray(body.candidate_merchant_ids || body.candidateMerchantIds);
+  const memoryContext = await readRecommendationMemoryContext({
+    userId,
+    query: [
+      parsed.normalized_goal,
+      sourceMessage,
+      ...(parsed.soft_preferences || []).map((item) => item.value || item.intent || "").filter(Boolean),
+    ].filter(Boolean).join("；"),
+  });
+  const entryMode = body.entry_mode || body.entryMode || (candidateMerchantIds.length ? "merchant_compare" : "offer_only");
+  const session = await createSession({
+    sessionId: body.session_id || body.sessionId,
+    userId,
+    dayId: body.day_id || body.dayId,
+    mealSlot: body.meal_slot || body.mealSlot,
+    entryForm,
+    parsed,
+    cards: [],
+    memoryContext,
+    entryMode,
+    startedBy: body.started_by || body.startedBy || "openclaw",
+    sourceMessage,
+    skippedDirectionStage: true,
+    candidateMerchantIds,
+    openclaw: body.openclaw || null,
+    primitiveChain: body.primitive_chain || body.primitiveChain || ["start-offers"],
+  });
+  const offerPayload = await buildFoodOffers({
+    session,
+    body: {
+      ...body,
+      candidate_merchant_ids: candidateMerchantIds,
+      ai_explanations: body.ai_explanations ?? body.aiExplanations ?? false,
+    },
+    limit: body.limit || 10,
+  });
+  await applyOfferCards(session, offerPayload);
+  ok(res, {
+    session: publicSession(session),
+    offer_payload: offerPayload,
+    skill_card: {
+      skill: "meal_swipe",
+      action: "open_meal_session",
+      title: entryMode === "merchant_compare" ? "滑卡比较这几家" : "直接看相关商户",
+      description: entryMode === "merchant_compare" ? "小汪已把这几家店放进商户卡。" : "小汪已按你的需求准备好商户卡。",
+      cta: "开始滑卡",
+      payload: {
+        session_id: session.session_id,
+        entry_mode: entryMode,
+      },
+    },
+    meta: {
+      primitive: "start-offers",
+      memory_context: {
+        confirmed_preferences: memoryContext.preference_count || 0,
+        evermind_memories: memoryContext.evermind_memory_count || 0,
+        evermind_warning: memoryContext.evermind_warning || "",
+        policy: memoryContext.policy,
+      },
+    },
+  });
+}
+
 async function handleParseEntry(req, res) {
   const body = await readBody(req);
   const entryForm = body.entry_form || body.entryForm || body;
@@ -936,6 +1052,10 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/session/offer-explanation") {
       await handleSessionOfferExplanation(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/meal/primitive/start-offers") {
+      await handleMealPrimitiveStartOffers(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/food-offers") {

@@ -1214,6 +1214,15 @@ Page({
 
   runChatSkill(event) {
     const action = event.currentTarget.dataset.action;
+    const payload = this.normalizeSkillPayload(event.currentTarget.dataset.payload);
+    if (action === "open_meal_entry") {
+      this.openMealEntryFromSkill(payload);
+      return;
+    }
+    if (action === "open_meal_session") {
+      this.openMealSessionFromSkill(payload);
+      return;
+    }
     if (action === "start_meal") {
       this.startMealSkill();
       return;
@@ -1224,6 +1233,53 @@ Page({
     }
     if (action === "run_dreaming") {
       this.runXiaowangDreaming();
+    }
+  },
+
+  normalizeSkillPayload(payload) {
+    if (!payload) return {};
+    if (typeof payload === "object") return payload;
+    try {
+      const parsed = JSON.parse(payload);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  },
+
+  openMealEntryFromSkill(payload = {}) {
+    const text = String(payload.prefill_text || payload.prefillText || latestUserChatText(this.data.chatMessages) || "").trim();
+    const nextEntryForm = text ? {
+      ...this.data.entryForm,
+      text
+    } : this.data.entryForm;
+    this.setData({
+      activeTab: "meal",
+      stage: "entry",
+      stageLabel: "入口",
+      stageSubtitle: "先告诉小汪今天想怎么吃",
+      entryForm: nextEntryForm,
+      editableGoal: this.entrySummary(nextEntryForm),
+      errorText: ""
+    });
+  },
+
+  async openMealSessionFromSkill(payload = {}) {
+    const sessionId = payload.session_id || payload.sessionId;
+    if (!sessionId || this.data.isLoading) return;
+    this.setData({ isLoading: true, loadingText: "小汪正在打开商户卡...", errorText: "" });
+    try {
+      const result = await sessionApi.getSession(sessionId);
+      if (!result.session) throw new Error("Session not found.");
+      wx.setStorageSync(STORAGE_SESSION_ID, sessionId);
+      this.setData({ activeTab: "meal" }, () => {
+        this.applySession(result.session, { notice: "已打开小汪准备好的商户卡" });
+      });
+    } catch (error) {
+      this.setData({ errorText: error.message || "商户卡打开失败" });
+      wx.showToast({ title: "商户卡打开失败", icon: "none" });
+    } finally {
+      this.setData({ isLoading: false, loadingText: "" });
     }
   },
 

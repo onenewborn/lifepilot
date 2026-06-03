@@ -419,6 +419,78 @@ try {
   assert.equal(noKeepFinalized.payload.result.alternatives.length, 0);
   assert.equal(noKeepFinalized.payload.result.selected_merchants.length, 0);
 
+  const primitiveOffer = await request("/api/meal/primitive/start-offers", {
+    method: "POST",
+    body: {
+      session_id: "smoke_primitive_offer_session",
+      user_id: "smoke_user",
+      source_message: "我想吃川菜，环境别太吵。",
+      entry_mode: "offer_only",
+      entry_form: {
+        party_size: 1,
+        budget_per_person_max: 80,
+      },
+      understanding: {
+        normalized_goal: "想吃川菜，环境别太吵。",
+        food_preferences: {
+          cuisine_tags: ["川菜"],
+        },
+        constraints: {
+          party_size: 1,
+          budget_per_person_max: 80,
+        },
+      },
+      openclaw: {
+        run_id: "smoke_openclaw_run",
+        skill: "meal-swipe",
+      },
+      ai_explanations: false,
+      limit: 5,
+    },
+  });
+  assert.equal(primitiveOffer.status, 200);
+  assert.equal(primitiveOffer.payload.ok, true);
+  assert.equal(primitiveOffer.payload.session.stage, "offer");
+  assert.equal(primitiveOffer.payload.session.next_step, "swipe_food_offers");
+  assert.equal(primitiveOffer.payload.session.entry_mode, "offer_only");
+  assert.equal(primitiveOffer.payload.session.started_by, "openclaw");
+  assert.equal(primitiveOffer.payload.session.source_message, "我想吃川菜，环境别太吵。");
+  assert.equal(primitiveOffer.payload.session.skipped_direction_stage, true);
+  assert.equal(primitiveOffer.payload.session.openclaw.run_id, "smoke_openclaw_run");
+  assert.ok(primitiveOffer.payload.session.current_cards.length > 0);
+  assert.ok(
+    primitiveOffer.payload.session.current_cards
+      .slice(0, 3)
+      .every((card) => (card.facts?.cuisine_tags || []).some((tag) => String(tag).includes("sichuan"))),
+    "explicit Sichuan primitive should rank Sichuan merchants first"
+  );
+  assert.equal(primitiveOffer.payload.skill_card.action, "open_meal_session");
+  assert.equal(primitiveOffer.payload.skill_card.payload.session_id, "smoke_primitive_offer_session");
+
+  const primitiveCompare = await request("/api/meal/primitive/start-offers", {
+    method: "POST",
+    body: {
+      session_id: "smoke_primitive_compare_session",
+      user_id: "smoke_user",
+      source_message: "椒香巷川味小馆和鲜潭蒸汽石锅鱼怎么选？",
+      entry_mode: "merchant_compare",
+      candidate_merchant_ids: ["m_futian_014", "m_futian_007"],
+      ai_explanations: false,
+      limit: 10,
+    },
+  });
+  assert.equal(primitiveCompare.status, 200);
+  assert.equal(primitiveCompare.payload.session.stage, "offer");
+  assert.equal(primitiveCompare.payload.session.entry_mode, "merchant_compare");
+  assert.deepEqual(primitiveCompare.payload.session.candidate_merchant_ids, ["m_futian_014", "m_futian_007"]);
+  assert.equal(primitiveCompare.payload.session.skipped_direction_stage, true);
+  assert.deepEqual(
+    new Set(primitiveCompare.payload.session.current_cards.map((card) => card.merchant_id)),
+    new Set(["m_futian_014", "m_futian_007"])
+  );
+  assert.equal(primitiveCompare.payload.offer_payload.offer_payload_meta.candidate_merchant_ids.length, 2);
+  assert.equal(primitiveCompare.payload.skill_card.payload.entry_mode, "merchant_compare");
+
   const feedback = await request("/api/memory/post-meal-feedback", {
     method: "POST",
     body: {

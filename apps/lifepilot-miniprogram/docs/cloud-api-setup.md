@@ -90,8 +90,9 @@ https://api.lifepilot-xiaowang.cn
 
 小汪说启动滑卡但页面不动
 
-- 前端需要收到 `skill_cards` 里的 `action: "start_meal"`。
-- 当前版本收到该动作后会自动进入饭点滑卡；如果没有进入，检查 `/api/xiaowang/chat-jobs/:job_id` 的最终返回里是否包含对应 skill card。
+- 泛需求应收到 `skill_cards` 里的 `action: "open_meal_entry"`，点击后进入需求确认页。
+- 明确需求或点名商户对比应收到 `action: "open_meal_session"`，payload 里必须有 `session_id`，点击后直接打开商户滑卡。
+- 如果仍只收到旧的 `action: "start_meal"`，说明云端后端或 OpenClaw workspace 还没有同步到新版。
 
 ## 后续切换到域名
 

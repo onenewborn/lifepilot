@@ -74,6 +74,11 @@ function compactMealSession(session) {
     stage: session.stage,
     next_step: session.next_step,
     goal: session.goal,
+    entry_mode: session.entry_mode || "full_flow",
+    started_by: session.started_by || "user_entry",
+    source_message: session.source_message || "",
+    skipped_direction_stage: Boolean(session.skipped_direction_stage),
+    candidate_merchant_ids: session.candidate_merchant_ids || [],
     location: session.location || null,
     direction_event_count: session.direction_events?.length || 0,
     offer_event_count: session.offer_events?.length || 0,
@@ -153,7 +158,23 @@ export async function appendMemoryCandidatesToDayContext({dayId, candidateIds = 
   return writeDayContext(dayContext);
 }
 
-export async function createSession({sessionId, userId, entryForm, parsed, cards, dayId, mealSlot, memoryContext = null}) {
+export async function createSession({
+  sessionId,
+  userId,
+  entryForm,
+  parsed,
+  cards,
+  dayId,
+  mealSlot,
+  memoryContext = null,
+  entryMode = "full_flow",
+  startedBy = "user_entry",
+  sourceMessage = "",
+  skippedDirectionStage = false,
+  candidateMerchantIds = [],
+  openclaw = null,
+  primitiveChain = [],
+}) {
   const createdAt = nowIso();
   const safeUserId = userId || "demo_weiyingru";
   const location = entryForm?.location || entryForm?.user_location || entryForm?.userLocation || null;
@@ -167,6 +188,13 @@ export async function createSession({sessionId, userId, entryForm, parsed, cards
     stage: "direction",
     next_step: "swipe_food_directions",
     goal: parsed.normalized_goal || "",
+    entry_mode: entryMode,
+    started_by: startedBy,
+    source_message: sourceMessage || "",
+    skipped_direction_stage: Boolean(skippedDirectionStage),
+    candidate_merchant_ids: Array.isArray(candidateMerchantIds) ? candidateMerchantIds.filter(Boolean).map(String) : [],
+    openclaw: openclaw && typeof openclaw === "object" ? openclaw : null,
+    primitive_chain: Array.isArray(primitiveChain) ? primitiveChain.filter(Boolean).map(String) : [],
     entry_form: entryForm || {},
     location,
     understanding: {

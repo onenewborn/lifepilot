@@ -19,10 +19,10 @@ const SKILL_REGISTRY = [
   {
     skill: "meal_swipe",
     title: "饭点滑卡",
-    description: "先滑方向卡，再筛具体商家，最后收束到一家。",
-    trigger_examples: ["今天吃什么", "帮我选饭", "不知道吃啥"],
-    action: "start_meal",
-    cta: "开始滑卡",
+    description: "由 OpenClaw 判断饭点入口；泛需求打开需求确认页，明确需求直接创建商户滑卡。",
+    trigger_examples: ["今天吃什么", "帮我选饭", "不知道吃啥", "我想吃川菜"],
+    action: "open_meal_entry",
+    cta: "去确认需求",
     runtime: "local",
     status: "available",
   },
@@ -178,6 +178,10 @@ function wantsMealSkill(text) {
   return /(滑卡|选饭|吃什么|推荐|帮我选|饭点|挑饭|不知道吃啥|不知道吃什么)/.test(text);
 }
 
+function wantsGenericMealEntrySkill(text) {
+  return /(不知道吃啥|不知道吃什么|吃什么|吃啥|帮我选饭|帮我选|没想法|没主意|随便吃点|挑饭)/.test(text);
+}
+
 function wantsDiarySkill(text) {
   return /(汪记本|日记|记得我|记住了什么|你了解我|我的偏好|待确认|画像|今天.*记录|今天.*记了什么)/.test(text);
 }
@@ -317,6 +321,9 @@ function parseOpenClawChatResponse(text) {
   return {
     message: String(parsed.message || "").trim(),
     skill_calls: normalizeSkillCalls(parsed.skill_calls || parsed.skillCalls || []),
+    skill_cards: Array.isArray(parsed.skill_cards || parsed.skillCards)
+      ? (parsed.skill_cards || parsed.skillCards)
+      : [],
     skill_result_cards: Array.isArray(parsed.skill_result_cards || parsed.skillResultCards)
       ? (parsed.skill_result_cards || parsed.skillResultCards)
       : [],
@@ -370,7 +377,7 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     "请只输出 JSON，不要加 Markdown，不要解释 JSON。",
     "",
     "JSON schema:",
-    "{\"message\":\"小汪要发给用户的一段自然回复，最多 3 句。\",\"skill_calls\":[],\"skill_result_cards\":[],\"memory_prompts\":[]}",
+    "{\"message\":\"小汪要发给用户的一段自然回复，最多 3 句。\",\"skill_calls\":[],\"skill_cards\":[],\"skill_result_cards\":[],\"memory_prompts\":[]}",
     "",
     "可用 LifePilot tool ids（当前 JSON 兼容层仍使用 snake_case；OpenClaw skill 目录使用 hyphen 命名）:",
     skills,
@@ -383,6 +390,10 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     "memory_manage args.target 可带 candidate_id/preference_id/match_text；如果用户说“刚刚那条/可以确认下来”，优先用 confirm_latest_pending。",
     "无待确认候选且用户明确要求记住某个偏好时，用 create_confirmed_preference，并给出 confirmation_text 或 statement。",
     `OpenClaw 工具调用 LifePilot API 时必须使用这个 api base：${openClawApiBase}`,
+    "饭点滑卡入口由 OpenClaw 判断，不由 LifePilot 后端按固定话术路由。",
+    "泛需求（如不知道吃什么、帮我选饭、没想法）不要直接创建 session；返回 skill_cards: [{skill:\"meal_swipe\", action:\"open_meal_entry\", cta:\"去确认需求\", payload:{prefill_text:\"用户原话\"}}]。",
+    "明确需求（如想吃川菜、找环境好/少排队/附近/适合聊天的店）应调用 meal-swipe skill 脚本创建 offer-stage session，再返回脚本输出的 open_meal_session skill card。",
+    "点名两家或多家商户对比时，先调用 merchant-compare 证据工具；若用户适合继续滑卡比较，再调用 meal-swipe start-offer-flow 并传 candidate_merchant_ids，只比较这些商户。",
     "如果用户问某家店的特色菜、口味、排队、适合几个人吃，优先调用 merchant-intel skill 的脚本：python3 skills/merchant-intel/scripts/merchant_intel_tool.py --api-base 上面的_api_base ...，读取工具结果后再生成 message。",
     "如果用户问两家或多家店怎么选、哪家更好吃、类似店对比，优先调用 merchant-compare skill 的脚本：python3 skills/merchant-compare/scripts/merchant_compare_tool.py --api-base 上面的_api_base ...，读取工具结果后再生成 message。",
     "如果用户问团购、优惠、券后、人均、省钱、怎么吃更划算，优先调用 deal-search skill 的脚本：python3 skills/deal-search/scripts/deal_search_tool.py --api-base 上面的_api_base ...，读取工具结果后再生成 message。",
@@ -424,6 +435,7 @@ async function getOpenClawChatReply({message, session, pendingCount, preferenceC
   return {
     content: response.message,
     skillCalls: response.skill_calls,
+    skillCards: response.skill_cards || [],
     skillResultCards: response.skill_result_cards || [],
     memoryPrompts: response.memory_prompts,
     parseMode: response.parse_mode,
@@ -466,6 +478,7 @@ async function getArkChatReply({message, session, pendingCount, preferenceCount,
   return {
     content: response.message,
     skillCalls: response.skill_calls,
+    skillCards: response.skill_cards || [],
     skillResultCards: response.skill_result_cards || [],
     memoryPrompts: response.memory_prompts,
     parseMode: response.parse_mode,
@@ -478,7 +491,7 @@ function fallbackSkillCards(message) {
     wantsDealSearchSkill(message) ? skillCard("deal_search") : null,
     wantsMerchantCompareSkill(message) ? skillCard("merchant_compare") : null,
     wantsMerchantIntelSkill(message) ? skillCard("merchant_intel") : null,
-    wantsMealSkill(message) ? skillCard("meal_swipe") : null,
+    wantsGenericMealEntrySkill(message) ? skillCard("meal_swipe") : null,
     wantsDiarySkill(message) ? skillCard("diary_review") : null,
   ].filter(Boolean);
 }
@@ -486,7 +499,16 @@ function fallbackSkillCards(message) {
 function skillCardsFromCalls(skillCalls = []) {
   return normalizeSkillCalls(skillCalls)
     .filter((call) => !["merchant_intel", "merchant_compare", "deal_search", "memory_manage"].includes(call.skill))
-    .map((call) => skillCard(call.skill))
+    .map((call) => {
+      const card = skillCard(call.skill);
+      if (!card) return null;
+      const args = call.args || {};
+      return {
+        ...card,
+        action: args.action || card.action,
+        payload: args.payload || args,
+      };
+    })
     .filter(Boolean);
 }
 
@@ -1025,7 +1047,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
       });
       content = openclawReply.content;
       skillCalls = openclawReply.skillCalls || [];
-      skillCards = skillCardsFromCalls(skillCalls);
+      skillCards = (openclawReply.skillCards && openclawReply.skillCards.length) ? openclawReply.skillCards : skillCardsFromCalls(skillCalls);
       skillResultCards = openclawReply.skillResultCards || [];
       const executed = await executeMerchantSkillCalls({skillCalls, message, userId, dayId, currentContext});
       skillResultCards = [...skillResultCards, ...executed.resultCards];
@@ -1073,7 +1095,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
         });
         content = arkReply.content;
         skillCalls = (arkReply.skillCalls || []).filter((item) => item.skill !== "memory_manage");
-        skillCards = skillCardsFromCalls(skillCalls);
+        skillCards = (arkReply.skillCards && arkReply.skillCards.length) ? arkReply.skillCards : skillCardsFromCalls(skillCalls);
         skillResultCards = arkReply.skillResultCards || [];
         const executed = await executeMerchantSkillCalls({skillCalls, message, userId, dayId, currentContext});
         skillResultCards = [...skillResultCards, ...executed.resultCards];

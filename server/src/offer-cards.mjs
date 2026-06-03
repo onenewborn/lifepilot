@@ -28,6 +28,23 @@ export function resetFoodOfferCache() {
 const OIL_RANK = {low: 0, medium: 1, high: 2};
 const SPICE_RANK = {none: 0, low: 1, medium: 2, high: 3};
 const QUEUE_LABELS = {low: "排队风险低", medium: "饭点可能有一点排队", high: "饭点排队风险高"};
+const CUISINE_ALIASES = {
+  川菜: ["川菜", "四川", "sichuan", "classic_sichuan", "fine_sichuan", "creative_sichuan", "chengdu", "zigong", "yanbang"],
+  四川: ["川菜", "四川", "sichuan", "classic_sichuan", "fine_sichuan", "creative_sichuan", "chengdu", "zigong", "yanbang"],
+  sichuan: ["川菜", "四川", "sichuan", "classic_sichuan", "fine_sichuan", "creative_sichuan", "chengdu", "zigong", "yanbang"],
+  湘菜: ["湘菜", "湖南", "hunan", "xiang"],
+  湖南: ["湘菜", "湖南", "hunan", "xiang"],
+  粤菜: ["粤菜", "广东", "cantonese", "guangdong"],
+  广东: ["粤菜", "广东", "cantonese", "guangdong"],
+  日料: ["日料", "日本", "japanese", "sushi"],
+  日本: ["日料", "日本", "japanese", "sushi"],
+};
+
+function normalizeArray(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).map((item) => String(item));
+  if (value === undefined || value === null || value === "") return [];
+  return [String(value)];
+}
 
 async function readOffers() {
   if (!cachedOffers) cachedOffers = JSON.parse(await readFile(OFFERS_PATH, "utf8")).offers || [];
@@ -157,6 +174,50 @@ function hasPreference(understanding = {}, facet, words = []) {
   return words.some((word) => text.includes(word));
 }
 
+function desiredCuisineTags(understanding = {}) {
+  const foodPreferences = understanding.food_preferences || understanding.foodPreferences || {};
+  const explicit = [
+    ...normalizeArray(foodPreferences.cuisine_tags || foodPreferences.cuisineTags || []),
+    ...normalizeArray(understanding.cuisine_tags || understanding.cuisineTags || []),
+    ...normalizeArray(understanding.cuisine || ""),
+    ...normalizeArray(foodPreferences.cuisine || ""),
+  ];
+  const preferenceText = [
+    understanding.normalized_goal,
+    understanding.raw_entry_text,
+    ...(understanding.soft_preferences || []).map((item) => `${item.value || ""} ${(item.evidence || []).join(" ")}`),
+  ].filter(Boolean).join(" ");
+  for (const key of Object.keys(CUISINE_ALIASES)) {
+    if (preferenceText.includes(key)) explicit.push(key);
+  }
+  const tags = new Set();
+  for (const item of explicit) {
+    const key = String(item || "").trim();
+    if (!key) continue;
+    tags.add(key);
+    tags.add(key.toLowerCase());
+    for (const alias of (CUISINE_ALIASES[key] || CUISINE_ALIASES[key.toLowerCase()] || [])) {
+      tags.add(alias);
+      tags.add(String(alias).toLowerCase());
+    }
+  }
+  return tags;
+}
+
+function cuisineMatch(offer = {}, merchant = {}, tags = new Set()) {
+  if (!tags.size) return false;
+  const values = [
+    ...(offer.cuisine_tags || []),
+    ...(offer.decision_tags || []),
+    offer.flavor_label,
+    offer.display_title,
+    offer.hook,
+    merchant.name,
+    merchant.scene,
+  ].filter(Boolean).map((item) => String(item).toLowerCase());
+  return values.some((value) => [...tags].some((tag) => value.includes(String(tag).toLowerCase())));
+}
+
 function hardConflicts(offer, merchant, context) {
   const reasons = [];
   const constraints = context.understanding?.constraints || {};
@@ -194,6 +255,16 @@ function scoreOffer(offer, merchant, context) {
   const understanding = context.understanding || {};
   const distanceKm = distanceKmFromMerchant(merchant);
   const userFeedback = userFeedbackForOffer(offer, merchant, context);
+  const cuisineTags = desiredCuisineTags(understanding);
+
+  if (cuisineTags.size) {
+    if (cuisineMatch(offer, merchant, cuisineTags)) {
+      score += 18;
+      matched.push("命中想吃的菜系");
+    } else {
+      score -= 4;
+    }
+  }
 
   if (offer.direction_ids?.some((id) => context.keptDirections.has(id))) {
     score += 12;
@@ -335,6 +406,7 @@ function normalizeOfferCard(offer, merchant, score, explanation, context = {}) {
       temperature: offer.temperature,
       satisfaction_level: offer.satisfaction_level,
       signature_items: offer.signature_items || [],
+      cuisine_tags: offer.cuisine_tags || [],
       recommended_offer_title: offer.title || "",
       environment: merchant.environment || {},
       environment_note: offer.environment_note,
@@ -395,6 +467,13 @@ function collapseToMerchantCards(cards) {
 export async function buildFoodOffers({session = {}, body = {}, limit = DEFAULT_OFFER_LIMIT} = {}) {
   const [offers, merchants, directions] = await Promise.all([readOffers(), readMerchants(), readDirections()]);
   const userId = session.user_id || body.user_id || body.userId || "demo_weiyingru";
+  const candidateMerchantIds = new Set(normalizeArray(
+    body.candidate_merchant_ids ||
+    body.candidateMerchantIds ||
+    session.candidate_merchant_ids ||
+    session.candidateMerchantIds ||
+    []
+  ));
   const context = {
     understanding: session.understanding || body.understanding || {},
     keptDirections: keptDirectionIds(session, body),
@@ -407,6 +486,7 @@ export async function buildFoodOffers({session = {}, body = {}, limit = DEFAULT_
   };
   const cards = [];
   for (const offer of offers) {
+    if (candidateMerchantIds.size && !candidateMerchantIds.has(offer.merchant_id)) continue;
     const merchant = merchants.get(offer.merchant_id);
     if (!merchant) continue;
     const {score, explanation} = scoreOffer(offer, merchant, context);
@@ -434,6 +514,7 @@ export async function buildFoodOffers({session = {}, body = {}, limit = DEFAULT_
       card_grain: "merchant",
       recommended_offer_policy: "one_best_offer_per_merchant",
       limit: Number(limit || DEFAULT_OFFER_LIMIT),
+      candidate_merchant_ids: [...candidateMerchantIds],
       kept_direction_ids: [...context.keptDirections],
       disliked_direction_ids: [...context.dislikedDirections],
       direction_context: directionContext,
