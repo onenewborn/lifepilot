@@ -297,7 +297,16 @@
       "data_checked_at": "2026-05-31",
       "media": {
         "poster_url": "",
-        "video_sources": [],
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/jieyang-xinheng-guotiao/official.mp4",
+            "poster_url": "/assets/offer-media/jieyang-xinheng-guotiao/img_3615.jpg",
+            "has_sound": true
+          }
+        ],
         "image_urls": [
           "/assets/offer-media/jieyang-xinheng-guotiao/img_3615.jpg",
           "/assets/offer-media/jieyang-xinheng-guotiao/img_3616.jpg",
