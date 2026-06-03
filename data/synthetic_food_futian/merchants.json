@@ -234,9 +234,19 @@
       ],
       "data_checked_at": "2026-05-31",
       "media": {
-        "poster_url": "",
-        "video_sources": [],
+        "poster_url": "/assets/offer-media/weilu-malatang/poster.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/weilu-malatang/official.mp4",
+            "poster_url": "/assets/offer-media/weilu-malatang/poster.jpg",
+            "has_sound": true
+          }
+        ],
         "image_urls": [
+          "/assets/offer-media/weilu-malatang/poster.jpg",
           "/assets/offer-media/weilu-malatang/img_3609.jpg",
           "/assets/offer-media/weilu-malatang/img_3610.jpg",
           "/assets/offer-media/weilu-malatang/img_3611.jpg",
@@ -296,18 +306,19 @@
       ],
       "data_checked_at": "2026-05-31",
       "media": {
-        "poster_url": "",
+        "poster_url": "/assets/offer-media/jieyang-xinheng-guotiao/poster.jpg",
         "video_sources": [
           {
             "key": "merchant_video",
             "type": "official",
             "label": "商家视频",
             "url": "/assets/offer-media/jieyang-xinheng-guotiao/official.mp4",
-            "poster_url": "/assets/offer-media/jieyang-xinheng-guotiao/img_3615.jpg",
+            "poster_url": "/assets/offer-media/jieyang-xinheng-guotiao/poster.jpg",
             "has_sound": true
           }
         ],
         "image_urls": [
+          "/assets/offer-media/jieyang-xinheng-guotiao/poster.jpg",
           "/assets/offer-media/jieyang-xinheng-guotiao/img_3615.jpg",
           "/assets/offer-media/jieyang-xinheng-guotiao/img_3616.jpg",
           "/assets/offer-media/jieyang-xinheng-guotiao/img_3617.jpg",
@@ -366,9 +377,19 @@
       ],
       "data_checked_at": "2026-05-31",
       "media": {
-        "poster_url": "",
-        "video_sources": [],
+        "poster_url": "/assets/offer-media/zhiquan-fenmian-yuntun/poster.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/zhiquan-fenmian-yuntun/official.mp4",
+            "poster_url": "/assets/offer-media/zhiquan-fenmian-yuntun/poster.jpg",
+            "has_sound": true
+          }
+        ],
         "image_urls": [
+          "/assets/offer-media/zhiquan-fenmian-yuntun/poster.jpg",
           "/assets/offer-media/zhiquan-fenmian-yuntun/img_3621.jpg",
           "/assets/offer-media/zhiquan-fenmian-yuntun/img_3622.jpg",
           "/assets/offer-media/zhiquan-fenmian-yuntun/img_3623.jpg",
@@ -431,9 +452,19 @@
       ],
       "data_checked_at": "2026-05-31",
       "media": {
-        "poster_url": "",
-        "video_sources": [],
+        "poster_url": "/assets/offer-media/xiantan-steam-fish/poster.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/xiantan-steam-fish/official.mp4",
+            "poster_url": "/assets/offer-media/xiantan-steam-fish/poster.jpg",
+            "has_sound": true
+          }
+        ],
         "image_urls": [
+          "/assets/offer-media/xiantan-steam-fish/poster.jpg",
           "/assets/offer-media/xiantan-steam-fish/img_3630.jpg",
           "/assets/offer-media/xiantan-steam-fish/img_3631.jpg",
           "/assets/offer-media/xiantan-steam-fish/img_3633.jpg",
@@ -491,7 +522,24 @@
       "public_sources": [
         "https://www.openrice.com.cn/zh-cn/shenzhen/r-%E7%8F%8D%E5%BA%AD%E6%BD%AE%E5%B7%9E%E8%8F%9C-%E7%A6%8F%E7%94%B0%E4%B8%AD%E5%BF%83%E5%8C%BA-%E6%BD%AE%E5%B7%9E%E8%8F%9C-r5851875"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/zhenting-chaozhou-cuisine/poster.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/zhenting-chaozhou-cuisine/official.mp4",
+            "poster_url": "/assets/offer-media/zhenting-chaozhou-cuisine/poster.jpg",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/zhenting-chaozhou-cuisine/poster.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_010",
@@ -603,7 +651,24 @@
         "番茄煎蛋汤"
       ],
       "public_sources": [],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/jiaoxiangxiang-sichuan-bistro/poster.png",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/jiaoxiangxiang-sichuan-bistro/official.mp4",
+            "poster_url": "/assets/offer-media/jiaoxiangxiang-sichuan-bistro/poster.png",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/jiaoxiangxiang-sichuan-bistro/poster.png"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_015",
@@ -650,7 +715,24 @@
         "紫苏煎黄瓜"
       ],
       "public_sources": [],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/ajie-hunan-stir-fry/poster.png",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/ajie-hunan-stir-fry/official.mp4",
+            "poster_url": "/assets/offer-media/ajie-hunan-stir-fry/poster.png",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/ajie-hunan-stir-fry/poster.png"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_016",
@@ -697,7 +779,24 @@
         "宽粉"
       ],
       "public_sources": [],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/shuqianqian-maocai/poster.png",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/shuqianqian-maocai/official.mp4",
+            "poster_url": "/assets/offer-media/shuqianqian-maocai/poster.png",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/shuqianqian-maocai/poster.png"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_017",
@@ -812,7 +911,24 @@
       "public_sources": [
         "https://www.openrice.com.cn/zh/shenzhen/r-%E6%8E%A2%E9%AD%9A-%E9%AE%AE%E9%9D%92%E6%A4%92%E7%88%BD%E9%BA%BB%E7%83%A4%E9%AD%9A-%E8%8F%AF%E5%BC%B7%E5%8C%97-%E5%B7%9D%E8%8F%9C-%E5%9B%9B%E5%B7%9D-r5780304"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/tanyu-green-pepper-grilled-fish/poster.jpg",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/tanyu-green-pepper-grilled-fish/official.mp4",
+            "poster_url": "/assets/offer-media/tanyu-green-pepper-grilled-fish/poster.jpg",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/tanyu-green-pepper-grilled-fish/poster.jpg"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_023",
@@ -861,7 +977,24 @@
       "public_sources": [
         "https://www.openrice.com.cn/zh-cn/shenzhen/r-%E6%BD%AE%E6%B1%95%E5%A4%A7%E7%9B%AE%E7%89%9B%E8%82%89%E7%81%AB%E9%94%85-%E5%8D%8E%E5%BC%BA%E5%8C%97-%E6%BD%AE%E5%B7%9E%E8%8F%9C-%E7%81%AB%E9%94%85-r5837592"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/chaoshan-damu-beef-hotpot/poster.png",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/chaoshan-damu-beef-hotpot/official.mp4",
+            "poster_url": "/assets/offer-media/chaoshan-damu-beef-hotpot/poster.png",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/chaoshan-damu-beef-hotpot/poster.png"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_024",
@@ -910,7 +1043,24 @@
       "public_sources": [
         "https://www.openrice.com.cn/zh/shenzhen/r-%E5%A4%A7%E6%A6%95%E6%A8%B9%E4%B8%8B-%E4%B8%8A%E6%B2%99-%E4%B8%8B%E6%B2%99-%E7%B2%B5%E8%8F%9C-%E5%BB%A3%E6%9D%B1-r6201570"
       ],
-      "data_checked_at": "2026-05-31"
+      "data_checked_at": "2026-05-31",
+      "media": {
+        "poster_url": "/assets/offer-media/darongshu-shunde-cuisine/poster.png",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/darongshu-shunde-cuisine/official.mp4",
+            "poster_url": "/assets/offer-media/darongshu-shunde-cuisine/poster.png",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/darongshu-shunde-cuisine/poster.png"
+        ],
+        "danmaku": []
+      }
     },
     {
       "merchant_id": "m_futian_025",
@@ -1219,9 +1369,20 @@
       ],
       "data_checked_at": "2026-06-03",
       "media": {
-        "poster_url": "",
-        "video_sources": [],
-        "image_urls": [],
+        "poster_url": "/assets/offer-media/sushi-gin/poster.png",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/sushi-gin/official.mp4",
+            "poster_url": "/assets/offer-media/sushi-gin/poster.png",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/sushi-gin/poster.png"
+        ],
         "danmaku": []
       }
     },
@@ -1330,9 +1491,20 @@
       ],
       "data_checked_at": "2026-06-03",
       "media": {
-        "poster_url": "",
-        "video_sources": [],
-        "image_urls": [],
+        "poster_url": "/assets/offer-media/dayouli-cha-chaan-teng/poster.png",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/dayouli-cha-chaan-teng/official.mp4",
+            "poster_url": "/assets/offer-media/dayouli-cha-chaan-teng/poster.png",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/dayouli-cha-chaan-teng/poster.png"
+        ],
         "danmaku": []
       }
     },
@@ -1384,9 +1556,20 @@
       ],
       "data_checked_at": "2026-06-03",
       "media": {
-        "poster_url": "",
-        "video_sources": [],
-        "image_urls": [],
+        "poster_url": "/assets/offer-media/baofanfan-tomato-hotpot/poster.png",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/baofanfan-tomato-hotpot/official.mp4",
+            "poster_url": "/assets/offer-media/baofanfan-tomato-hotpot/poster.png",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/baofanfan-tomato-hotpot/poster.png"
+        ],
         "danmaku": []
       }
     },
@@ -1439,9 +1622,20 @@
       ],
       "data_checked_at": "2026-06-03",
       "media": {
-        "poster_url": "",
-        "video_sources": [],
-        "image_urls": [],
+        "poster_url": "/assets/offer-media/blue-vegan-salad/poster.png",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/blue-vegan-salad/official.mp4",
+            "poster_url": "/assets/offer-media/blue-vegan-salad/poster.png",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/blue-vegan-salad/poster.png"
+        ],
         "danmaku": []
       }
     },
@@ -1495,9 +1689,20 @@
       ],
       "data_checked_at": "2026-06-03",
       "media": {
-        "poster_url": "",
-        "video_sources": [],
-        "image_urls": [],
+        "poster_url": "/assets/offer-media/hantiejiang-hotpot/poster.png",
+        "video_sources": [
+          {
+            "key": "merchant_video",
+            "type": "official",
+            "label": "商家视频",
+            "url": "/assets/offer-media/hantiejiang-hotpot/official.mp4",
+            "poster_url": "/assets/offer-media/hantiejiang-hotpot/poster.png",
+            "has_sound": true
+          }
+        ],
+        "image_urls": [
+          "/assets/offer-media/hantiejiang-hotpot/poster.png"
+        ],
         "danmaku": []
       }
     }
