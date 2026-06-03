@@ -8,7 +8,7 @@ import { config } from "./config.mjs";
 import { REPO_ROOT } from "./config.mjs";
 import { buildDirectionSummary } from "./direction-summary.mjs";
 import { parseEntry } from "./entry-parser.mjs";
-import { buildFoodOffers, explainOneOfferCard, selectFinalDecision } from "./offer-cards.mjs";
+import { buildFoodOffers, explainOneOfferCard, selectFinalDecisionWithContext } from "./offer-cards.mjs";
 import { queuePayload, routePayload, weatherPayload } from "./context-providers.mjs";
 import { fail, ok, readBody, sendJson } from "./http.mjs";
 import { appendMemoryCandidatesToDayContext, appendSwipeEvent, applyDirectionSummary, applyFinalDecision, applyOfferCards, createSession, getDayContext, getSession, normalizeSwipeEvent, setSessionMemoryContext, updateCurrentOfferCard, updateSessionEntry } from "./session-store.mjs";
@@ -324,7 +324,7 @@ async function handleSessionFinalize(req, res) {
   if (session.stage === "final") {
     ok(res, {
       session: publicSession(session),
-      result: session.result || selectFinalDecision(session),
+      result: session.result || await selectFinalDecisionWithContext(session),
       evermind_session_summary: {
         ok: false,
         skipped: "already_finalized",
@@ -344,7 +344,7 @@ async function handleSessionFinalize(req, res) {
     fail(res, 409, "invalid_session_transition", "Session can only finalize from offer in P3.", {stage: session.stage});
     return;
   }
-  const result = selectFinalDecision(session);
+  const result = await selectFinalDecisionWithContext(session);
   await applyFinalDecision(session, result);
   const evermindSummary = body.sync_evermind_session === false || body.syncEvermindSession === false
     ? {ok: false, skipped: "disabled"}

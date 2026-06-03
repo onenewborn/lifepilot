@@ -3,7 +3,9 @@ import path from "node:path";
 import { REPO_ROOT } from "./config.mjs";
 import { callArkChat } from "./ai/ark-provider.mjs";
 import { buildOfferExplanationPrompt } from "./ai/prompts.mjs";
+import { queuePayload, routePayload, weatherPayload } from "./context-providers.mjs";
 import { parseJsonObjectFromText } from "./json-utils.mjs";
+import { buildDealSearchContext } from "./merchant-tools.mjs";
 import { readRecommendationMemoryContext } from "./memory-store.mjs";
 import { readMerchantFeedbackContext } from "./merchant-feedback-store.mjs";
 
@@ -736,16 +738,174 @@ export async function explainOneOfferCard({session = {}, card = {}, body = {}, d
 }
 
 export function selectFinalDecision(session = {}) {
-  const kept = (session.offer_events || []).filter((event) => event.action === "keep").map((event) => event.offer_id).filter(Boolean);
-  const disliked = new Set((session.offer_events || []).filter((event) => event.action === "dislike").map((event) => event.offer_id).filter(Boolean));
-  const cards = (session.current_cards || []).filter((card) => !disliked.has(card.offer_id));
-  const primary = cards.find((card) => kept.includes(card.offer_id)) || cards[0] || null;
-  const alternatives = cards.filter((card) => primary && card.offer_id !== primary.offer_id).slice(0, 2);
-  if (!primary) return {hasSelection: false, primary: null, alternatives: []};
+  const latestActionByMerchant = new Map();
+  for (const event of session.offer_events || []) {
+    const merchantId = event.merchant_id || "";
+    if (!merchantId) continue;
+    latestActionByMerchant.set(merchantId, event.action);
+  }
+  const keptMerchantIds = new Set([...latestActionByMerchant.entries()]
+    .filter(([, action]) => action === "keep")
+    .map(([merchantId]) => merchantId));
+  const selected = (session.current_cards || []).filter((card) => keptMerchantIds.has(card.merchant_id));
+  const primary = selected[0] || null;
+  const alternatives = primary ? selected.filter((card) => card.merchant_id !== primary.merchant_id) : [];
+  if (!primary) {
+    return {
+      hasSelection: false,
+      primary: null,
+      alternatives: [],
+      selected_merchants: [],
+      ranking_basis: "仅保留用户在商户滑卡阶段右滑的商户；本轮没有右滑保留商户。",
+      context_cards: [],
+      deal_context: null,
+      summary_text: "这轮还没有明确保留的商户。",
+    };
+  }
   return {
     hasSelection: true,
     primary,
     alternatives,
-    summary_text: `小汪会推荐 ${primary.merchant_name} · ${primary.title}，因为它和刚刚保留的方向更贴近，${primary.facts.distance_text}，人均约 ${primary.facts.price_per_person}。真实营业、价格和排队仍建议出发前再确认。`,
+    selected_merchants: selected,
+    ranking_basis: "仅在用户右滑保留的商户中，沿用商户卡阶段的匹配分排序。",
+    context_cards: [],
+    deal_context: null,
+    summary_text: `小汪建议优先看 ${primary.merchant_name}，因为它在你刚刚保留的商户里排序最高，${primary.facts.distance_text}，人均约 ${primary.facts.price_per_person}。真实营业、价格、排队和团购仍建议出发前再确认。`,
+  };
+}
+
+function numberOrNull(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function entryPartySize(session = {}) {
+  const constraints = session.understanding?.constraints || {};
+  const explicit = numberOrNull(constraints.party_size || session.entry_form?.party_size);
+  if (explicit) return explicit;
+  const value = String(session.entry_form?.partySize || session.entry_form?.party_size || "").trim();
+  if (value === "one") return 1;
+  if (value === "two") return 2;
+  return null;
+}
+
+function entryBudget(session = {}) {
+  const constraints = session.understanding?.constraints || {};
+  return numberOrNull(
+    constraints.budget_per_person_max ||
+    session.entry_form?.budget_per_person_max ||
+    session.entry_form?.budget
+  );
+}
+
+async function safeContext(label, fallback, fn) {
+  try {
+    return await fn();
+  } catch (error) {
+    return {
+      ...fallback,
+      ok: false,
+      fallback_used: true,
+      fallback_reason: error?.message || `${label}_failed`,
+    };
+  }
+}
+
+async function buildDealContextForMerchants({session, merchantIds}) {
+  const chunks = [];
+  for (let index = 0; index < merchantIds.length; index += 4) {
+    chunks.push(merchantIds.slice(index, index + 4));
+  }
+  const payloads = await Promise.all(chunks.map((ids) => safeContext("deal_context", {
+    ok: false,
+    merchants: ids.map((merchantId) => ({
+      merchant: {merchant_id: merchantId},
+      deals: [],
+      best_value_hint: null,
+      deal_count: 0,
+      no_deal_note: "当前种子证据库里暂无这家店的优惠线索；不能据此判断真实平台没有优惠。",
+    })),
+  }, () => buildDealSearchContext({
+    userId: session.user_id || "demo_weiyingru",
+    merchantIds: ids,
+    sessionId: session.session_id || "",
+    question: session.goal || "最终确认页团购线索",
+    partySize: entryPartySize(session),
+    budget: entryBudget(session),
+    mealTime: session.meal_slot || "",
+  }))));
+  const okPayloads = payloads.filter((payload) => payload && payload.ok);
+  return {
+    ok: okPayloads.length > 0,
+    tool: "deal_search_context",
+    merchants: payloads.flatMap((payload) => payload.merchants || []),
+    evidence_policy: okPayloads[0]?.evidence_policy || payloads[0]?.evidence_policy || null,
+    deal_contract: okPayloads[0]?.deal_contract || payloads[0]?.deal_contract || null,
+    fallback_used: payloads.some((payload) => payload.fallback_used || !payload.ok),
+    fallback_reason: payloads.find((payload) => payload.fallback_reason)?.fallback_reason || null,
+  };
+}
+
+function bestDealFromContext(dealContext, merchantId) {
+  const merchantContext = (dealContext?.merchants || []).find((item) => item.merchant?.merchant_id === merchantId);
+  const bestDeal = merchantContext?.deals?.[0] || null;
+  return {
+    best_deal: bestDeal,
+    deal_count: merchantContext?.deal_count || 0,
+    no_deal_note: merchantContext?.no_deal_note || "",
+    best_value_hint: merchantContext?.best_value_hint || null,
+  };
+}
+
+export async function selectFinalDecisionWithContext(session = {}) {
+  const result = selectFinalDecision(session);
+  if (!result.hasSelection) return result;
+
+  const selected = result.selected_merchants || [result.primary, ...(result.alternatives || [])].filter(Boolean);
+  const merchantIds = selected.map((card) => card.merchant_id).filter(Boolean);
+  const [weather, dealContext, routeResults] = await Promise.all([
+    safeContext("weather", {}, () => weatherPayload({location: session.location})),
+    buildDealContextForMerchants({session, merchantIds}),
+    Promise.all(selected.map((card) => safeContext("route", {}, () => routePayload({
+      origin: session.location,
+      location: session.location,
+      merchant_id: card.merchant_id,
+      destination: {
+        merchant_id: card.merchant_id,
+        location: card.facts?.location || null,
+        distance_km: card.facts?.distance_km || null,
+      },
+    })))),
+  ]);
+  const contextByMerchant = new Map(selected.map((card, index) => {
+    const queue = queuePayload({
+      merchant_id: card.merchant_id,
+      queue_risk: card.facts?.queue_risk,
+    });
+    const deal = bestDealFromContext(dealContext, card.merchant_id);
+    return [card.merchant_id, {
+      merchant_id: card.merchant_id,
+      merchant_name: card.merchant_name,
+      weather,
+      queue,
+      route: routeResults[index],
+      ...deal,
+    }];
+  }));
+  const attachContext = (card) => ({
+    ...card,
+    final_context: contextByMerchant.get(card.merchant_id) || null,
+  });
+  const primary = attachContext(result.primary);
+  const alternatives = (result.alternatives || []).map(attachContext);
+  return {
+    ...result,
+    primary,
+    alternatives,
+    selected_merchants: [primary, ...alternatives],
+    context_cards: [primary, ...alternatives].map((card) => card.final_context).filter(Boolean),
+    deal_context: dealContext,
+    weather_context: weather,
+    summary_text: `小汪建议优先看 ${primary.merchant_name}，这是你右滑保留的商户里综合排序最高的一家。天气、路线、排队和团购线索已经一起放在下面，出发前仍建议再确认真实营业和平台信息。`,
   };
 }

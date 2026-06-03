@@ -300,6 +300,8 @@ try {
   assert.ok(offerCard.facts.address);
   assert.ok(offerCard.facts.location);
   assert.equal(offerCard.facts.location.coordinate_type, "gcj02");
+  const secondOfferCard = offerAdvance.payload.session.current_cards[1];
+  assert.ok(secondOfferCard);
 
   const offerSwipe = await request("/api/session/swipe", {
     method: "POST",
@@ -315,6 +317,20 @@ try {
   assert.equal(offerSwipe.payload.event.offer_id, offerCard.offer_id);
   assert.equal(offerSwipe.payload.session.offer_events.length, 1);
 
+  const secondOfferSwipe = await request("/api/session/swipe", {
+    method: "POST",
+    body: {
+      session_id: "smoke_p1_session",
+      action: "keep",
+      card_id: secondOfferCard.card_id,
+      dwell_ms: 920,
+    },
+  });
+  assert.equal(secondOfferSwipe.status, 200);
+  assert.equal(secondOfferSwipe.payload.event.action, "keep");
+  assert.equal(secondOfferSwipe.payload.event.offer_id, secondOfferCard.offer_id);
+  assert.equal(secondOfferSwipe.payload.session.offer_events.length, 2);
+
   const finalized = await request("/api/session/finalize", {
     method: "POST",
     body: {
@@ -328,6 +344,18 @@ try {
   assert.ok(finalized.payload.session.finalized_at);
   assert.equal(finalized.payload.result.hasSelection, true);
   assert.equal(finalized.payload.result.primary.offer_id, offerCard.offer_id);
+  assert.equal(finalized.payload.result.alternatives.length, 1);
+  assert.equal(finalized.payload.result.alternatives[0].offer_id, secondOfferCard.offer_id);
+  assert.equal(finalized.payload.result.selected_merchants.length, 2);
+  assert.equal(finalized.payload.result.selected_merchants[0].merchant_id, offerCard.merchant_id);
+  assert.equal(finalized.payload.result.selected_merchants[1].merchant_id, secondOfferCard.merchant_id);
+  assert.ok(finalized.payload.result.ranking_basis.includes("右滑"));
+  assert.equal(finalized.payload.result.context_cards.length, 2);
+  assert.ok(finalized.payload.result.context_cards[0].weather);
+  assert.ok(finalized.payload.result.context_cards[0].queue);
+  assert.ok(finalized.payload.result.context_cards[0].route);
+  assert.ok(Object.hasOwn(finalized.payload.result.context_cards[0], "best_deal"));
+  assert.ok(finalized.payload.result.deal_context);
   assert.equal(finalized.payload.evermind_session_summary.skipped, "not_configured");
   const persistedAfterFinalize = JSON.parse(await readFile(sessionFile, "utf8"));
   assert.equal(persistedAfterFinalize.stage, "final");
@@ -340,6 +368,56 @@ try {
   assert.equal(mealSummary.stage, "final");
   assert.equal(mealSummary.final_offer_id, offerCard.offer_id);
   assert.equal(mealSummary.final_merchant_id, offerCard.merchant_id);
+
+  const noKeepStarted = await request("/api/session/start", {
+    method: "POST",
+    body: {
+      session_id: "smoke_no_keep_session",
+      user_id: "smoke_user",
+      location: {
+        label: "烟测当前位置",
+        latitude: 22.52291,
+        longitude: 114.05454,
+        coordinate_type: "gcj02",
+        source: "smoke",
+      },
+      entry_form: {
+        raw_query: "今天想吃近一点的。",
+        party_size: 1,
+        budget_per_person_max: 60,
+      },
+    },
+  });
+  assert.equal(noKeepStarted.status, 200);
+  const noKeepSummary = await request("/api/session/advance", {
+    method: "POST",
+    body: {
+      session_id: "smoke_no_keep_session",
+      local_only: true,
+    },
+  });
+  assert.equal(noKeepSummary.status, 200);
+  const noKeepOffers = await request("/api/session/advance", {
+    method: "POST",
+    body: {
+      session_id: "smoke_no_keep_session",
+      limit: 3,
+      ai_explanations: false,
+    },
+  });
+  assert.equal(noKeepOffers.status, 200);
+  assert.ok(noKeepOffers.payload.session.current_cards.length > 0);
+  const noKeepFinalized = await request("/api/session/finalize", {
+    method: "POST",
+    body: {
+      session_id: "smoke_no_keep_session",
+    },
+  });
+  assert.equal(noKeepFinalized.status, 200);
+  assert.equal(noKeepFinalized.payload.result.hasSelection, false);
+  assert.equal(noKeepFinalized.payload.result.primary, null);
+  assert.equal(noKeepFinalized.payload.result.alternatives.length, 0);
+  assert.equal(noKeepFinalized.payload.result.selected_merchants.length, 0);
 
   const feedback = await request("/api/memory/post-meal-feedback", {
     method: "POST",
@@ -445,10 +523,11 @@ try {
   assert.equal(dreamInput.payload.dream_input.policy.may_create_confirmed_preferences, false);
   assert.equal(dreamInput.payload.dream_input.policy.may_modify_meal_session, false);
   assert.ok(dreamInput.payload.dream_input.allowed_outputs.includes("memory_candidates"));
-  assert.equal(dreamInput.payload.dream_input.meal_sessions.length, 1);
-  assert.equal(dreamInput.payload.dream_input.meal_sessions[0].session_id, "smoke_p1_session");
-  assert.equal(dreamInput.payload.dream_input.meal_sessions[0].status, "finalized");
-  assert.equal(dreamInput.payload.dream_input.meal_sessions[0].direction_events.length, 2);
+  assert.ok(dreamInput.payload.dream_input.meal_sessions.length >= 2);
+  const dreamMealSession = dreamInput.payload.dream_input.meal_sessions.find((item) => item.session_id === "smoke_p1_session");
+  assert.ok(dreamMealSession);
+  assert.equal(dreamMealSession.status, "finalized");
+  assert.equal(dreamMealSession.direction_events.length, 2);
   assert.equal(dreamInput.payload.dream_input.confirmed_preferences.length, 1);
   assert.ok(Array.isArray(dreamInput.payload.dream_input.pending_memory_candidates));
   assert.ok(dreamInput.payload.dream_input.merchant_feedback_summary.merchants.length >= 1);
@@ -603,7 +682,7 @@ try {
   });
   assert.equal(recoveredFinalize.status, 200);
   assert.equal(recoveredFinalize.payload.session.stage, "final");
-  assert.equal(recoveredFinalize.payload.result.hasSelection, true);
+  assert.equal(recoveredFinalize.payload.result.hasSelection, false);
   assert.equal(recoveredFinalize.payload.meta.recovered_from_stage, "direction_summary");
 
   const invalidAdvance = await request("/api/session/advance", {

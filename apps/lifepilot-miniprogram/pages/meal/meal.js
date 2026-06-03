@@ -244,8 +244,6 @@ Page({
     summaryCorrectionText: "",
     directionCorrectionNotice: "",
     result: null,
-    postMealFeedbackText: "",
-    postMealResponse: null,
     chatSessionId: "",
     chatMessages: [],
     chatInput: "",
@@ -1008,9 +1006,7 @@ Page({
         stageLabel: "最终确认",
         stageSubtitle: "吃完以后可以反馈给小汪",
         sessionStage: "final",
-        result,
-        postMealFeedbackText: "",
-        postMealResponse: null
+        result
       });
       wx.removeStorageSync(STORAGE_SESSION_ID);
     } catch (error) {
@@ -1021,36 +1017,22 @@ Page({
     }
   },
 
-  onFeedbackInput(event) {
-    this.setData({ postMealFeedbackText: event.detail.value });
-  },
-
-  async submitPostMealFeedback() {
-    const text = String(this.data.postMealFeedbackText || "").trim();
+  openPostMealFeedbackChat() {
     const primary = this.data.result && this.data.result.primary;
-    if (!text || !primary) return;
-    this.setData({ isLoading: true, loadingText: "小汪正在记录这次体验..." });
-    try {
-      const payload = await memoryApi.postMealFeedback({
-        user_id: DEFAULT_USER_ID,
-        session_id: this.data.sessionId,
-        offer_id: primary.offerId,
-        merchant_id: primary.merchantId,
-        merchant_name: primary.title,
-        feedback_text: text
-      });
-      this.setData({
-        postMealResponse: {
-          createdCount: payload.created_count || 0,
-          merchantFeedback: payload.merchant_feedback || null
-        }
-      });
-      wx.showToast({ title: payload.created_count ? "已生成待确认记忆" : "已记录反馈", icon: "none" });
-    } catch (error) {
-      wx.showToast({ title: "反馈提交失败", icon: "none" });
-    } finally {
-      this.setData({ isLoading: false, loadingText: "" });
-    }
+    const merchantName = primary ? primary.title : "刚刚这家";
+    const guideMessage = decorateChatMessage({
+      id: `post_meal_guide_${Date.now()}`,
+      role: "assistant",
+      content: `吃完回来告诉我 ${merchantName} 的真实感受就好。比如好不好吃、排队久不久、环境舒不舒服，我会帮你整理成待确认偏好。`,
+      skill_cards: []
+    });
+    this.setData({
+      activeTab: "chat",
+      stageLabel: "问小汪",
+      stageSubtitle: "可以聊天，也可以调起滑卡",
+      errorText: "",
+      chatMessages: this.data.chatMessages.concat(guideMessage)
+    });
   },
 
   switchMainTab(event) {

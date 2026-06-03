@@ -1127,12 +1127,6 @@ button::after {
   box-shadow: 0 18rpx 42rpx rgba(126, 74, 34, 0.16);
 }
 
-.result-image {
-  width: 100%;
-  height: 460rpx;
-  background: #dfe6df;
-}
-
 .result-content {
   padding: 26rpx 26rpx 30rpx;
 }
@@ -1148,6 +1142,25 @@ button::after {
   margin-bottom: 18rpx;
 }
 
+.result-merchant-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.result-merchant-cover {
+  flex-shrink: 0;
+  width: 132rpx;
+  height: 132rpx;
+  border-radius: 18rpx;
+  background: #dfe6df;
+}
+
+.result-merchant-copy {
+  min-width: 0;
+  flex: 1;
+}
+
 .result-merchant {
   color: #2d2118;
   font-size: 38rpx;
@@ -1155,11 +1168,12 @@ button::after {
   line-height: 1.18;
 }
 
-.dark-dish {
-  margin-top: 8rpx;
-  color: #d95d2d;
-  font-size: 28rpx;
-  font-weight: 900;
+.result-merchant-subtitle {
+  margin-top: 10rpx;
+  color: rgba(75, 50, 31, 0.58);
+  font-size: 24rpx;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
 .result-ai-row {
@@ -1221,6 +1235,71 @@ button::after {
   line-height: 1.42;
 }
 
+.final-context-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.final-context-item {
+  padding: 18rpx 20rpx;
+  border-radius: 14rpx;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: inset 0 0 0 1rpx rgba(125, 78, 44, 0.08);
+}
+
+.final-context-label {
+  margin-bottom: 6rpx;
+  color: #8a4a28;
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.final-context-value {
+  color: rgba(45, 33, 24, 0.78);
+  font-size: 23rpx;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.deal-block {
+  margin-top: 20rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 14rpx;
+  background: rgba(255, 99, 52, 0.09);
+}
+
+.deal-title {
+  margin-top: 10rpx;
+  color: #2d2118;
+  font-size: 25rpx;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.deal-line {
+  margin-top: 8rpx;
+  color: #d95d2d;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.deal-muted,
+.deal-source,
+.final-context-notice {
+  margin-top: 8rpx;
+  color: rgba(45, 33, 24, 0.64);
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.deal-source,
+.final-context-notice {
+  color: rgba(75, 50, 31, 0.5);
+}
+
 .alt-list,
 .feedback-panel {
   margin-top: 28rpx;
@@ -1231,21 +1310,62 @@ button::after {
 
 .alt-item {
   display: flex;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
+  align-items: flex-start;
+  gap: 18rpx;
+  padding: 20rpx 0;
   border-top: 1rpx solid #edf0ed;
   color: #293039;
   font-size: 25rpx;
 }
 
-.feedback-textarea {
-  min-height: 132rpx;
-  margin-bottom: 18rpx;
+.alt-cover {
+  flex-shrink: 0;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 14rpx;
+  background: #dfe6df;
 }
 
-.feedback-notice {
-  margin: 16rpx 0 0;
+.alt-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.alt-title {
+  color: #2d2118;
+  font-size: 27rpx;
+  font-weight: 900;
+  line-height: 1.28;
+}
+
+.alt-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 10rpx;
+}
+
+.alt-tag {
+  padding: 5rpx 10rpx;
+  border-radius: 999rpx;
+  background: rgba(236, 96, 50, 0.1);
+  color: #6b3b22;
+  font-size: 20rpx;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.alt-reason,
+.alt-deal {
+  margin-top: 10rpx;
+  color: rgba(45, 33, 24, 0.66);
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 1.42;
+}
+
+.alt-deal {
+  color: #d95d2d;
 }
 
 .full-button {

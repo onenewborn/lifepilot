@@ -379,51 +379,81 @@
   <view wx:elif="{{activeTab === 'meal' && stage === 'final'}}" class="final-panel">
     <view wx:if="{{result.hasSelection}}">
       <view class="final-kicker">最终确认</view>
-      <view class="section-title final-title">小汪建议这一家</view>
+      <view class="section-title final-title">小汪建议优先看这家</view>
       <view class="result-ai-row">
         <image class="result-ai-avatar" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
         <view class="result-ai-copy">{{result.summaryText}}</view>
       </view>
       <view class="result-card">
-        <image class="result-image" src="{{result.primary.imageUrl}}" mode="aspectFill" />
         <view class="result-content">
-          <view class="result-merchant">{{result.primary.title}}</view>
-          <view class="dish-title dark-dish">{{result.primary.dishTitle}}</view>
+          <view class="result-merchant-row">
+            <image class="result-merchant-cover" src="{{result.primary.merchantCoverUrl || result.primary.imageUrl}}" mode="aspectFill" binderror="onImageError" />
+            <view class="result-merchant-copy">
+              <view class="result-merchant">{{result.primary.title}}</view>
+              <view class="result-merchant-subtitle">按你右滑保留的商户排序</view>
+            </view>
+          </view>
           <view class="tag-row fixed-tags">
             <text wx:for="{{result.primary.tags}}" wx:key="*this" class="tag dark-tag">{{item}}</text>
           </view>
           <view wx:if="{{result.primary.matched.length}}" class="result-reason-block">
-            <view class="result-mini-title">为什么是这家</view>
+            <view class="result-mini-title">为什么优先看这家</view>
             <view wx:for="{{result.primary.matched}}" wx:key="*this" class="result-reason-line">{{item}}</view>
           </view>
           <view wx:if="{{result.primary.issueLines.length}}" class="result-reason-block result-watchout-block">
             <view class="result-mini-title">{{result.primary.issueTitle}}</view>
             <view wx:for="{{result.primary.issueLines}}" wx:key="*this" class="result-reason-line">{{item}}</view>
           </view>
+          <view wx:if="{{result.primary.finalContext}}" class="final-context-grid">
+            <view class="final-context-item">
+              <view class="final-context-label">天气</view>
+              <view class="final-context-value">{{result.primary.finalContext.weatherText}}</view>
+            </view>
+            <view class="final-context-item">
+              <view class="final-context-label">路线</view>
+              <view class="final-context-value">{{result.primary.finalContext.routeText}}</view>
+            </view>
+            <view class="final-context-item">
+              <view class="final-context-label">排队</view>
+              <view class="final-context-value">{{result.primary.finalContext.queueText}}</view>
+            </view>
+          </view>
+          <view wx:if="{{result.primary.finalContext}}" class="deal-block">
+            <view class="result-mini-title">团购线索</view>
+            <block wx:if="{{result.primary.finalContext.deal.hasDeal}}">
+              <view class="deal-title">{{result.primary.finalContext.deal.title}}</view>
+              <view class="deal-line">{{result.primary.finalContext.deal.priceText}}</view>
+              <view wx:if="{{result.primary.finalContext.deal.partyText || result.primary.finalContext.deal.restrictionsText}}" class="deal-muted">
+                {{result.primary.finalContext.deal.partyText}}{{result.primary.finalContext.deal.partyText && result.primary.finalContext.deal.restrictionsText ? ' · ' : ''}}{{result.primary.finalContext.deal.restrictionsText}}
+              </view>
+              <view wx:if="{{result.primary.finalContext.deal.sourceText || result.primary.finalContext.deal.confidenceText}}" class="deal-source">
+                {{result.primary.finalContext.deal.sourceText}}{{result.primary.finalContext.deal.sourceText && result.primary.finalContext.deal.confidenceText ? ' · 置信度 ' : ''}}{{result.primary.finalContext.deal.confidenceText}}
+              </view>
+            </block>
+            <view wx:else class="deal-muted">{{result.primary.finalContext.noDealNote}}</view>
+          </view>
+          <view wx:if="{{result.primary.finalContext}}" class="final-context-notice">{{result.primary.finalContext.sourceNotice}}</view>
         </view>
       </view>
 
       <view wx:if="{{result.alternatives.length}}" class="alt-list">
-        <view class="mini-title">备选</view>
+        <view class="mini-title">你保留下来的其他商户</view>
         <view wx:for="{{result.alternatives}}" wx:key="cardId" class="alt-item">
-          <text>{{item.title}}</text>
-          <text>{{item.dishTitle}}</text>
+          <image class="alt-cover" src="{{item.merchantCoverUrl || item.imageUrl}}" mode="aspectFill" binderror="onImageError" />
+          <view class="alt-copy">
+            <view class="alt-title">{{item.title}}</view>
+            <view class="alt-tags">
+              <text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" class="alt-tag">{{tag}}</text>
+            </view>
+            <view wx:if="{{item.matched.length}}" class="alt-reason">{{item.matched[0]}}</view>
+            <view wx:if="{{item.finalContext && item.finalContext.deal.summaryText}}" class="alt-deal">{{item.finalContext.deal.summaryText}}</view>
+          </view>
         </view>
       </view>
 
       <view class="feedback-panel">
         <view class="field-label">吃完以后告诉小汪真实感受</view>
-        <textarea
-          class="feedback-textarea"
-          value="{{postMealFeedbackText}}"
-          maxlength="180"
-          bindinput="onFeedbackInput"
-          placeholder="比如：这家面很好吃，但环境有点吵。"
-        />
-        <button class="primary-button" loading="{{isLoading}}" bindtap="submitPostMealFeedback">提交反馈</button>
-        <view wx:if="{{postMealResponse}}" class="notice feedback-notice">
-          已记录反馈，生成 {{postMealResponse.createdCount}} 条待确认记忆。
-        </view>
+        <button class="primary-button" bindtap="openPostMealFeedbackChat">吃完告诉小汪</button>
       </view>
     </view>
     <view wx:else class="empty-state">

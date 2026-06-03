@@ -80,6 +80,78 @@ function normalizeDanmaku(lines = []) {
     }));
 }
 
+function plainMoneyText(value) {
+  const number = Number(value || 0);
+  return number > 0 ? `${number}` : "";
+}
+
+function dealPartyText(deal = {}) {
+  const min = deal.party_size_min;
+  const max = deal.party_size_max;
+  if (min && max && min !== max) return `${min}-${max} 人`;
+  if (min) return `${min} 人起`;
+  if (max) return `${max} 人内`;
+  return "";
+}
+
+function normalizeDealSummary(deal = null, context = {}) {
+  if (!deal) {
+    return {
+      hasDeal: false,
+      title: "",
+      priceText: "",
+      partyText: "",
+      restrictionsText: "",
+      sourceText: "",
+      confidenceText: "",
+      summaryText: context.no_deal_note || "当前种子库暂无优惠线索，不能据此判断真实平台没有优惠。"
+    };
+  }
+  const price = plainMoneyText(deal.deal_price_per_person || deal.deal_price);
+  const restrictions = Array.isArray(deal.restrictions) ? deal.restrictions.filter(Boolean).slice(0, 2) : [];
+  const source = [deal.source_label || deal.source_type, deal.data_checked_at].filter(Boolean).join(" · ");
+  return {
+    hasDeal: true,
+    title: compactText(deal.title, "团购优惠线索"),
+    priceText: price ? `券后约 ${price} / 人` : "",
+    partyText: dealPartyText(deal),
+    restrictionsText: restrictions.join("；"),
+    sourceText: source,
+    confidenceText: deal.confidence ? `${Math.round(Number(deal.confidence) * 100)}%` : "",
+    summaryText: [
+      price ? `券后约 ${price} / 人` : "",
+      dealPartyText(deal),
+      restrictions[0] || ""
+    ].filter(Boolean).join(" · ")
+  };
+}
+
+function normalizeFinalContext(context = null) {
+  if (!context) return null;
+  const route = context.route || {};
+  const routeRecommended = route.recommended || {};
+  const weather = context.weather || {};
+  const queue = context.queue || {};
+  const deal = normalizeDealSummary(context.best_deal, context);
+  return {
+    merchantId: context.merchant_id || context.merchantId || "",
+    weatherText: compactText(weather.text, "天气以实时信息为准"),
+    weatherAffects: Boolean(weather.affects_recommendation),
+    weatherFallback: Boolean(weather.fallback_used),
+    queueText: compactText(queue.average_queue_wait, "排队需要到店前确认"),
+    queueRisk: compactText(queue.queue_risk, ""),
+    routeText: compactText([
+      routeRecommended.distance_text,
+      routeRecommended.eta
+    ].filter(Boolean).join(" · "), "路线以真实地图为准"),
+    routeFallback: Boolean(route.fallback_used),
+    deal,
+    dealCount: Number(context.deal_count || 0),
+    noDealNote: context.no_deal_note || deal.summaryText || "",
+    sourceNotice: "天气、路线、排队和团购均为出发前辅助线索，真实营业与平台信息仍需确认。"
+  };
+}
+
 function normalizeDirectionCard(card = {}, order = 0) {
   const directionId = card.direction_id || card.directionId || card.card_id || `direction_${order}`;
   const manifestVideo = directionVideos[directionId] || {};
@@ -145,6 +217,7 @@ function normalizeOfferCard(card = {}, order = 0) {
     subtitle: compactText(card.hook || card.description || facts.address, "小汪会按刚刚的选择继续收束到这家店"),
     badge: compactText(card.badge, "深圳福田 · 商家卡"),
     imageUrl,
+    merchantCoverUrl: assetUrl(card.cover_thumb_url || card.coverThumbUrl || facts.cover_thumb_url || facts.coverThumbUrl || card.image_url || card.imageUrl || ""),
     coverThumbUrl: assetUrl(card.cover_thumb_url || card.coverThumbUrl || facts.cover_thumb_url || facts.coverThumbUrl || card.image_url || card.imageUrl || ""),
     posterUrl: (firstVideo && firstVideo.posterUrl) || assetUrl(card.poster_url || card.posterUrl || card.image_url || card.imageUrl || ""),
     videoUrl: (firstVideo && firstVideo.url) || "",
@@ -167,7 +240,8 @@ function normalizeOfferCard(card = {}, order = 0) {
     issueTitle: watchouts.length ? "需要留意" : "可能不合适",
     issueLines,
     hasConflict: Boolean(conflicts.length),
-    aiExplanationMode: card.ai_explanation_mode || card.aiExplanationMode || ""
+    aiExplanationMode: card.ai_explanation_mode || card.aiExplanationMode || "",
+    finalContext: normalizeFinalContext(card.final_context || card.finalContext || null)
   };
 }
 
@@ -179,6 +253,9 @@ function normalizeResult(result = {}) {
     hasSelection: true,
     primary: normalizedPrimary,
     alternatives: (result.alternatives || []).map(normalizeOfferCard),
+    selectedMerchants: (result.selected_merchants || result.selectedMerchants || [primary, ...(result.alternatives || [])]).map(normalizeOfferCard),
+    rankingBasis: result.ranking_basis || result.rankingBasis || "",
+    contextCards: result.context_cards || result.contextCards || [],
     summaryText: result.summary_text || result.summaryText || `小汪建议先去 ${normalizedPrimary.title}。`
   };
 }
