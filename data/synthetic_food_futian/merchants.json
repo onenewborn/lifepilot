@@ -1561,6 +1561,337 @@
         ],
         "danmaku": []
       }
+    },
+    {
+      "merchant_id": "m_futian_029_sushi_gin",
+      "name": "鮨吟Sushi Gin",
+      "area": "深圳福田",
+      "neighborhood": "车公庙",
+      "scene": "车公庙创建大厦的寿司刺身店，适合想安静吃一顿日料或小范围聊天。",
+      "environment": {
+        "space_type": "寿司刺身日料店",
+        "noise_level": "low",
+        "solo_friendly": true,
+        "chat_friendly": true,
+        "comfort_level": "premium"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 6,
+      "opening_hours": {
+        "weekday": [
+          "11:30",
+          "22:00"
+        ],
+        "weekend": [
+          "11:30",
+          "22:00"
+        ]
+      },
+      "synthetic": false,
+      "meal_service_type": "dine_in",
+      "reservation_mode": "recommended",
+      "address": "深圳市福田区车公庙深南大道6023号创建大厦1层",
+      "location": {
+        "latitude": 22.535,
+        "longitude": 114.025,
+        "coordinate_type": "gcj02",
+        "source": "public_web_curated_anchor_needs_map_confirm"
+      },
+      "distance_km": 0.7,
+      "source_type": "public_web_curated",
+      "specialties": [
+        "海胆饭手卷",
+        "马粪海胆",
+        "味噌汤",
+        "鹅肝金枪鱼",
+        "刺身三点"
+      ],
+      "public_sources": [
+        "https://www.openrice.com.cn/zh-cn/shenzhen/r-%E9%AE%A8%E5%90%9Fsushi-gin-%E8%BD%A6%E5%85%AC%E5%BA%99-%E6%97%A5%E6%9C%AC%E8%8F%9C-%E5%AF%BF%E5%8F%B8-%E5%88%BA%E8%BA%AB-r5971261"
+      ],
+      "data_checked_at": "2026-06-03",
+      "media": {
+        "poster_url": "",
+        "video_sources": [],
+        "image_urls": [],
+        "danmaku": []
+      }
+    },
+    {
+      "merchant_id": "m_futian_030_runyuan_coconut_chicken",
+      "name": "润园四季椰子鸡火锅",
+      "area": "深圳福田",
+      "neighborhood": "车公庙",
+      "scene": "深圳本地连锁椰子鸡，汤底清甜，适合两三个人吃一顿舒服的正餐。",
+      "environment": {
+        "space_type": "椰子鸡火锅店",
+        "noise_level": "medium",
+        "solo_friendly": false,
+        "chat_friendly": true,
+        "comfort_level": "comfortable"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 8,
+      "opening_hours": {
+        "weekday": [
+          "10:00",
+          "22:00"
+        ],
+        "weekend": [
+          "10:00",
+          "22:00"
+        ]
+      },
+      "synthetic": false,
+      "meal_service_type": "dine_in",
+      "reservation_mode": "optional",
+      "address": "深圳市福田区深南大道6007号安徽大厦创展中心3楼",
+      "location": {
+        "latitude": 22.533,
+        "longitude": 114.023,
+        "coordinate_type": "gcj02",
+        "source": "public_web_curated_anchor_needs_map_confirm"
+      },
+      "distance_km": 0.8,
+      "source_type": "public_web_curated",
+      "specialties": [
+        "竹笙椰子鸡",
+        "原味椰子鸡",
+        "珍珠小马蹄",
+        "腊味煲仔饭",
+        "炸腐竹"
+      ],
+      "public_sources": [
+        "https://maps.apple.com/place?auid=1117349099146661&lsp=57879",
+        "https://szgor.com/5847/"
+      ],
+      "data_checked_at": "2026-06-03",
+      "media": {
+        "poster_url": "",
+        "video_sources": [],
+        "image_urls": [],
+        "danmaku": []
+      }
+    },
+    {
+      "merchant_id": "m_futian_031_dayouli_cha_chaan_teng",
+      "name": "大有利茶餐厅",
+      "area": "深圳福田",
+      "neighborhood": "皇岗/水围",
+      "scene": "深圳老牌港式茶餐厅，出餐快，适合焗饭、通粉、冻饮这类简餐需求。",
+      "environment": {
+        "space_type": "港式茶餐厅",
+        "noise_level": "medium",
+        "solo_friendly": true,
+        "chat_friendly": true,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 4,
+      "opening_hours": {
+        "weekday": [
+          "00:00",
+          "23:59"
+        ],
+        "weekend": [
+          "00:00",
+          "23:59"
+        ]
+      },
+      "synthetic": false,
+      "meal_service_type": "quick_meal",
+      "reservation_mode": "none",
+      "address": "深圳市福田区福民路水围村316号1-2楼",
+      "location": {
+        "latitude": 22.522,
+        "longitude": 114.063,
+        "coordinate_type": "gcj02",
+        "source": "public_web_curated_anchor_needs_map_confirm"
+      },
+      "distance_km": 4.2,
+      "source_type": "public_web_curated",
+      "specialties": [
+        "招牌焗猪扒饭",
+        "火腿通粉",
+        "冻柠茶",
+        "菠萝油",
+        "八宝饭"
+      ],
+      "public_sources": [
+        "https://www.cityhui.com/shop/15232.html"
+      ],
+      "data_checked_at": "2026-06-03",
+      "media": {
+        "poster_url": "",
+        "video_sources": [],
+        "image_urls": [],
+        "danmaku": []
+      }
+    },
+    {
+      "merchant_id": "m_futian_032_baofanfan_tomato_hotpot",
+      "name": "爆番番·黄番茄火锅",
+      "area": "深圳福田",
+      "neighborhood": "福田中心区",
+      "scene": "主打黄番茄锅底的小火锅店，适合想吃酸甜清爽锅底的人。",
+      "environment": {
+        "space_type": "商场火锅店",
+        "noise_level": "medium",
+        "solo_friendly": false,
+        "chat_friendly": true,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 6,
+      "opening_hours": {
+        "weekday": [
+          "10:30",
+          "22:00"
+        ],
+        "weekend": [
+          "10:30",
+          "22:00"
+        ]
+      },
+      "synthetic": false,
+      "meal_service_type": "dine_in",
+      "reservation_mode": "optional",
+      "address": "深圳市福田区金田路2028号卓悦INTOWN购物中心三楼",
+      "location": {
+        "latitude": 22.537,
+        "longitude": 114.062,
+        "coordinate_type": "gcj02",
+        "source": "public_web_curated_anchor_needs_map_confirm"
+      },
+      "distance_km": 4.8,
+      "source_type": "public_web_curated",
+      "specialties": [
+        "黄番茄锅底",
+        "牛肉小锅",
+        "蔬菜拼盘",
+        "海鲜火锅"
+      ],
+      "public_sources": [
+        "https://ugo-hk.com/restaurant/3108/%E7%88%86%E7%95%AA%E7%95%AA-%E9%BB%83%E7%95%AA%E8%8C%84%E7%81%AB%E9%8D%8B"
+      ],
+      "data_checked_at": "2026-06-03",
+      "media": {
+        "poster_url": "",
+        "video_sources": [],
+        "image_urls": [],
+        "danmaku": []
+      }
+    },
+    {
+      "merchant_id": "m_futian_033_blue_vegan_salad",
+      "name": "Blue&Vegan轻食·沙拉满都",
+      "area": "深圳福田",
+      "neighborhood": "皇岗/水围",
+      "scene": "皇岗水围附近的轻食沙拉店，适合低负担、鸡胸肉和六谷碗这类减脂餐。",
+      "environment": {
+        "space_type": "轻食快餐店",
+        "noise_level": "low",
+        "solo_friendly": true,
+        "chat_friendly": false,
+        "comfort_level": "basic"
+      },
+      "queue_risk": "low",
+      "subway_walk_min": 12,
+      "opening_hours": {
+        "weekday": [
+          "08:30",
+          "21:00"
+        ],
+        "weekend": [
+          "08:30",
+          "21:00"
+        ]
+      },
+      "synthetic": false,
+      "meal_service_type": "quick_meal",
+      "reservation_mode": "none",
+      "address": "深圳市福田区皇岗社区上围二村47号103",
+      "location": {
+        "latitude": 22.529,
+        "longitude": 114.062,
+        "coordinate_type": "gcj02",
+        "source": "public_web_curated_anchor_needs_map_confirm"
+      },
+      "distance_km": 4.4,
+      "source_type": "public_web_curated",
+      "specialties": [
+        "低GI热力牛肉六谷碗",
+        "低GI嫩煎鸡胸六谷碗",
+        "烤鸡腿肉无米炒饭",
+        "虾仁沙拉"
+      ],
+      "public_sources": [
+        "https://www.openrice.com.cn/zh/shenzhen/r-blue-vegan%E8%BC%95%E9%A3%9F-%E6%B2%99%E6%8B%89%E6%BB%BF%E9%83%BD-%E7%9A%87%E5%B4%97-%E6%B0%B4%E5%9C%8D-%E8%A5%BF%E5%BC%8F-r5943187",
+        "https://sz.city8.com/cater/861g4i70bfpjb6e71a"
+      ],
+      "data_checked_at": "2026-06-03",
+      "media": {
+        "poster_url": "",
+        "video_sources": [],
+        "image_urls": [],
+        "danmaku": []
+      }
+    },
+    {
+      "merchant_id": "m_futian_034_hantiejiang_hotpot",
+      "name": "憨铁匠重庆老火锅",
+      "area": "深圳福田",
+      "neighborhood": "车公庙",
+      "scene": "车公庙苍松大厦的重庆老火锅，适合朋友一起吃毛肚、鸭血和牛油锅。",
+      "environment": {
+        "space_type": "重庆老火锅店",
+        "noise_level": "high",
+        "solo_friendly": false,
+        "chat_friendly": true,
+        "comfort_level": "standard"
+      },
+      "queue_risk": "medium",
+      "subway_walk_min": 6,
+      "opening_hours": {
+        "weekday": [
+          "11:00",
+          "02:30"
+        ],
+        "weekend": [
+          "11:00",
+          "02:30"
+        ]
+      },
+      "synthetic": false,
+      "meal_service_type": "dine_in",
+      "reservation_mode": "optional",
+      "address": "深圳市福田区车公庙泰然七路25号苍松大厦1层102号铺",
+      "location": {
+        "latitude": 22.535,
+        "longitude": 114.029,
+        "coordinate_type": "gcj02",
+        "source": "public_web_curated_anchor_needs_map_confirm"
+      },
+      "distance_km": 0.9,
+      "source_type": "public_web_curated",
+      "specialties": [
+        "脆毛肚",
+        "精品肥牛",
+        "鲜鸭血",
+        "现剥虾仁",
+        "嫩牛肉",
+        "红糖糍粑"
+      ],
+      "public_sources": [
+        "https://www.openrice.com.cn/zh-cn/shenzhen/r-%E6%86%A8%E9%93%81%E5%8C%A0%E9%87%8D%E5%BA%86%E8%80%81%E7%81%AB%E9%94%85-%E8%BD%A6%E5%85%AC%E5%BA%99-%E5%B7%9D%E8%8F%9C-%E7%81%AB%E9%94%85-r6139828"
+      ],
+      "data_checked_at": "2026-06-03",
+      "media": {
+        "poster_url": "",
+        "video_sources": [],
+        "image_urls": [],
+        "danmaku": []
+      }
     }
   ]
 }

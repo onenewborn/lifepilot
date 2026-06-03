@@ -3041,6 +3041,665 @@
         }
       ],
       "updated_at": "2026-06-01T00:00:00+08:00"
+    },
+    {
+      "merchant_id": "m_futian_029_sushi_gin",
+      "merchant_name": "鮨吟Sushi Gin",
+      "source_type": "mixed_public_and_demo_constructed",
+      "evidence_confidence": "medium",
+      "rating": {
+        "value": 4.5,
+        "scale": 5,
+        "source": "demo_constructed_from_public_listing_context"
+      },
+      "review_stats": {
+        "review_count": 360,
+        "positive_count": 284,
+        "positive_ratio": 0.79,
+        "neutral_count": 54,
+        "neutral_ratio": 0.15,
+        "negative_count": 22,
+        "negative_ratio": 0.06,
+        "source": "demo_constructed_distribution"
+      },
+      "reputation_tags": [
+        {
+          "tag": "寿司刺身品质稳定",
+          "sentiment": "positive",
+          "mention_count": 190,
+          "mention_ratio": 0.53,
+          "evidence_text": "190 条左右评价提到“寿司刺身品质稳定”，约占总评价 53%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "环境安静适合聊天",
+          "sentiment": "positive",
+          "mention_count": 148,
+          "mention_ratio": 0.41,
+          "evidence_text": "148 条左右评价提到“环境安静适合聊天”，约占总评价 41%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "海胆手卷有记忆点",
+          "sentiment": "positive",
+          "mention_count": 116,
+          "mention_ratio": 0.32,
+          "evidence_text": "116 条左右评价提到“海胆手卷有记忆点”，约占总评价 32%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "预算偏高",
+          "sentiment": "neutral",
+          "mention_count": 82,
+          "mention_ratio": 0.23,
+          "evidence_text": "82 条左右评价提到“预算偏高”，约占总评价 23%。",
+          "source": "demo_constructed_tag_summary"
+        }
+      ],
+      "signature_dishes": [
+        {
+          "name": "海胆饭手卷",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "马粪海胆",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "味噌汤",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "鹅肝金枪鱼",
+          "confidence": 0.72,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "刺身三点",
+          "confidence": 0.72,
+          "source": "public_listing_or_menu_curation"
+        }
+      ],
+      "scenario_fit": {
+        "solo": true,
+        "friends": true,
+        "quick_meal": false,
+        "reservation_preferred": true,
+        "queue_risk": "medium"
+      },
+      "negative_signals": [
+        {
+          "signal": "预算偏高",
+          "severity": "low",
+          "mention_count": 82,
+          "mention_ratio": 0.23
+        }
+      ],
+      "evidence": [
+        {
+          "type": "public_source_url",
+          "url": "https://www.openrice.com.cn/zh-cn/shenzhen/r-%E9%AE%A8%E5%90%9Fsushi-gin-%E8%BD%A6%E5%85%AC%E5%BA%99-%E6%97%A5%E6%9C%AC%E8%8F%9C-%E5%AF%BF%E5%8F%B8-%E5%88%BA%E8%BA%AB-r5971261",
+          "note": "用于确认商户、地址、菜品或公开榜单信息。"
+        },
+        {
+          "type": "demo_reputation_seed",
+          "note": "评分、评论分布和标签计数用于产品原型与 OpenClaw skill 评测，未声明为实时平台评分。"
+        }
+      ],
+      "updated_at": "2026-06-03T00:00:00+08:00"
+    },
+    {
+      "merchant_id": "m_futian_030_runyuan_coconut_chicken",
+      "merchant_name": "润园四季椰子鸡火锅",
+      "source_type": "mixed_public_and_demo_constructed",
+      "evidence_confidence": "medium",
+      "rating": {
+        "value": 4.4,
+        "scale": 5,
+        "source": "demo_constructed_from_public_listing_context"
+      },
+      "review_stats": {
+        "review_count": 1880,
+        "positive_count": 1504,
+        "positive_ratio": 0.8,
+        "neutral_count": 263,
+        "neutral_ratio": 0.14,
+        "negative_count": 113,
+        "negative_ratio": 0.06,
+        "source": "demo_constructed_distribution"
+      },
+      "reputation_tags": [
+        {
+          "tag": "椰子鸡汤底清甜",
+          "sentiment": "positive",
+          "mention_count": 1015,
+          "mention_ratio": 0.54,
+          "evidence_text": "1015 条左右评价提到“椰子鸡汤底清甜”，约占总评价 54%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "适合朋友家庭聚餐",
+          "sentiment": "positive",
+          "mention_count": 790,
+          "mention_ratio": 0.42,
+          "evidence_text": "790 条左右评价提到“适合朋友家庭聚餐”，约占总评价 42%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "腊味煲仔饭受欢迎",
+          "sentiment": "positive",
+          "mention_count": 451,
+          "mention_ratio": 0.24,
+          "evidence_text": "451 条左右评价提到“腊味煲仔饭受欢迎”，约占总评价 24%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "饭点可能等位",
+          "sentiment": "neutral",
+          "mention_count": 244,
+          "mention_ratio": 0.13,
+          "evidence_text": "244 条左右评价提到“饭点可能等位”，约占总评价 13%。",
+          "source": "demo_constructed_tag_summary"
+        }
+      ],
+      "signature_dishes": [
+        {
+          "name": "竹笙椰子鸡",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "原味椰子鸡",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "珍珠小马蹄",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "腊味煲仔饭",
+          "confidence": 0.72,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "炸腐竹",
+          "confidence": 0.72,
+          "source": "public_listing_or_menu_curation"
+        }
+      ],
+      "scenario_fit": {
+        "solo": false,
+        "friends": true,
+        "quick_meal": false,
+        "reservation_preferred": true,
+        "queue_risk": "medium"
+      },
+      "negative_signals": [
+        {
+          "signal": "饭点可能等位",
+          "severity": "low",
+          "mention_count": 244,
+          "mention_ratio": 0.13
+        }
+      ],
+      "evidence": [
+        {
+          "type": "public_source_url",
+          "url": "https://maps.apple.com/place?auid=1117349099146661&lsp=57879",
+          "note": "用于确认商户、地址、菜品或公开榜单信息。"
+        },
+        {
+          "type": "public_source_url",
+          "url": "https://szgor.com/5847/",
+          "note": "用于确认商户、地址、菜品或公开榜单信息。"
+        },
+        {
+          "type": "demo_reputation_seed",
+          "note": "评分、评论分布和标签计数用于产品原型与 OpenClaw skill 评测，未声明为实时平台评分。"
+        }
+      ],
+      "updated_at": "2026-06-03T00:00:00+08:00"
+    },
+    {
+      "merchant_id": "m_futian_031_dayouli_cha_chaan_teng",
+      "merchant_name": "大有利茶餐厅",
+      "source_type": "mixed_public_and_demo_constructed",
+      "evidence_confidence": "medium",
+      "rating": {
+        "value": 4.2,
+        "scale": 5,
+        "source": "demo_constructed_from_public_listing_context"
+      },
+      "review_stats": {
+        "review_count": 1460,
+        "positive_count": 1051,
+        "positive_ratio": 0.72,
+        "neutral_count": 321,
+        "neutral_ratio": 0.22,
+        "negative_count": 88,
+        "negative_ratio": 0.06,
+        "source": "demo_constructed_distribution"
+      },
+      "reputation_tags": [
+        {
+          "tag": "焗猪扒饭满足",
+          "sentiment": "positive",
+          "mention_count": 715,
+          "mention_ratio": 0.49,
+          "evidence_text": "715 条左右评价提到“焗猪扒饭满足”，约占总评价 49%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "茶餐厅选择多",
+          "sentiment": "positive",
+          "mention_count": 613,
+          "mention_ratio": 0.42,
+          "evidence_text": "613 条左右评价提到“茶餐厅选择多”，约占总评价 42%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "出餐比较快",
+          "sentiment": "positive",
+          "mention_count": 496,
+          "mention_ratio": 0.34,
+          "evidence_text": "496 条左右评价提到“出餐比较快”，约占总评价 34%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "饭点环境较吵",
+          "sentiment": "neutral",
+          "mention_count": 234,
+          "mention_ratio": 0.16,
+          "evidence_text": "234 条左右评价提到“饭点环境较吵”，约占总评价 16%。",
+          "source": "demo_constructed_tag_summary"
+        }
+      ],
+      "signature_dishes": [
+        {
+          "name": "招牌焗猪扒饭",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "火腿通粉",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "冻柠茶",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "菠萝油",
+          "confidence": 0.72,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "八宝饭",
+          "confidence": 0.72,
+          "source": "public_listing_or_menu_curation"
+        }
+      ],
+      "scenario_fit": {
+        "solo": true,
+        "friends": true,
+        "quick_meal": true,
+        "reservation_preferred": false,
+        "queue_risk": "medium"
+      },
+      "negative_signals": [
+        {
+          "signal": "饭点环境较吵",
+          "severity": "low",
+          "mention_count": 234,
+          "mention_ratio": 0.16
+        }
+      ],
+      "evidence": [
+        {
+          "type": "public_source_url",
+          "url": "https://www.cityhui.com/shop/15232.html",
+          "note": "用于确认商户、地址、菜品或公开榜单信息。"
+        },
+        {
+          "type": "demo_reputation_seed",
+          "note": "评分、评论分布和标签计数用于产品原型与 OpenClaw skill 评测，未声明为实时平台评分。"
+        }
+      ],
+      "updated_at": "2026-06-03T00:00:00+08:00"
+    },
+    {
+      "merchant_id": "m_futian_032_baofanfan_tomato_hotpot",
+      "merchant_name": "爆番番·黄番茄火锅",
+      "source_type": "mixed_public_and_demo_constructed",
+      "evidence_confidence": "medium",
+      "rating": {
+        "value": 4.3,
+        "scale": 5,
+        "source": "demo_constructed_from_public_listing_context"
+      },
+      "review_stats": {
+        "review_count": 520,
+        "positive_count": 395,
+        "positive_ratio": 0.76,
+        "neutral_count": 94,
+        "neutral_ratio": 0.18,
+        "negative_count": 31,
+        "negative_ratio": 0.06,
+        "source": "demo_constructed_distribution"
+      },
+      "reputation_tags": [
+        {
+          "tag": "黄番茄锅底清爽",
+          "sentiment": "positive",
+          "mention_count": 286,
+          "mention_ratio": 0.55,
+          "evidence_text": "286 条左右评价提到“黄番茄锅底清爽”，约占总评价 55%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "比牛油锅负担低",
+          "sentiment": "positive",
+          "mention_count": 198,
+          "mention_ratio": 0.38,
+          "evidence_text": "198 条左右评价提到“比牛油锅负担低”，约占总评价 38%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "商场聚餐方便",
+          "sentiment": "positive",
+          "mention_count": 151,
+          "mention_ratio": 0.29,
+          "evidence_text": "151 条左右评价提到“商场聚餐方便”，约占总评价 29%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "单人吃略不划算",
+          "sentiment": "neutral",
+          "mention_count": 68,
+          "mention_ratio": 0.13,
+          "evidence_text": "68 条左右评价提到“单人吃略不划算”，约占总评价 13%。",
+          "source": "demo_constructed_tag_summary"
+        }
+      ],
+      "signature_dishes": [
+        {
+          "name": "黄番茄锅底",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "牛肉小锅",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "蔬菜拼盘",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "海鲜火锅",
+          "confidence": 0.72,
+          "source": "public_listing_or_menu_curation"
+        }
+      ],
+      "scenario_fit": {
+        "solo": true,
+        "friends": true,
+        "quick_meal": false,
+        "reservation_preferred": true,
+        "queue_risk": "medium"
+      },
+      "negative_signals": [
+        {
+          "signal": "单人吃略不划算",
+          "severity": "low",
+          "mention_count": 68,
+          "mention_ratio": 0.13
+        }
+      ],
+      "evidence": [
+        {
+          "type": "public_source_url",
+          "url": "https://ugo-hk.com/restaurant/3108/%E7%88%86%E7%95%AA%E7%95%AA-%E9%BB%83%E7%95%AA%E8%8C%84%E7%81%AB%E9%8D%8B",
+          "note": "用于确认商户、地址、菜品或公开榜单信息。"
+        },
+        {
+          "type": "demo_reputation_seed",
+          "note": "评分、评论分布和标签计数用于产品原型与 OpenClaw skill 评测，未声明为实时平台评分。"
+        }
+      ],
+      "updated_at": "2026-06-03T00:00:00+08:00"
+    },
+    {
+      "merchant_id": "m_futian_033_blue_vegan_salad",
+      "merchant_name": "Blue&Vegan轻食·沙拉满都",
+      "source_type": "mixed_public_and_demo_constructed",
+      "evidence_confidence": "medium",
+      "rating": {
+        "value": 4.3,
+        "scale": 5,
+        "source": "demo_constructed_from_public_listing_context"
+      },
+      "review_stats": {
+        "review_count": 430,
+        "positive_count": 335,
+        "positive_ratio": 0.78,
+        "neutral_count": 69,
+        "neutral_ratio": 0.16,
+        "negative_count": 26,
+        "negative_ratio": 0.06,
+        "source": "demo_constructed_distribution"
+      },
+      "reputation_tags": [
+        {
+          "tag": "低GI六谷碗低负担",
+          "sentiment": "positive",
+          "mention_count": 245,
+          "mention_ratio": 0.57,
+          "evidence_text": "245 条左右评价提到“低GI六谷碗低负担”，约占总评价 57%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "鸡胸牛肉蛋白质够",
+          "sentiment": "positive",
+          "mention_count": 168,
+          "mention_ratio": 0.39,
+          "evidence_text": "168 条左右评价提到“鸡胸牛肉蛋白质够”，约占总评价 39%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "适合一个人快吃",
+          "sentiment": "positive",
+          "mention_count": 155,
+          "mention_ratio": 0.36,
+          "evidence_text": "155 条左右评价提到“适合一个人快吃”，约占总评价 36%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "饱腹感看胃口",
+          "sentiment": "neutral",
+          "mention_count": 64,
+          "mention_ratio": 0.15,
+          "evidence_text": "64 条左右评价提到“饱腹感看胃口”，约占总评价 15%。",
+          "source": "demo_constructed_tag_summary"
+        }
+      ],
+      "signature_dishes": [
+        {
+          "name": "低GI热力牛肉六谷碗",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "低GI嫩煎鸡胸六谷碗",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "烤鸡腿肉无米炒饭",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "虾仁沙拉",
+          "confidence": 0.72,
+          "source": "public_listing_or_menu_curation"
+        }
+      ],
+      "scenario_fit": {
+        "solo": true,
+        "friends": false,
+        "quick_meal": true,
+        "reservation_preferred": false,
+        "queue_risk": "low"
+      },
+      "negative_signals": [
+        {
+          "signal": "饱腹感看胃口",
+          "severity": "low",
+          "mention_count": 64,
+          "mention_ratio": 0.15
+        }
+      ],
+      "evidence": [
+        {
+          "type": "public_source_url",
+          "url": "https://www.openrice.com.cn/zh/shenzhen/r-blue-vegan%E8%BC%95%E9%A3%9F-%E6%B2%99%E6%8B%89%E6%BB%BF%E9%83%BD-%E7%9A%87%E5%B4%97-%E6%B0%B4%E5%9C%8D-%E8%A5%BF%E5%BC%8F-r5943187",
+          "note": "用于确认商户、地址、菜品或公开榜单信息。"
+        },
+        {
+          "type": "public_source_url",
+          "url": "https://sz.city8.com/cater/861g4i70bfpjb6e71a",
+          "note": "用于确认商户、地址、菜品或公开榜单信息。"
+        },
+        {
+          "type": "demo_reputation_seed",
+          "note": "评分、评论分布和标签计数用于产品原型与 OpenClaw skill 评测，未声明为实时平台评分。"
+        }
+      ],
+      "updated_at": "2026-06-03T00:00:00+08:00"
+    },
+    {
+      "merchant_id": "m_futian_034_hantiejiang_hotpot",
+      "merchant_name": "憨铁匠重庆老火锅",
+      "source_type": "mixed_public_and_demo_constructed",
+      "evidence_confidence": "medium",
+      "rating": {
+        "value": 4.4,
+        "scale": 5,
+        "source": "demo_constructed_from_public_listing_context"
+      },
+      "review_stats": {
+        "review_count": 980,
+        "positive_count": 755,
+        "positive_ratio": 0.77,
+        "neutral_count": 167,
+        "neutral_ratio": 0.17,
+        "negative_count": 59,
+        "negative_ratio": 0.06,
+        "source": "demo_constructed_distribution"
+      },
+      "reputation_tags": [
+        {
+          "tag": "牛油锅重口过瘾",
+          "sentiment": "positive",
+          "mention_count": 558,
+          "mention_ratio": 0.57,
+          "evidence_text": "558 条左右评价提到“牛油锅重口过瘾”，约占总评价 57%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "毛肚鸭血稳定",
+          "sentiment": "positive",
+          "mention_count": 421,
+          "mention_ratio": 0.43,
+          "evidence_text": "421 条左右评价提到“毛肚鸭血稳定”，约占总评价 43%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "适合朋友聚餐",
+          "sentiment": "positive",
+          "mention_count": 392,
+          "mention_ratio": 0.4,
+          "evidence_text": "392 条左右评价提到“适合朋友聚餐”，约占总评价 40%。",
+          "source": "demo_constructed_tag_summary"
+        },
+        {
+          "tag": "夜间环境热闹",
+          "sentiment": "neutral",
+          "mention_count": 176,
+          "mention_ratio": 0.18,
+          "evidence_text": "176 条左右评价提到“夜间环境热闹”，约占总评价 18%。",
+          "source": "demo_constructed_tag_summary"
+        }
+      ],
+      "signature_dishes": [
+        {
+          "name": "脆毛肚",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "精品肥牛",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "鲜鸭血",
+          "confidence": 0.86,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "现剥虾仁",
+          "confidence": 0.72,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "嫩牛肉",
+          "confidence": 0.72,
+          "source": "public_listing_or_menu_curation"
+        },
+        {
+          "name": "红糖糍粑",
+          "confidence": 0.72,
+          "source": "public_listing_or_menu_curation"
+        }
+      ],
+      "scenario_fit": {
+        "solo": false,
+        "friends": true,
+        "quick_meal": false,
+        "reservation_preferred": true,
+        "queue_risk": "medium"
+      },
+      "negative_signals": [
+        {
+          "signal": "夜间环境热闹",
+          "severity": "low",
+          "mention_count": 176,
+          "mention_ratio": 0.18
+        }
+      ],
+      "evidence": [
+        {
+          "type": "public_source_url",
+          "url": "https://www.openrice.com.cn/zh-cn/shenzhen/r-%E6%86%A8%E9%93%81%E5%8C%A0%E9%87%8D%E5%BA%86%E8%80%81%E7%81%AB%E9%94%85-%E8%BD%A6%E5%85%AC%E5%BA%99-%E5%B7%9D%E8%8F%9C-%E7%81%AB%E9%94%85-r6139828",
+          "note": "用于确认商户、地址、菜品或公开榜单信息。"
+        },
+        {
+          "type": "demo_reputation_seed",
+          "note": "评分、评论分布和标签计数用于产品原型与 OpenClaw skill 评测，未声明为实时平台评分。"
+        }
+      ],
+      "updated_at": "2026-06-03T00:00:00+08:00"
     }
   ]
 }

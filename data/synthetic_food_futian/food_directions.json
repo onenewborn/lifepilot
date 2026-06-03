@@ -712,6 +712,95 @@
         "has_sound": true
       },
       "synthetic": true
+    },
+    {
+      "direction_id": "dir_steam_stone_fish",
+      "title": "石锅鱼/鱼火锅",
+      "hook": "想吃热汤鱼，但不想走牛油重口路线。",
+      "budget_band": "90-140",
+      "tags": [
+        "鱼火锅",
+        "热汤",
+        "两三人",
+        "不太油"
+      ],
+      "fit": [
+        "两人以上",
+        "想吃热汤",
+        "不想吃太辣",
+        "朋友小聚"
+      ],
+      "avoid_for": [
+        "一个人随便吃",
+        "预算 80 内",
+        "完全不想等位"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "fish_hotpot",
+          "stone_pot_fish",
+          "yunnan_hotpot",
+          "hotpot",
+          "fish"
+        ],
+        "oil_level_max": "medium",
+        "party_size_min": 2,
+        "budget_min": 80
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/steam_stone_fish.png",
+        "future_video_prompt": "2-5 秒，蒸汽石锅鱼热汤翻滚，鱼片和青椒紫苏，朋友围坐",
+        "video_url": "",
+        "poster_url": "/assets/food-directions/steam_stone_fish.png",
+        "video_version": "",
+        "has_sound": false
+      },
+      "synthetic": true
+    },
+    {
+      "direction_id": "dir_cantonese_bistro",
+      "title": "粤菜小馆",
+      "hook": "潮汕、顺德、广府小馆都归这里，适合想吃不太辣的正餐。",
+      "budget_band": "70-180",
+      "tags": [
+        "粤菜",
+        "潮汕",
+        "顺德",
+        "不辣"
+      ],
+      "fit": [
+        "想吃粤菜",
+        "不想吃辣",
+        "两三人点菜",
+        "认真吃一顿"
+      ],
+      "avoid_for": [
+        "预算 50 内",
+        "想吃重口辣菜",
+        "一个人快速解决"
+      ],
+      "match_rules": {
+        "cuisine_tags": [
+          "cantonese",
+          "chaoshan",
+          "chaozhou",
+          "shunde",
+          "guangdong"
+        ],
+        "spice_level_max": "low",
+        "budget_min": 60
+      },
+      "media": {
+        "type": "image",
+        "url": "/assets/food-directions/cantonese_bistro.png",
+        "future_video_prompt": "2-5 秒，粤菜小馆圆桌，蚝仔烙、烧鹅和煲仔饭上桌，不辣舒服",
+        "video_url": "",
+        "poster_url": "/assets/food-directions/cantonese_bistro.png",
+        "video_version": "",
+        "has_sound": false
+      },
+      "synthetic": true
     }
   ]
 }

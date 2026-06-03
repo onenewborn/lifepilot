@@ -9,23 +9,23 @@
       "direction_ids": [
         "dir_hot_soup_noodles"
       ],
-      "title": "蒸饺 + 馄炖",
-      "display_title": "沙县小吃 · 蒸饺 + 馄炖",
+      "title": "蒸饺 + 馄饨",
+      "display_title": "沙县小吃 · 蒸饺 + 馄饨",
       "hook": "踏实的碳水，沙县大酒店永远值得信赖",
       "price_per_person": 14,
       "oil_level": "low",
       "spice_level": "none",
       "solo_friendly": true,
       "signature_items": [
-        "客家猪肉汤",
-        "猪油渣炒菜心",
-        "客家酿豆腐"
+        "蒸饺",
+        "云吞/扁肉",
+        "拌面"
       ],
       "environment_note": "车公庙地铁口小吃快餐店，翻台快，适合快速解决一顿。",
       "avoid_for": [
         "想吃精致正餐",
         "想慢慢聊天",
-        "有减脂需求"
+        "严格减脂需求"
       ],
       "media": {
         "type": "image",
@@ -269,13 +269,13 @@
       "offer_id": "off_futian_003_two_dish_rice",
       "merchant_id": "m_futian_003",
       "direction_ids": [
-        "dir_budget_rice_bowls"
+        "dir_light_rice_noodles"
       ],
       "title": "牛肉牛丸粿条 + 沙茶牛肉",
       "display_title": "菜忠潮州牛肉店 · 牛肉牛丸粿条 + 沙茶牛肉",
       "hook": "热汤粿条加牛肉丸，适合想吃清爽潮汕味的一顿。",
       "price_per_person": 38,
-      "oil_level": "medium",
+      "oil_level": "low",
       "spice_level": "low",
       "solo_friendly": true,
       "signature_items": [
@@ -290,13 +290,14 @@
       ],
       "media": {
         "type": "image",
-        "inherit_from_direction": "dir_budget_rice_bowls"
+        "inherit_from_direction": "dir_light_rice_noodles"
       },
       "synthetic": true,
       "cuisine_tags": [
-        "rice_bowl",
-        "home_style",
-        "canteen"
+        "chaoshan",
+        "rice_noodle",
+        "beef",
+        "soup"
       ],
       "meal_style": "quick_meal",
       "service_speed": "fast",
@@ -307,7 +308,7 @@
         "潮汕",
         "牛肉粿条",
         "热汤",
-        "岗厦"
+        "清爽"
       ],
       "source_type": "public_web_curated_demo_offer"
     },
@@ -315,14 +316,13 @@
       "offer_id": "off_futian_003_light_rice_plate",
       "merchant_id": "m_futian_003",
       "direction_ids": [
-        "dir_budget_rice_bowls",
-        "dir_light_salad"
+        "dir_light_rice_noodles"
       ],
       "title": "炒粿条 + 牛肉丸汤",
       "display_title": "菜忠潮州牛肉店 · 炒粿条 + 牛肉丸汤",
       "hook": "比汤粿条更香，但还能用一碗汤把这一顿收住。",
       "price_per_person": 42,
-      "oil_level": "low",
+      "oil_level": "medium",
       "spice_level": "none",
       "solo_friendly": true,
       "signature_items": [
@@ -333,17 +333,18 @@
       "environment_note": "高峰期会吵，但一个人快速吃完很顺。",
       "avoid_for": [
         "想吃重口",
-        "想吃肉很多"
+        "严格低油"
       ],
       "media": {
         "type": "image",
-        "inherit_from_direction": "dir_budget_rice_bowls"
+        "inherit_from_direction": "dir_light_rice_noodles"
       },
       "synthetic": true,
       "cuisine_tags": [
-        "rice_bowl",
-        "steamed_food",
-        "home_style"
+        "chaoshan",
+        "fried_rice_noodle",
+        "beef",
+        "soup"
       ],
       "meal_style": "quick_meal",
       "service_speed": "fast",
@@ -504,8 +505,7 @@
       "offer_id": "off_futian_005_fried_rice_noodle",
       "merchant_id": "m_futian_005",
       "direction_ids": [
-        "dir_light_rice_noodles",
-        "dir_tea_restaurant"
+        "dir_light_rice_noodles"
       ],
       "title": "粿卷 + 牛肉丸汤",
       "display_title": "林记揭阳新亨粿条 · 粿卷 + 牛肉丸汤",
@@ -644,7 +644,7 @@
       "offer_id": "off_futian_007_grilled_fish_teishoku",
       "merchant_id": "m_futian_007",
       "direction_ids": [
-        "dir_japanese_teishoku"
+        "dir_steam_stone_fish"
       ],
       "title": "原味锅石锅鱼",
       "display_title": "鲜潭蒸汽石锅鱼 · 原味锅石锅鱼",
@@ -652,7 +652,7 @@
       "price_per_person": 108,
       "oil_level": "low",
       "spice_level": "none",
-      "solo_friendly": true,
+      "solo_friendly": false,
       "signature_items": [
         "江团鱼",
         "原味锅石锅鱼",
@@ -665,15 +665,16 @@
       ],
       "media": {
         "type": "image",
-        "inherit_from_direction": "dir_japanese_teishoku"
+        "inherit_from_direction": "dir_steam_stone_fish"
       },
       "synthetic": true,
       "cuisine_tags": [
-        "japanese",
-        "teishoku",
-        "grilled_fish"
+        "fish_hotpot",
+        "stone_pot_fish",
+        "yunnan_hotpot",
+        "soup"
       ],
-      "meal_style": "casual_meal",
+      "meal_style": "group_meal",
       "service_speed": "normal",
       "portion_size": "normal",
       "temperature": "hot",
@@ -684,21 +685,22 @@
         "热汤",
         "适合两人"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "云南蒸汽石锅鱼"
     },
     {
       "offer_id": "off_futian_007_karaage_teishoku",
       "merchant_id": "m_futian_007",
       "direction_ids": [
-        "dir_japanese_teishoku"
+        "dir_steam_stone_fish"
       ],
       "title": "青椒紫苏锅 + 手制虾滑老油条",
       "display_title": "鲜潭蒸汽石锅鱼 · 青椒紫苏锅 + 手制虾滑老油条",
       "hook": "青椒紫苏更有风味，适合想吃热乎但不想牛油锅的人。",
       "price_per_person": 118,
       "oil_level": "medium",
-      "spice_level": "none",
-      "solo_friendly": true,
+      "spice_level": "low",
+      "solo_friendly": false,
       "signature_items": [
         "青椒紫苏锅",
         "鲜潭手制虾滑老油条",
@@ -711,15 +713,16 @@
       ],
       "media": {
         "type": "image",
-        "inherit_from_direction": "dir_japanese_teishoku"
+        "inherit_from_direction": "dir_steam_stone_fish"
       },
       "synthetic": true,
       "cuisine_tags": [
-        "japanese",
-        "teishoku",
-        "fried_chicken"
+        "fish_hotpot",
+        "stone_pot_fish",
+        "yunnan_hotpot",
+        "qingjiao_zisu"
       ],
-      "meal_style": "casual_meal",
+      "meal_style": "group_meal",
       "service_speed": "normal",
       "portion_size": "filling",
       "temperature": "hot",
@@ -730,21 +733,22 @@
         "热汤",
         "多人可吃"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "青椒紫苏石锅鱼"
     },
     {
       "offer_id": "off_futian_008_bibimbap",
       "merchant_id": "m_futian_008",
       "direction_ids": [
-        "dir_korean_bibimbap"
+        "dir_cantonese_bistro"
       ],
       "title": "潮式蚝仔烙 + 鹅血煲",
       "display_title": "珍庭潮州菜 · 潮式蚝仔烙 + 鹅血煲",
       "hook": "想认真吃潮州菜时，这组比一人饭更有特色。",
       "price_per_person": 168,
       "oil_level": "medium",
-      "spice_level": "medium",
-      "solo_friendly": true,
+      "spice_level": "low",
+      "solo_friendly": false,
       "signature_items": [
         "潮式蚝仔烙",
         "鹅血煲",
@@ -757,15 +761,16 @@
       ],
       "media": {
         "type": "image",
-        "inherit_from_direction": "dir_korean_bibimbap"
+        "inherit_from_direction": "dir_cantonese_bistro"
       },
       "synthetic": true,
       "cuisine_tags": [
-        "korean",
-        "bibimbap",
-        "rice_bowl"
+        "cantonese",
+        "chaoshan",
+        "chaozhou",
+        "oyster_omelette"
       ],
-      "meal_style": "casual_meal",
+      "meal_style": "group_meal",
       "service_speed": "normal",
       "portion_size": "normal",
       "temperature": "hot",
@@ -776,14 +781,14 @@
         "适合两人",
         "预算高"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "潮州菜小馆"
     },
     {
       "offer_id": "off_futian_008_korean_beef_rice",
       "merchant_id": "m_futian_008",
       "direction_ids": [
-        "dir_korean_bibimbap",
-        "dir_budget_rice_bowls"
+        "dir_cantonese_bistro"
       ],
       "title": "脱骨老鹅掌 + 金不换拌象拔蚌",
       "display_title": "珍庭潮州菜 · 脱骨老鹅掌 + 金不换拌象拔蚌",
@@ -791,7 +796,7 @@
       "price_per_person": 260,
       "oil_level": "medium",
       "spice_level": "low",
-      "solo_friendly": true,
+      "solo_friendly": false,
       "signature_items": [
         "脱骨老鹅掌",
         "金不换拌象拔蚌",
@@ -804,15 +809,16 @@
       ],
       "media": {
         "type": "image",
-        "inherit_from_direction": "dir_korean_bibimbap"
+        "inherit_from_direction": "dir_cantonese_bistro"
       },
       "synthetic": true,
       "cuisine_tags": [
-        "korean",
-        "beef_rice",
-        "rice_bowl"
+        "cantonese",
+        "chaoshan",
+        "chaozhou",
+        "goose"
       ],
-      "meal_style": "quick_meal",
+      "meal_style": "group_meal",
       "service_speed": "normal",
       "portion_size": "normal",
       "temperature": "hot",
@@ -823,30 +829,32 @@
         "精致",
         "预算高"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "精致潮州菜"
     },
     {
       "offer_id": "off_futian_009_tomato_beef_pot",
-      "merchant_id": "m_futian_009",
+      "merchant_id": "m_futian_032_baofanfan_tomato_hotpot",
       "direction_ids": [
         "dir_tomato_mini_hotpot"
       ],
-      "title": "厨师推荐烤肉拼盘",
-      "display_title": "BUS GRILL巴士扒房 · 厨师推荐烤肉拼盘",
-      "hook": "土耳其烤肉方向明确，适合朋友一起分着吃。",
-      "price_per_person": 180,
+      "title": "黄番茄牛肉小锅",
+      "display_title": "爆番番·黄番茄火锅 · 黄番茄牛肉小锅",
+      "hook": "酸甜番茄锅底比牛油锅轻，热乎但不容易累。",
+      "price_per_person": 118,
       "oil_level": "medium",
       "spice_level": "none",
-      "solo_friendly": true,
+      "solo_friendly": false,
       "signature_items": [
-        "厨师推荐烤肉拼盘",
-        "小羊排",
-        "阿达纳烤肉串"
+        "黄番茄锅底",
+        "牛肉小锅",
+        "蔬菜拼盘"
       ],
-      "environment_note": "商场餐厅，一个人也能吃，但饭点可能排队。",
+      "environment_note": "商场火锅店，适合两个人吃清爽热锅。",
       "avoid_for": [
-        "预算 50 内",
-        "想吃很辣很爽"
+        "预算 80 内",
+        "想吃很辣很爽",
+        "一个人快速吃"
       ],
       "media": {
         "type": "image",
@@ -856,43 +864,46 @@
       "cuisine_tags": [
         "hotpot",
         "tomato_hotpot",
-        "beef"
+        "beef",
+        "vegetable"
       ],
-      "meal_style": "solo_treat",
+      "meal_style": "group_meal",
       "service_speed": "normal",
-      "portion_size": "normal",
+      "portion_size": "share",
       "temperature": "hot",
       "satisfaction_level": "satisfying",
       "decision_tags": [
-        "烤肉",
-        "土耳其菜",
-        "朋友聚餐",
-        "购物公园"
+        "番茄锅",
+        "清爽",
+        "热锅",
+        "两人更合适"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "黄番茄清爽小锅"
     },
     {
       "offer_id": "off_futian_009_mushroom_pot",
-      "merchant_id": "m_futian_009",
+      "merchant_id": "m_futian_032_baofanfan_tomato_hotpot",
       "direction_ids": [
         "dir_tomato_mini_hotpot"
       ],
-      "title": "牛肉奶酪皮塔饼 + 烤肉串",
-      "display_title": "BUS GRILL巴士扒房 · 牛肉奶酪皮塔饼 + 烤肉串",
-      "hook": "比完整扒房轻一点，但还是有西式烤肉的满足感。",
-      "price_per_person": 128,
+      "title": "蔬菜番茄小锅",
+      "display_title": "爆番番·黄番茄火锅 · 蔬菜番茄小锅",
+      "hook": "想吃热锅又怕油，这组更偏清爽。",
+      "price_per_person": 96,
       "oil_level": "low",
       "spice_level": "none",
       "solo_friendly": true,
       "signature_items": [
-        "牛肉奶酪皮塔饼",
-        "鸡肉串",
-        "烤肉串"
+        "黄番茄锅底",
+        "蔬菜拼盘",
+        "海鲜火锅"
       ],
-      "environment_note": "适合不想吃油腻的一人晚餐。",
+      "environment_note": "比重口火锅轻一点，一个人或两个人都能吃。",
       "avoid_for": [
         "想吃肉很多",
-        "想吃重口"
+        "想吃重辣",
+        "预算 70 内"
       ],
       "media": {
         "type": "image",
@@ -901,8 +912,9 @@
       "synthetic": true,
       "cuisine_tags": [
         "hotpot",
-        "mushroom_soup",
-        "vegetable"
+        "tomato_hotpot",
+        "vegetable",
+        "light_hotpot"
       ],
       "meal_style": "solo_treat",
       "service_speed": "normal",
@@ -910,12 +922,13 @@
       "temperature": "hot",
       "satisfaction_level": "light",
       "decision_tags": [
-        "皮塔饼",
-        "烤肉",
-        "西餐",
-        "适合聊天"
+        "番茄锅",
+        "不太油",
+        "热乎",
+        "轻一点"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "低油番茄小锅"
     },
     {
       "offer_id": "off_futian_010_solo_sukiyaki",
@@ -975,8 +988,7 @@
       "offer_id": "off_futian_010_friend_sukiyaki",
       "merchant_id": "m_futian_010",
       "direction_ids": [
-        "dir_sukiyaki_solo",
-        "dir_sushi_chat"
+        "dir_sukiyaki_solo"
       ],
       "title": "双人寿喜烧放题",
       "display_title": "一绪に和牛寿喜烧 · 双人寿喜烧放题",
@@ -1028,26 +1040,27 @@
     },
     {
       "offer_id": "off_futian_011_sushi_set",
-      "merchant_id": "m_futian_011",
+      "merchant_id": "m_futian_029_sushi_gin",
       "direction_ids": [
         "dir_sushi_chat"
       ],
       "title": "寿司聊天套餐",
-      "display_title": "海门鱼仔·潮汕味 · 寿司聊天套餐",
-      "hook": "贵一点，但周末和朋友坐下来会舒服很多。",
-      "price_per_person": 168,
+      "display_title": "鮨吟Sushi Gin · 寿司聊天套餐",
+      "hook": "想安静吃一顿日料，这组比普通简餐更有聊天感。",
+      "price_per_person": 188,
       "oil_level": "low",
       "spice_level": "none",
       "solo_friendly": false,
       "signature_items": [
         "握寿司拼盘",
-        "手卷",
+        "海胆饭手卷",
         "味噌汤"
       ],
-      "environment_note": "环境好，适合聊天，不是工作日随便吃的选择。",
+      "environment_note": "车公庙创建大厦寿司店，环境安静，适合朋友小聚。",
       "avoid_for": [
-        "预算 100 内",
-        "想快速解决"
+        "预算 120 内",
+        "想快速解决",
+        "想吃热乎米饭"
       ],
       "media": {
         "type": "image",
@@ -1057,6 +1070,7 @@
       "cuisine_tags": [
         "japanese",
         "sushi",
+        "sashimi",
         "set_menu"
       ],
       "meal_style": "group_meal",
@@ -1071,30 +1085,32 @@
         "周末",
         "价格较高"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "寿司刺身聊天局"
     },
     {
       "offer_id": "off_futian_011_sushi_bar_lunch",
-      "merchant_id": "m_futian_011",
+      "merchant_id": "m_futian_029_sushi_gin",
       "direction_ids": [
-        "dir_sushi_chat",
-        "dir_japanese_teishoku"
+        "dir_sushi_chat"
       ],
       "title": "寿司吧台简餐",
-      "display_title": "海门鱼仔·潮汕味 · 寿司吧台简餐",
-      "hook": "想吃好一点但不组大局，可以坐吧台。",
-      "price_per_person": 118,
+      "display_title": "鮨吟Sushi Gin · 寿司吧台简餐",
+      "hook": "一个人想吃好一点，可以坐吧台点寿司小拼。",
+      "price_per_person": 138,
       "oil_level": "low",
       "spice_level": "none",
       "solo_friendly": true,
       "signature_items": [
         "寿司小拼",
+        "刺身三点",
         "玉子烧"
       ],
-      "environment_note": "一个人可以坐吧台，但不是低预算方案。",
+      "environment_note": "吧台位适合一个人，不是低预算快餐。",
       "avoid_for": [
-        "预算 80 内",
-        "想吃热乎米饭"
+        "预算 100 内",
+        "想吃热汤面",
+        "赶时间"
       ],
       "media": {
         "type": "image",
@@ -1104,6 +1120,7 @@
       "cuisine_tags": [
         "japanese",
         "sushi",
+        "sashimi",
         "bar_seat"
       ],
       "meal_style": "solo_treat",
@@ -1118,31 +1135,32 @@
         "吃好一点",
         "不是低预算"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "寿司吧台轻正餐"
     },
     {
       "offer_id": "off_futian_012_pork_belly_bbq",
-      "merchant_id": "m_futian_012",
+      "merchant_id": "m_futian_029_sushi_gin",
       "direction_ids": [
         "dir_sushi_chat"
       ],
-      "title": "朋友烤肉双人局",
-      "display_title": "木屋烧烤 · 朋友烤肉双人局",
-      "hook": "热闹、有参与感，但油烟和预算都不低。",
-      "price_per_person": 128,
-      "oil_level": "high",
-      "spice_level": "low",
+      "title": "海胆手卷 + 刺身三点",
+      "display_title": "鮨吟Sushi Gin · 海胆手卷 + 刺身三点",
+      "hook": "比普通寿司更有记忆点，适合两个人点来慢慢吃。",
+      "price_per_person": 238,
+      "oil_level": "low",
+      "spice_level": "none",
       "solo_friendly": false,
       "signature_items": [
-        "五花肉",
-        "牛肋条",
-        "生菜"
+        "海胆饭手卷",
+        "刺身三点",
+        "鹅肝金枪鱼"
       ],
-      "environment_note": "适合朋友聚餐，不适合安静聊天。",
+      "environment_note": "安静日料店，适合朋友聊天或小庆祝。",
       "avoid_for": [
-        "不想太油",
-        "一个人吃",
-        "想安静"
+        "不吃生食",
+        "预算 150 内",
+        "想吃重口热菜"
       ],
       "media": {
         "type": "image",
@@ -1150,46 +1168,48 @@
       },
       "synthetic": true,
       "cuisine_tags": [
-        "bbq",
-        "korean_bbq",
-        "pork"
+        "japanese",
+        "sushi",
+        "sashimi",
+        "uni"
       ],
       "meal_style": "group_meal",
       "service_speed": "slow",
       "portion_size": "share",
-      "temperature": "hot",
+      "temperature": "cold",
       "satisfaction_level": "indulgent",
       "decision_tags": [
-        "烤肉",
-        "朋友聚餐",
-        "热闹",
-        "油烟",
-        "预算不低"
+        "海胆手卷",
+        "刺身",
+        "安静聊天",
+        "预算高"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "寿司刺身小聚"
     },
     {
       "offer_id": "off_futian_013_coconut_chicken",
-      "merchant_id": "m_futian_013",
+      "merchant_id": "m_futian_030_runyuan_coconut_chicken",
       "direction_ids": [
         "dir_coconut_chicken"
       ],
       "title": "椰子鸡双人锅",
-      "display_title": "叶客·客家菜 · 椰子鸡双人锅",
-      "hook": "清爽正餐，适合朋友吃，不会像牛油锅那么累。",
-      "price_per_person": 108,
+      "display_title": "润园四季椰子鸡火锅 · 椰子鸡双人锅",
+      "hook": "清甜椰子鸡，适合两三个人吃一顿舒服正餐。",
+      "price_per_person": 109,
       "oil_level": "low",
       "spice_level": "none",
       "solo_friendly": false,
       "signature_items": [
-        "椰子鸡锅",
-        "竹荪",
-        "煲仔饭"
+        "竹笙椰子鸡",
+        "原味椰子鸡",
+        "腊味煲仔饭"
       ],
-      "environment_note": "商场正餐，聊天舒服，预算比快餐高。",
+      "environment_note": "安徽大厦里的椰子鸡火锅店，适合朋友聊天，饭点可能等位。",
       "avoid_for": [
         "一个人随便吃",
-        "预算 80 内"
+        "预算 80 内",
+        "想吃重辣"
       ],
       "media": {
         "type": "image",
@@ -1199,7 +1219,8 @@
       "cuisine_tags": [
         "coconut_chicken",
         "hotpot",
-        "chicken"
+        "chicken",
+        "cantonese"
       ],
       "meal_style": "group_meal",
       "service_speed": "normal",
@@ -1213,7 +1234,8 @@
         "低油",
         "预算较高"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "清爽椰子鸡"
     },
     {
       "offer_id": "off_futian_014_spicy_chicken_rice",
@@ -1570,25 +1592,27 @@
     },
     {
       "offer_id": "off_futian_018_baked_pork_chop_rice",
-      "merchant_id": "m_futian_018",
+      "merchant_id": "m_futian_031_dayouli_cha_chaan_teng",
       "direction_ids": [
         "dir_tea_restaurant"
       ],
-      "title": "焗猪扒饭",
-      "display_title": "牛校长牛肉海鲜粥底火锅 · 焗猪扒饭",
-      "hook": "茶餐厅里最有满足感的一类，但会偏油偏重。",
-      "price_per_person": 52,
+      "title": "招牌焗猪扒饭",
+      "display_title": "大有利茶餐厅 · 招牌焗猪扒饭",
+      "hook": "茶餐厅里最有满足感的一类，配冻柠茶很稳。",
+      "price_per_person": 59,
       "oil_level": "high",
       "spice_level": "none",
       "solo_friendly": true,
       "signature_items": [
-        "焗猪扒饭",
-        "冻柠茶"
+        "招牌焗猪扒饭",
+        "冻柠茶",
+        "菠萝油"
       ],
-      "environment_note": "卡座比快餐舒服，但饭点会吵。",
+      "environment_note": "老牌港式茶餐厅，出餐快，饭点会比较热闹。",
       "avoid_for": [
         "不想吃粤菜",
-        "不想太油"
+        "不想太油",
+        "严格减脂"
       ],
       "media": {
         "type": "image",
@@ -1612,30 +1636,33 @@
         "更满足",
         "饭点会吵"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "港式茶餐厅焗饭"
     },
     {
       "offer_id": "off_futian_018_macaroni_set",
-      "merchant_id": "m_futian_018",
+      "merchant_id": "m_futian_031_dayouli_cha_chaan_teng",
       "direction_ids": [
         "dir_tea_restaurant",
         "dir_hot_soup_noodles"
       ],
-      "title": "通粉简餐",
-      "display_title": "牛校长牛肉海鲜粥底火锅 · 通粉简餐",
-      "hook": "比焗饭轻一点，但仍然是粤式茶餐厅风格。",
-      "price_per_person": 28,
+      "title": "火腿通粉 + 冻柠茶",
+      "display_title": "大有利茶餐厅 · 火腿通粉 + 冻柠茶",
+      "hook": "比焗饭轻一点，适合早晚快速吃一口。",
+      "price_per_person": 36,
       "oil_level": "low",
       "spice_level": "none",
       "solo_friendly": true,
       "signature_items": [
         "火腿通粉",
-        "煎蛋"
+        "煎蛋",
+        "冻柠茶"
       ],
-      "environment_note": "适合早晚快速吃一口。",
+      "environment_note": "茶餐厅简餐，适合一个人快速吃完。",
       "avoid_for": [
         "不想吃粤菜",
-        "想吃米饭正餐"
+        "想吃米饭正餐",
+        "很饿"
       ],
       "media": {
         "type": "image",
@@ -1659,30 +1686,33 @@
         "快速",
         "粤式"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "港式通粉简餐"
     },
     {
       "offer_id": "off_futian_019_special_tasting",
-      "merchant_id": "m_futian_019",
+      "merchant_id": "m_futian_029_sushi_gin",
       "direction_ids": [
         "dir_sushi_chat"
       ],
-      "title": "重要聚会品鉴套餐",
-      "display_title": "LA.Prime 艾雷牛排馆 · 重要聚会品鉴套餐",
-      "hook": "这是特殊场合选项，不是日常吃饭。",
-      "price_per_person": 680,
-      "oil_level": "medium",
-      "spice_level": "low",
+      "title": "寿司品鉴套餐",
+      "display_title": "鮨吟Sushi Gin · 寿司品鉴套餐",
+      "hook": "重要一点的日料局，适合想把环境和菜品都拉高。",
+      "price_per_person": 328,
+      "oil_level": "low",
+      "spice_level": "none",
       "solo_friendly": false,
       "signature_items": [
-        "时令套餐",
-        "主厨甜品"
+        "马粪海胆",
+        "鹅肝金枪鱼",
+        "刺身三点",
+        "主厨寿司"
       ],
-      "environment_note": "高端餐室，适合重要聚会和正式聊天。",
+      "environment_note": "偏正式的寿司刺身店，适合重要聊天，不适合日常快吃。",
       "avoid_for": [
         "日常晚餐",
-        "预算 300 内",
-        "想快速解决"
+        "预算 200 内",
+        "不吃生食"
       ],
       "media": {
         "type": "image",
@@ -1690,8 +1720,9 @@
       },
       "synthetic": true,
       "cuisine_tags": [
-        "fine_dining",
-        "tasting_menu",
+        "japanese",
+        "sushi",
+        "sashimi",
         "special_occasion"
       ],
       "meal_style": "special_occasion",
@@ -1700,37 +1731,37 @@
       "temperature": "mixed",
       "satisfaction_level": "indulgent",
       "decision_tags": [
+        "寿司",
         "重要聚会",
-        "高端餐室",
-        "正式聊天",
-        "高预算",
-        "非日常"
+        "安静环境",
+        "高预算"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "寿司品鉴"
     },
     {
       "offer_id": "off_futian_020_grain_bowl",
-      "merchant_id": "m_futian_020",
+      "merchant_id": "m_futian_033_blue_vegan_salad",
       "direction_ids": [
         "dir_light_salad"
       ],
-      "title": "双蛋肉肠粉 + 辣椒酱",
-      "display_title": "天桥下肠粉 · 双蛋肉肠粉 + 辣椒酱",
-      "hook": "便宜、快、热乎，像一顿很顺手的早午饭。",
-      "price_per_person": 24,
+      "title": "低GI牛肉六谷碗",
+      "display_title": "Blue&Vegan轻食·沙拉满都 · 低GI牛肉六谷碗",
+      "hook": "不油但有蛋白质，适合不想午后犯困的一顿。",
+      "price_per_person": 35,
       "oil_level": "low",
       "spice_level": "none",
       "solo_friendly": true,
       "signature_items": [
-        "双蛋肉肠粉",
-        "辣椒酱",
-        "豆芽肉肠"
+        "低GI热力牛肉六谷碗",
+        "虾仁沙拉",
+        "无米炒饭"
       ],
-      "environment_note": "写字楼轻食店，干净但没有烟火气。",
+      "environment_note": "轻食快餐店，适合一个人快速吃完，不适合想吃热汤。",
       "avoid_for": [
         "很饿",
         "想吃热汤",
-        "预算 40 内"
+        "想吃重口"
       ],
       "media": {
         "type": "image",
@@ -1739,8 +1770,9 @@
       "synthetic": true,
       "cuisine_tags": [
         "light_meal",
+        "salad",
         "grain_bowl",
-        "chicken_breast"
+        "beef"
       ],
       "meal_style": "light_meal",
       "service_speed": "fast",
@@ -1748,36 +1780,37 @@
       "temperature": "mixed",
       "satisfaction_level": "light",
       "decision_tags": [
-        "肠粉",
-        "快餐",
-        "40元内",
-        "景田"
+        "轻食",
+        "低GI",
+        "牛肉六谷碗",
+        "不油"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "低GI轻食碗"
     },
     {
       "offer_id": "off_futian_020_salmon_salad",
-      "merchant_id": "m_futian_020",
+      "merchant_id": "m_futian_033_blue_vegan_salad",
       "direction_ids": [
-        "dir_light_salad",
-        "dir_sushi_chat"
+        "dir_light_salad"
       ],
-      "title": "蛋肉肠 + 豆芽肉肠",
-      "display_title": "天桥下肠粉 · 蛋肉肠 + 豆芽肉肠",
-      "hook": "想吃轻一点又要热乎时，比沙拉更像中国胃。",
-      "price_per_person": 26,
+      "title": "嫩煎鸡胸六谷碗",
+      "display_title": "Blue&Vegan轻食·沙拉满都 · 嫩煎鸡胸六谷碗",
+      "hook": "低负担但不只是一盒菜，适合健身或减脂日。",
+      "price_per_person": 32,
       "oil_level": "low",
       "spice_level": "none",
       "solo_friendly": true,
       "signature_items": [
-        "蛋肉肠",
-        "豆芽肉肠",
-        "芹菜肉肠"
+        "低GI嫩煎鸡胸六谷碗",
+        "烤鸡腿肉无米炒饭",
+        "虾仁沙拉"
       ],
-      "environment_note": "适合午晚餐轻负担，不适合想吃热乎的人。",
+      "environment_note": "适合午晚餐轻负担，不适合想吃热乎汤粉的人。",
       "avoid_for": [
         "想吃热的",
-        "预算 60 内"
+        "很饿",
+        "想吃下饭菜"
       ],
       "media": {
         "type": "image",
@@ -1786,8 +1819,9 @@
       "synthetic": true,
       "cuisine_tags": [
         "light_meal",
-        "salmon_salad",
-        "grain_bowl"
+        "salad",
+        "grain_bowl",
+        "chicken_breast"
       ],
       "meal_style": "light_meal",
       "service_speed": "fast",
@@ -1795,12 +1829,13 @@
       "temperature": "mixed",
       "satisfaction_level": "steady",
       "decision_tags": [
-        "肠粉",
-        "轻一点",
-        "热乎",
-        "早餐友好"
+        "轻食",
+        "鸡胸",
+        "低油",
+        "减脂友好"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "鸡胸轻食碗"
     },
     {
       "offer_id": "off_futian_021_spicy_grilled_fish",
@@ -1852,28 +1887,29 @@
     },
     {
       "offer_id": "off_futian_022_butter_hotpot",
-      "merchant_id": "m_futian_022",
+      "merchant_id": "m_futian_034_hantiejiang_hotpot",
       "direction_ids": [
         "dir_butter_hotpot"
       ],
-      "title": "碳烤羊腿 + 羊肉串",
-      "display_title": "大汗烧烤·碳烤羊腿 · 碳烤羊腿 + 羊肉串",
-      "hook": "夜宵感很足，适合多人一起吃，不适合赶时间。",
-      "price_per_person": 110,
+      "title": "牛油锅 + 毛肚鸭血",
+      "display_title": "憨铁匠重庆老火锅 · 牛油锅 + 毛肚鸭血",
+      "hook": "就是想吃爽一点，毛肚鸭血和牛油锅直接到位。",
+      "price_per_person": 128,
       "oil_level": "high",
       "spice_level": "high",
       "solo_friendly": false,
       "signature_items": [
-        "烤羊腿",
-        "羊肉串",
-        "烤鸡脆骨",
-        "锡纸金针菇"
+        "脆毛肚",
+        "鲜鸭血",
+        "嫩牛肉",
+        "红糖糍粑"
       ],
-      "environment_note": "热闹火锅店，适合朋友聚餐。",
+      "environment_note": "车公庙重庆老火锅，适合朋友聚餐，声音会比较热闹。",
       "avoid_for": [
         "不想太油",
         "一个人吃",
-        "预算 100 内"
+        "预算 100 内",
+        "完全不吃辣"
       ],
       "media": {
         "type": "image",
@@ -1883,7 +1919,8 @@
       "cuisine_tags": [
         "hotpot",
         "butter_hotpot",
-        "sichuan"
+        "sichuan",
+        "chongqing_hotpot"
       ],
       "meal_style": "group_meal",
       "service_speed": "slow",
@@ -1891,12 +1928,14 @@
       "temperature": "hot",
       "satisfaction_level": "indulgent",
       "decision_tags": [
-        "烧烤",
-        "羊腿",
-        "多人局",
-        "夜宵"
+        "牛油锅",
+        "毛肚",
+        "鸭血",
+        "朋友局",
+        "重口味"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "重庆牛油火锅"
     },
     {
       "offer_id": "off_futian_023_beef_hotpot",
@@ -2136,48 +2175,50 @@
       "offer_id": "off_futian_024_pork_knuckle_rice",
       "merchant_id": "m_futian_024",
       "direction_ids": [
-        "dir_pork_knuckle_rice",
-        "dir_budget_rice_bowls"
+        "dir_cantonese_bistro"
       ],
       "title": "古法鲜果咕咾肉 + 大良姜撞奶",
       "display_title": "大榕树下顺德菜 · 古法鲜果咕咾肉 + 大良姜撞奶",
       "hook": "酸甜下饭，也有甜品收尾，适合不想吃辣的晚餐。",
       "price_per_person": 78,
-      "oil_level": "high",
+      "oil_level": "medium",
       "spice_level": "none",
-      "solo_friendly": true,
+      "solo_friendly": false,
       "signature_items": [
         "古法鲜果咕咾肉",
         "大良姜撞奶",
         "腊味煲仔饭"
       ],
-      "environment_note": "社区饭堂的快餐选择，适合很饿时快速解决。",
+      "environment_note": "商场顺德菜，适合两三人点菜，不是猪脚饭快餐。",
       "avoid_for": [
-        "不想太油",
-        "想吃清爽"
+        "一个人快速解决",
+        "预算 60 内",
+        "想吃重辣"
       ],
       "media": {
         "type": "image",
-        "inherit_from_direction": "dir_pork_knuckle_rice"
+        "inherit_from_direction": "dir_cantonese_bistro"
       },
       "synthetic": true,
       "cuisine_tags": [
-        "pork_knuckle_rice",
-        "rice_bowl",
-        "braised"
+        "cantonese",
+        "shunde",
+        "guangdong",
+        "home_style"
       ],
-      "meal_style": "quick_meal",
-      "service_speed": "fast",
+      "meal_style": "group_meal",
+      "service_speed": "normal",
       "portion_size": "filling",
       "temperature": "hot",
       "satisfaction_level": "satisfying",
       "decision_tags": [
+        "顺德菜",
+        "粤菜",
         "咕咾肉",
-        "姜撞奶",
-        "不辣",
-        "粤菜"
+        "姜撞奶"
       ],
-      "source_type": "public_web_curated_demo_offer"
+      "source_type": "public_web_curated_demo_offer",
+      "flavor_label": "顺德粤菜"
     },
     {
       "offer_id": "off_futian_025_wangji_douhua",

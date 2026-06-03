@@ -165,35 +165,35 @@
     },
     {
       "deal_id": "deal_futian_012_bbq_2p",
-      "merchant_id": "m_futian_012",
+      "merchant_id": "m_futian_029_sushi_gin",
       "offer_id": "off_futian_012_pork_belly_bbq",
       "platform": "demo_group_buy",
-      "external_shop_name": "木屋烧烤",
+      "external_shop_name": "鮨吟Sushi Gin",
       "deal_type": "set_meal",
-      "title": "烧烤朋友双人局线索",
-      "deal_price": 108,
-      "original_price": 148,
+      "title": "寿司朋友双人局线索",
+      "deal_price": 298,
+      "original_price": 398,
       "party_size_min": 2,
       "party_size_max": 2,
       "included_items": [
-        "烤串组合",
-        "主食",
-        "饮品券"
+        "寿司小拼",
+        "刺身",
+        "味噌汤"
       ],
       "best_for": [
-        "夜宵和朋友局",
-        "想把人均控制在 60 元上下"
+        "想安静吃日料",
+        "朋友小聚或轻庆祝"
       ],
       "restrictions": [
-        "不适合清淡需求",
-        "夜宵时段可能等待更久"
+        "不适合低预算",
+        "生食接受度需确认"
       ],
-      "valid_time": "晚市/夜宵线索",
+      "valid_time": "午市/晚市线索",
       "source_type": "demo_seed_deal",
       "source_label": "LifePilot 可控种子优惠",
       "source_url": "",
       "data_checked_at": "2026-06-02",
-      "confidence": 0.69
+      "confidence": 0.62
     },
     {
       "deal_id": "deal_futian_014_spicy_rice",
@@ -259,34 +259,34 @@
     },
     {
       "deal_id": "deal_futian_020_changfen",
-      "merchant_id": "m_futian_020",
+      "merchant_id": "m_futian_033_blue_vegan_salad",
       "offer_id": "off_futian_020_grain_bowl",
       "platform": "demo_group_buy",
-      "external_shop_name": "天桥下肠粉",
+      "external_shop_name": "Blue&Vegan轻食·沙拉满都",
       "deal_type": "set_meal",
-      "title": "肠粉早餐/简餐组合线索",
-      "deal_price": 19,
-      "original_price": 26,
+      "title": "轻食单人六谷碗线索",
+      "deal_price": 29,
+      "original_price": 39,
       "party_size_min": 1,
       "party_size_max": 1,
       "included_items": [
-        "双蛋肉肠粉",
-        "豆浆"
+        "低GI六谷碗",
+        "沙拉或饮品"
       ],
       "best_for": [
-        "一个人想吃便宜热乎",
-        "早餐或轻午餐"
+        "一个人想吃低负担",
+        "午餐不想犯困"
       ],
       "restrictions": [
-        "不适合想吃很饱的正餐",
+        "不适合很饿",
         "原型优惠线索，需二次确认"
       ],
-      "valid_time": "早餐/午市线索",
+      "valid_time": "午市/晚市线索",
       "source_type": "demo_seed_deal",
       "source_label": "LifePilot 可控种子优惠",
       "source_url": "",
       "data_checked_at": "2026-06-02",
-      "confidence": 0.7
+      "confidence": 0.66
     }
   ]
 }
