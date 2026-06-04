@@ -742,12 +742,13 @@ async function requestAiExplanationBatch(cards, session, body, directionContext,
   };
 }
 
-async function requestAiExplanationForCards(cards, session, body, directionContext, memoryContext, meta) {
+async function requestAiExplanationForCards(cards, session, body, directionContext, memoryContext, meta, rankContextCards = cards) {
   const explanations = new Map();
+  const contextCards = Array.isArray(rankContextCards) && rankContextCards.length ? rankContextCards : cards;
   for (const card of cards) {
-    const result = await requestAiExplanationBatch([card], session, body, directionContext, memoryContext);
+    const result = await requestAiExplanationBatch(contextCards, session, body, directionContext, memoryContext);
     meta.attempts.push({
-      card_count: 1,
+      card_count: contextCards.length,
       offer_id: card.offer_id,
       depth: 0,
       ok: result.ok,
@@ -840,7 +841,7 @@ async function maybeApplyAiExplanations(cards, session, body, directionContext =
   const perCardCount = Number(body.offer_ai_per_card_count || body.offerAiPerCardCount || 0);
   const explanationTargets = perCardCount > 0 ? cards.slice(0, perCardCount) : cards;
   const explanations = perCardCount > 0
-    ? await requestAiExplanationForCards(explanationTargets, session, body, directionContext, memoryContext, splitMeta)
+    ? await requestAiExplanationForCards(explanationTargets, session, body, directionContext, memoryContext, splitMeta, cards)
     : await explainCardsWithSplitFallback(cards, session, body, directionContext, memoryContext, splitMeta);
   if (!explanations.size) {
     return {
@@ -911,7 +912,10 @@ export async function explainOneOfferCard({session = {}, card = {}, body = {}, d
     evermind_memory_count: 0,
   };
   const meta = {attempts: [], fallback_reasons: [], usage: []};
-  const explanations = await requestAiExplanationForCards([card], session, body, resolvedDirectionContext, memoryContext, meta);
+  const rankContextCards = Array.isArray(session.current_cards) && session.current_cards.length
+    ? session.current_cards
+    : [card];
+  const explanations = await requestAiExplanationForCards([card], session, body, resolvedDirectionContext, memoryContext, meta, rankContextCards);
   const explanation = explanations.get(card.offer_id);
   if (!explanation) {
     return {
