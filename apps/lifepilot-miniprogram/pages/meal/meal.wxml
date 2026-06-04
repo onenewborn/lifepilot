@@ -247,11 +247,11 @@
             <view wx:if="{{currentCard.matched.length || currentCard.issueLines.length}}" class="offer-decision-block">
               <image class="offer-decision-mascot" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
               <view class="offer-decision-copy">
-                <view wx:if="{{currentCard.matched.length}}" class="decision-section">
-                  <view class="decision-title">小汪觉得适合主人</view>
+                <view wx:if="{{currentCard.matched.length}}" class="decision-section recommend-decision-section">
+                  <view class="decision-title">值得推荐</view>
                   <view wx:for="{{currentCard.matched}}" wx:key="*this" class="decision-line">{{item}}</view>
                 </view>
-                <view wx:if="{{currentCard.issueLines.length}}" class="decision-section muted-decision-section">
+                <view wx:if="{{currentCard.issueLines.length}}" class="decision-section caution-decision-section">
                   <view class="decision-title">{{currentCard.issueTitle}}</view>
                   <view wx:for="{{currentCard.issueLines}}" wx:key="*this" class="decision-line">{{item}}</view>
                 </view>

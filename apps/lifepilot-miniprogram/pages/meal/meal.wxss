@@ -894,11 +894,34 @@ button::after {
   margin-top: 14rpx;
 }
 
+.decision-section {
+  padding: 12rpx 14rpx;
+  border-radius: 8rpx;
+}
+
+.recommend-decision-section {
+  background: rgba(255, 247, 232, 0.92);
+  border-left: 6rpx solid #ff5a36;
+}
+
+.caution-decision-section {
+  background: rgba(255, 242, 217, 0.96);
+  border-left: 6rpx solid #c46a14;
+}
+
 .decision-title {
   color: #8a4a28;
   font-size: 23rpx;
   font-weight: 900;
   line-height: 1.25;
+}
+
+.recommend-decision-section .decision-title {
+  color: #8a3b20;
+}
+
+.caution-decision-section .decision-title {
+  color: #8d430c;
 }
 
 .decision-line {
@@ -909,9 +932,8 @@ button::after {
   line-height: 1.38;
 }
 
-.muted-decision-section .decision-title,
-.muted-decision-section .decision-line {
-  color: rgba(45, 33, 24, 0.58);
+.caution-decision-section .decision-line {
+  color: #5a3821;
 }
 
 .offer-action-bar {
