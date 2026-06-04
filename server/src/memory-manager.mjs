@@ -7,12 +7,6 @@ import {
   setConfirmedPreferenceStatus,
   updateConfirmedPreference,
 } from "./memory-store.mjs";
-import {
-  evermindSyncAllowed,
-  syncPreferenceAddToEvermind,
-  syncPreferenceDeleteFromEvermind,
-  syncPreferenceReplaceToEvermind,
-} from "./evermind-sync.mjs";
 
 const DEFAULT_USER_ID = "demo_weiyingru";
 
@@ -118,10 +112,6 @@ export async function executeMemoryManageOperation({body = {}} = {}) {
   const userId = body.user_id || body.userId || DEFAULT_USER_ID;
   const target = body.target && typeof body.target === "object" ? body.target : body;
   const actor = text(body.actor) || "openclaw";
-  const syncBody = {
-    sync_evermind: body.sync_evermind,
-    syncEvermind: body.syncEvermind,
-  };
 
   if (!operation) {
     return {ok: false, user_id: userId, error: "operation_required"};
@@ -157,17 +147,10 @@ export async function executeMemoryManageOperation({body = {}} = {}) {
       patch: patchFromArgs(body),
     });
     if (!payload.ok) return {...payload, operation};
-    let preference = payload.preference;
-    if (evermindSyncAllowed(syncBody)) {
-      const synced = await syncPreferenceAddToEvermind(preference, {operation: "memory_manage_confirm"});
-      preference = synced.preference || preference;
-    }
     return {
       ...payload,
       operation,
-      preference,
-      evermind_sync: preference.sync,
-      result_summary: summarizeResult({operation, preference, candidate: payload.candidate}),
+      result_summary: summarizeResult({operation, preference: payload.preference, candidate: payload.candidate}),
     };
   }
 
@@ -203,17 +186,10 @@ export async function executeMemoryManageOperation({body = {}} = {}) {
       },
     });
     if (!payload.ok) return {...payload, operation};
-    let preference = payload.preference;
-    if (evermindSyncAllowed(syncBody)) {
-      const synced = await syncPreferenceAddToEvermind(preference, {operation: "memory_manage_create"});
-      preference = synced.preference || preference;
-    }
     return {
       ...payload,
       operation,
-      preference,
-      evermind_sync: preference.sync,
-      result_summary: summarizeResult({operation, preference}),
+      result_summary: summarizeResult({operation, preference: payload.preference}),
     };
   }
 
@@ -231,17 +207,10 @@ export async function executeMemoryManageOperation({body = {}} = {}) {
       },
     });
     if (!payload.ok) return {...payload, operation};
-    let preference = payload.preference;
-    if (evermindSyncAllowed(syncBody)) {
-      const synced = await syncPreferenceReplaceToEvermind(previous, preference);
-      preference = synced.preference || preference;
-    }
     return {
       ...payload,
       operation,
-      preference,
-      evermind_sync: preference.sync,
-      result_summary: summarizeResult({operation, preference}),
+      result_summary: summarizeResult({operation, preference: payload.preference}),
     };
   }
 
@@ -259,17 +228,10 @@ export async function executeMemoryManageOperation({body = {}} = {}) {
       actor,
     });
     if (!payload.ok) return {...payload, operation};
-    let preference = payload.preference;
-    if (operation === "delete_preference" && evermindSyncAllowed(syncBody)) {
-      const synced = await syncPreferenceDeleteFromEvermind(preference);
-      preference = synced.preference || preference;
-    }
     return {
       ...payload,
       operation,
-      preference,
-      evermind_sync: preference.sync,
-      result_summary: summarizeResult({operation, preference}),
+      result_summary: summarizeResult({operation, preference: payload.preference}),
     };
   }
 

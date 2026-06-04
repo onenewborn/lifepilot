@@ -1,6 +1,6 @@
 # 项目驾驶舱
 
-更新时间：2026-06-01 15:30
+更新时间：2026-06-04
 
 ## 一句话
 
@@ -17,9 +17,9 @@ OpenClaw Runtime
   负责 AGENTS/SOUL/skills、dreaming、后台任务、小汪互动内容、
   候选记忆复盘、需要工具调用和更长思考的 agent 能力。
 
-Evermind
-  作为长期记忆增强服务接入。当前用于写入/读取部分长期记忆，
-  但产品后端仍是推荐链路读取记忆的权威入口。
+LifePilot Memory
+  本地 JSON 账本是唯一记忆权威。confirmed preferences、candidates、
+  observations、profile、signals 都由产品后端管理；当前比赛版本已移除 Evermind 主链路。
 ```
 
 硬边界：OpenClaw 不直接读写产品 runtime 文件；它通过产品后端 API 读 session、day context、memory，并提交候选结果。
@@ -93,7 +93,7 @@ POST /api/map/route
 POST /api/memory/post-meal-feedback
 memory candidates / confirmed preferences CRUD
 OpenClaw memory bridge / dreaming skill 测试链路
-Evermind 读写接入
+本地 memory observations / food insight profile / recommendation signals
 ```
 
 后端饭点主链路已经不是纯内存：meal session 会写入 `data/runtime/meal_sessions`，day context 会写入 `data/runtime/day_contexts`。
@@ -117,12 +117,15 @@ memory dreaming
 未来小汪互动 skills
 ```
 
-Evermind 当前已经接入测试过：
+当前记忆主链路：
 
 ```text
-可以写入长期记忆
-可以读取长期记忆
-通用长期记忆更适合在 session 启动时读取一次并缓存
+LifePilot 本地 JSON 账本是唯一权威
+Agent/OpenClaw 只能提交 observation、candidate、intelligence result 或结构化 memory_manage
+confirmed preference 必须来自用户确认或明确授权
+快速滑卡只读取本地 confirmed preferences / recommendation signals，不实时搜索历史
+Evermind 已从当前比赛版本主链路移除
+```
 ```
 
 ### 前端
@@ -225,7 +228,7 @@ paused / rejected memory
 merchant feedback weight
 ```
 
-Doubao/Ark 不直接做工具型 memory CRUD。OpenClaw/Evermind 可以生成候选或增强理解，但最终推荐链路应通过后端统一读取。
+Doubao/Ark 不直接做工具型 memory CRUD。OpenClaw 可以生成候选或增强理解，但最终推荐链路应通过后端统一读取本地记忆账本。
 
 ### 前端选择
 
@@ -245,7 +248,7 @@ OpenClaw trace / 长连接 / 流式过程展示后续可以用 web 控制台或�
 3. merchant-intel / merchant-compare 的脚本和后端证据工具已经具备雏形，但 OpenClaw sandbox 当前访问不到本地 4331 后端。
 4. 本地端口、手机真机、开发者工具、OpenClaw sandbox 对 127.0.0.1 的理解不同，临时 tunnel 也不稳定；固定 HTTPS API 的优先级升高。
 5. 商户卡解释仍依赖 Ark/Doubao 单卡预取，首张卡可能有等待。
-6. Evermind 通用长期记忆不应该每张卡都请求，后续要在 session 启动时读一次并缓存。
+6. Memory Intelligence / Dreaming 仍需要统一入口和压缩输入；当前 day/week dreaming 先保持手动触发，不做 cron。
 7. 根目录有一个未跟踪的临时 project.config.json，暂时不要提交。
 ```
 
@@ -262,7 +265,7 @@ docs/CURRENT_ISSUES_SUMMARY.md
 ```text
 1. 在微信开发者工具里完整跑一轮饭点流程，重点检查方向小结反馈、新静音按钮、商家卡新版布局和商家卡预取。
 2. 根据实机截图继续微调商家卡：信息区高度、长文滚动、标签密度、底部按钮间距。
-3. 把 session 启动时的长期记忆读取做成一次性缓存，避免 Evermind 每轮请求拖慢。
+3. 补齐本地 memory_search / session_memory_read API，让问小汪和汪记本可以按需读取本地历史。
 4. 给商户饭后反馈接入 merchant weight：好吃加权，难吃降权，环境差等字段进入商户历史标签。
 5. 继续迁移/设计“问小汪”入口，但第一版仍可隐藏。
 6. 设计 OpenClaw trace 展示方案：小程序内简化展示，web 控制台展示完整工具调用过程。
@@ -303,6 +306,5 @@ server/src/app.mjs
 server/src/session-store.mjs
 server/src/offer-cards.mjs
 server/src/memory-store.mjs
-server/src/evermind-memory.mjs
 server/src/openclaw-store.mjs
 ```

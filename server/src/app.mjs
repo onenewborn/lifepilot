@@ -24,14 +24,6 @@ import {
   setConfirmedPreferenceStatus,
   updateConfirmedPreference,
 } from "./memory-store.mjs";
-import { evermindConfigStatus } from "./evermind-memory.mjs";
-import {
-  evermindSyncAllowed,
-  syncPreferenceAddToEvermind,
-  syncPreferenceDeleteFromEvermind,
-  syncPreferenceReplaceToEvermind,
-  writeMealSessionSummaryToEvermind,
-} from "./evermind-sync.mjs";
 import { executeMemoryManageOperation } from "./memory-manager.mjs";
 import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
 import { buildDealSearchContext, buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantsFromText, searchMerchantCandidates } from "./merchant-tools.mjs";
@@ -52,6 +44,14 @@ let latestLocationProbe = null;
 
 function publicSession(session) {
   return session;
+}
+
+function memoryContextMeta(memoryContext = {}, source = "") {
+  return {
+    ...(source ? {source} : {}),
+    confirmed_preferences: memoryContext.preference_count || 0,
+    policy: memoryContext.policy || "local_active_confirmed_preferences_are_strong",
+  };
 }
 
 async function handleHealth(res) {
@@ -103,11 +103,7 @@ async function handleSessionStart(req, res) {
     session: publicSession(session),
     meta: {
       memory_context: {
-        source: "session_start",
-        confirmed_preferences: memoryContext.preference_count || 0,
-        evermind_memories: memoryContext.evermind_memory_count || 0,
-        evermind_warning: memoryContext.evermind_warning || "",
-        policy: memoryContext.policy,
+        ...memoryContextMeta(memoryContext, "session_start"),
       },
     },
   });
@@ -219,12 +215,7 @@ async function handleMealPrimitiveStartOffers(req, res) {
     },
     meta: {
       primitive: "start-offers",
-      memory_context: {
-        confirmed_preferences: memoryContext.preference_count || 0,
-        evermind_memories: memoryContext.evermind_memory_count || 0,
-        evermind_warning: memoryContext.evermind_warning || "",
-        policy: memoryContext.policy,
-      },
+      memory_context: memoryContextMeta(memoryContext),
     },
   });
 }
@@ -314,11 +305,7 @@ async function handleSessionEntryUpdate(req, res) {
       fallback_used: parsed.parse_mode === "local_fallback",
       fallback_reason: parsed.warning?.code || null,
       memory_context: {
-        source: "session_entry_update",
-        confirmed_preferences: memoryContext.preference_count || 0,
-        evermind_memories: memoryContext.evermind_memory_count || 0,
-        evermind_warning: memoryContext.evermind_warning || "",
-        policy: memoryContext.policy,
+        ...memoryContextMeta(memoryContext, "session_entry_update"),
       },
     },
   });
@@ -390,12 +377,7 @@ async function handleSessionAdvance(req, res) {
     session: publicSession(session),
     meta: {
       ...(summaryPayload.meta || {fallback_used: false}),
-      memory_context: {
-        confirmed_preferences: memoryContext.preference_count || 0,
-        evermind_memories: memoryContext.evermind_memory_count || 0,
-        evermind_warning: memoryContext.evermind_warning || "",
-        policy: memoryContext.policy,
-      },
+      memory_context: memoryContextMeta(memoryContext),
     },
   });
 }
@@ -450,11 +432,10 @@ async function handleSessionFinalize(req, res) {
     ok(res, {
       session: publicSession(session),
       result: session.result || await selectFinalDecisionWithContext(session),
-      evermind_session_summary: {
-        ok: false,
+      session_summary: {
+        ok: true,
+        provider: "local",
         skipped: "already_finalized",
-        status: null,
-        error: null,
       },
     });
     return;
@@ -471,9 +452,6 @@ async function handleSessionFinalize(req, res) {
   }
   const result = await selectFinalDecisionWithContext(session);
   await applyFinalDecision(session, result);
-  const evermindSummary = body.sync_evermind_session === false || body.syncEvermindSession === false
-    ? {ok: false, skipped: "disabled"}
-    : await writeMealSessionSummaryToEvermind(session);
   const observationResult = await createMemoryObservation({
     userId: session.user_id,
     body: {
@@ -500,11 +478,10 @@ async function handleSessionFinalize(req, res) {
   ok(res, {
     session: publicSession(session),
     result,
-    evermind_session_summary: {
-      ok: Boolean(evermindSummary.ok),
-      skipped: evermindSummary.skipped || null,
-      status: evermindSummary.status || null,
-      error: evermindSummary.error || null,
+    session_summary: {
+      ok: true,
+      provider: "local",
+      observation_id: observationResult.ok ? observationResult.observation.observation_id : null,
     },
     meta: {
       recovered_from_stage: recoveredFrom || null,
@@ -783,40 +760,12 @@ function buildMemoryPipeline({observations = [], jobs = [], candidates = [], pre
       metrics: {
         confidence: preference.confidence ?? null,
         strength: preference.strength ?? null,
-        sync_status: preference.sync?.sync_status || "not_synced",
       },
       links: {
         source_candidate_id: preference.source_candidate_id || "",
-        evermind_memory_id: preference.sync?.evermind_memory_id || "",
       },
       raw: preference,
     }));
-    if (preference.sync) {
-      const syncId = preference.sync.evermind_memory_id || preference.preference_id;
-      events.push(memoryPipelineEvent({
-        type: "evermind_sync",
-        id: syncId,
-        title: `Evermind ${preference.sync.sync_status || "not_synced"}`,
-        subtitle: preference.statement || preference.preference_id,
-        status: preference.sync.sync_status || "not_synced",
-        occurredAt: preference.sync.last_synced_at || preference.updated_at || preference.created_at || "",
-        links: {
-          preference_id: preference.preference_id,
-          evermind_memory_id: preference.sync.evermind_memory_id || "",
-        },
-        raw: {
-          preference_id: preference.preference_id,
-          statement: preference.statement,
-          sync: preference.sync,
-          provider_status: providerStatus.evermind || null,
-        },
-      }));
-      edges.push({
-        from: `confirmed_preference:${preference.preference_id}`,
-        to: `evermind_sync:${syncId}`,
-        label: "sync_status",
-      });
-    }
   }
 
   if (foodInsightProfile) {
@@ -864,10 +813,7 @@ async function handleAdminMemoryPipeline(req, res, url) {
   ]);
   const memoryCandidates = (candidatesResult.candidates || []).filter((item) => matchesMemoryDay(item, dayId));
   const confirmedPreferences = preferencesResult.preferences || [];
-  const providerStatus = {
-    local: {configured: true},
-    evermind: evermindConfigStatus(),
-  };
+  const providerStatus = {local: {configured: true}};
   const pipeline = buildMemoryPipeline({
     observations: observationsResult.observations || [],
     jobs: jobsResult.jobs || [],
@@ -905,7 +851,6 @@ async function handleMemoryLedger(res, url) {
     memory_root: context.memory_root,
     provider_status: {
       local: {configured: true},
-      evermind: evermindConfigStatus(),
     },
     candidates: candidates.candidates,
     pending_candidates: candidates.candidates.filter((candidate) => candidate.status === "pending"),
@@ -1056,15 +1001,6 @@ async function handleMemoryPreferenceCreate(req, res) {
     fail(res, 422, payload.error || "invalid_memory_preference", payload.error || "Invalid memory preference.");
     return;
   }
-  if (evermindSyncAllowed(body)) {
-    const synced = await syncPreferenceAddToEvermind(payload.preference, {operation: "manual_create"});
-    ok(res, {
-      ...payload,
-      preference: synced.preference || payload.preference,
-      evermind_sync: synced.preference?.sync || payload.preference.sync,
-    });
-    return;
-  }
   ok(res, payload);
 }
 
@@ -1076,15 +1012,6 @@ async function handleMemoryPreferenceUpdate(req, res, preferenceId) {
   const payload = await updateConfirmedPreference({userId, preferenceId, patch: body});
   if (!payload.ok) {
     fail(res, 404, payload.error || "preference_not_found", payload.error || "Preference not found.");
-    return;
-  }
-  if (evermindSyncAllowed(body)) {
-    const synced = await syncPreferenceReplaceToEvermind(previous, payload.preference);
-    ok(res, {
-      ...payload,
-      preference: synced.preference || payload.preference,
-      evermind_sync: synced.preference?.sync || payload.preference.sync,
-    });
     return;
   }
   ok(res, payload);
@@ -1102,15 +1029,6 @@ async function handleMemoryPreferenceDelete(req, res, preferenceId) {
   });
   if (!payload.ok) {
     fail(res, 404, payload.error || "preference_not_found", payload.error || "Preference not found.");
-    return;
-  }
-  if (evermindSyncAllowed(body)) {
-    const synced = await syncPreferenceDeleteFromEvermind(payload.preference);
-    ok(res, {
-      ...payload,
-      preference: synced.preference || payload.preference,
-      evermind_sync: synced.preference?.sync || payload.preference.sync,
-    });
     return;
   }
   ok(res, payload);
@@ -1145,15 +1063,6 @@ async function handleMemoryCandidateConfirm(req, res, candidateId) {
   });
   if (!payload.ok) {
     fail(res, 404, payload.error || "candidate_not_found", payload.error || "Candidate not found.");
-    return;
-  }
-  if (evermindSyncAllowed(body)) {
-    const synced = await syncPreferenceAddToEvermind(payload.preference, {operation: "candidate_confirm"});
-    ok(res, {
-      ...payload,
-      preference: synced.preference || payload.preference,
-      evermind_sync: synced.preference?.sync || payload.preference.sync,
-    });
     return;
   }
   ok(res, payload);

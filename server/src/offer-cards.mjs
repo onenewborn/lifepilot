@@ -826,7 +826,7 @@ async function maybeApplyAiExplanations(cards, session, body, directionContext =
         session.direction_summary?.summary_text,
         ...(cards || []).slice(0, 8).map((card) => `${card.merchant_name || ""} ${card.title || ""} ${(card.tags || []).join(" ")}`.trim()),
       ].filter(Boolean).join("；"),
-    }) : {confirmed_preferences: [], preference_count: 0, evermind_weak_memories: [], evermind_memory_count: 0})
+    }) : {confirmed_preferences: [], preference_count: 0})
   );
   if (body.ai_explanations === false || body.aiExplanations === false) {
     return {
@@ -836,8 +836,6 @@ async function maybeApplyAiExplanations(cards, session, body, directionContext =
         fallback_used: false,
         memory_context: {
           confirmed_preferences: memoryContext.preference_count || 0,
-          evermind_memories: memoryContext.evermind_memory_count || 0,
-          evermind_warning: memoryContext.evermind_warning || "",
           policy: memoryContext.policy || "only_active_confirmed_preferences_are_recommendation_context",
         },
       },
@@ -872,8 +870,6 @@ async function maybeApplyAiExplanations(cards, session, body, directionContext =
       attempts: splitMeta.attempts,
       memory_context: {
         confirmed_preferences: memoryContext.preference_count || 0,
-        evermind_memories: memoryContext.evermind_memory_count || 0,
-        evermind_warning: memoryContext.evermind_warning || "",
         policy: memoryContext.policy || "only_active_confirmed_preferences_are_recommendation_context",
       },
     },
@@ -906,8 +902,6 @@ async function maybeApplyAiExplanations(cards, session, body, directionContext =
       attempts: splitMeta.attempts,
       memory_context: {
         confirmed_preferences: memoryContext.preference_count || 0,
-        evermind_memories: memoryContext.evermind_memory_count || 0,
-        evermind_warning: memoryContext.evermind_warning || "",
         policy: memoryContext.policy || "only_active_confirmed_preferences_are_recommendation_context",
       },
       usage: splitMeta.usage,
@@ -926,8 +920,6 @@ export async function explainOneOfferCard({session = {}, card = {}, body = {}, d
   const memoryContext = body.memory_context || body.memoryContext || session.memory_context || {
     confirmed_preferences: [],
     preference_count: 0,
-    evermind_weak_memories: [],
-    evermind_memory_count: 0,
   };
   const meta = {attempts: [], fallback_reasons: [], usage: []};
   const rankContextCards = Array.isArray(session.current_cards) && session.current_cards.length

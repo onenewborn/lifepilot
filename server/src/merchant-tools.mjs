@@ -527,7 +527,7 @@ export async function buildMerchantIntelContext({userId = "demo_weiyingru", merc
   const [offers, merchantFeedback, memoryContext, session] = await Promise.all([
     readOffers(),
     readMerchantFeedbackContext({userId}),
-    readRecommendationMemoryContext({userId, query: question || merchant.name, includeEvermind: false}),
+    readRecommendationMemoryContext({userId}),
     sessionId ? getSession(sessionId) : null,
   ]);
   const context = await merchantContext({merchantId, merchant, userId, merchantFeedback, offers});
@@ -551,7 +551,7 @@ export async function buildMerchantCompareContext({userId = "demo_weiyingru", me
   const [offers, merchantFeedback, memoryContext, session] = await Promise.all([
     readOffers(),
     readMerchantFeedbackContext({userId}),
-    readRecommendationMemoryContext({userId, query: question || normalizedIds.join(" "), includeEvermind: false}),
+    readRecommendationMemoryContext({userId}),
     sessionId ? getSession(sessionId) : null,
   ]);
   const merchantContexts = await Promise.all(normalizedIds.map((merchantId) => (
@@ -618,7 +618,7 @@ export async function buildDealSearchContext({
   const [offers, deals, memoryContext, session] = await Promise.all([
     readOffers(),
     readDeals(),
-    readRecommendationMemoryContext({userId, query: question || targetIds.join(" "), includeEvermind: false}),
+    readRecommendationMemoryContext({userId}),
     sessionId ? getSession(sessionId) : null,
   ]);
   const offerById = new Map(offers.map((offer) => [offer.offer_id, offer]));

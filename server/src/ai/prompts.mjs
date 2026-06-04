@@ -116,8 +116,7 @@ function compactEntryContext(entryContext = {}) {
 function compactMemoryContext(memoryContext = {}) {
   return {
     local_active_confirmed_preferences: memoryContext.confirmed_preferences || [],
-    evermind_weak_memories: (memoryContext.evermind_weak_memories || []).slice(0, 8),
-    policy: memoryContext.policy || "local_active_confirmed_preferences_are_strong; evermind_memories_are_weak_context",
+    policy: memoryContext.policy || "local_active_confirmed_preferences_are_strong",
   };
 }
 
@@ -277,7 +276,6 @@ export function buildDirectionSummaryPrompt({goal, events = [], entryContext = n
     "- 称呼用户为主人。",
     "- summary_text 写 1 到 2 句中文，不要列表，不要换行。",
     "- 如果存在 confirmed memory，只有在它和本次 keep/dislike、入口需求高度相关时，才自然带一句“我记得主人喜欢……”来帮助解释本次选择。",
-    "- Evermind 外部记忆只能作为弱上下文，不能当作用户已确认偏好；只有和本次选择高度相关时才自然参考。",
     "- 面向用户时不要写“长期喜欢”“长期偏好”“confirmed memory”“记忆上下文”这类系统化表述。",
     "- pending memory 不能当作已确认偏好。",
     "",
@@ -342,9 +340,8 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     "- 不要编造真实美团、大众点评、订单、支付、营业、实时排队或真实路线。",
     "- 不要说“实时情况”“走过去就能到”“走路就能到”“步行可达”这类暗示已经查过真实路线或实时数据的话；可以说“距离不远”“离得近”“出发前再确认一下”。",
     "- 距离使用 facts.distance_text，例如 0.9km，不要写 subway_walk_min。",
-    "- 如果存在记忆上下文，本地 confirmed preferences 是强依据；Evermind 外部记忆只能作为弱上下文，pending candidates 不是已确认偏好，不能当作推荐依据。",
+    "- 如果存在记忆上下文，本地 confirmed preferences 是强依据，pending candidates 不是已确认偏好，不能当作推荐依据。",
     "- 只有当 confirmed_preferences 和当前商家卡事实高度相关时，才自然带一句“我记得主人喜欢……”；不要为了展示记忆而强行提。",
-    "- Evermind 外部记忆如果和当前商家卡高度相关，可以辅助理解用户最近场景，但不要说成小汪已经确认记住。",
     "- 面向用户时不要写“长期喜欢”“长期偏好”“confirmed memory”“记忆上下文”这类系统化表述。",
     "- 文案短，适合卡片展示。",
     "",

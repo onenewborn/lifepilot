@@ -510,7 +510,7 @@ Page({
       sessionDebug: {
         api: getApiBaseUrl(),
         mode: `${getApiMode()} · ${session.schema_version || "session"}`,
-        memory: memoryMeta ? `confirmed ${memoryMeta.confirmed_preferences || 0} / evermind ${memoryMeta.evermind_memories || 0}` : this.data.sessionDebug.memory
+        memory: memoryMeta ? `confirmed ${memoryMeta.confirmed_preferences || 0}` : this.data.sessionDebug.memory
       },
       bootNotice: options.notice || ""
     }, () => {

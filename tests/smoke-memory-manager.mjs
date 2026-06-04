@@ -33,7 +33,6 @@ try {
       skill: "memory_manage",
       args: {
         operation: "confirm_latest_pending",
-        sync_evermind: false,
       },
     }],
   });
@@ -50,7 +49,6 @@ try {
       confirmation_text: "下雨天可以多推荐热汤面",
       category: "cuisine",
       polarity: "positive",
-      sync_evermind: false,
     },
   });
   assert.equal(directCreate.ok, true);
@@ -62,7 +60,6 @@ try {
       operation: "update_preference",
       target: {match_text: "热汤面"},
       confirmation_text: "下雨天可以多推荐清淡热汤面",
-      sync_evermind: false,
     },
   });
   assert.equal(updated.ok, true);
@@ -73,7 +70,6 @@ try {
       user_id: userId,
       operation: "delete_preference",
       target: {match_text: "排队久"},
-      sync_evermind: false,
     },
   });
   assert.equal(deleted.ok, true);

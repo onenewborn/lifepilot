@@ -3,7 +3,6 @@ import { existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { config } from "./config.mjs";
-import { evermindConfigStatus, searchEvermindMemories } from "./evermind-memory.mjs";
 
 const SCHEMA_CANDIDATES = "lifepilot.memory_candidates.v1";
 const SCHEMA_PREFERENCES = "lifepilot.confirmed_preferences.v1";
@@ -275,8 +274,7 @@ function preferenceFromCandidate({candidate, userId, actor = "user", method = "c
     },
     sync: {
       provider: "local",
-      evermind_memory_id: null,
-      sync_status: "not_synced",
+      sync_status: "local_only",
       last_synced_at: null,
       replacement: null,
     },
@@ -317,8 +315,7 @@ function preferenceFromBody({body, userId}) {
     },
     sync: {
       provider: "local",
-      evermind_memory_id: body.evermind_memory_id || body.evermindMemoryId || null,
-      sync_status: body.sync_status || body.syncStatus || "not_synced",
+      sync_status: body.sync_status || body.syncStatus || "local_only",
       last_synced_at: body.last_synced_at || body.lastSyncedAt || null,
       replacement: null,
     },
@@ -614,47 +611,6 @@ export async function setConfirmedPreferenceStatus({workspaceRoot = config.stora
   };
 }
 
-export async function setConfirmedPreferenceSync({workspaceRoot = config.storage.runtimeRoot, userId, preferenceId: targetPreferenceId, sync = {}, audit = {}}) {
-  const user = await ensureMemoryUser({workspaceRoot, userId});
-  const store = await readJsonIfExists(user.preferencesPath, defaultPreferenceStore(user.userId));
-  const preferences = store.preferences || [];
-  const index = preferences.findIndex((preference) => preference.preference_id === targetPreferenceId);
-  if (index === -1) {
-    return {ok: false, user_id: user.userId, memory_root: user.root, error: "preference_not_found"};
-  }
-  const updatedAt = nowIso();
-  const previous = preferences[index];
-  const next = {
-    ...previous,
-    updated_at: updatedAt,
-    sync: {
-      ...(previous.sync || {}),
-      provider: "evermind",
-      ...sync,
-    },
-    audit: [
-      ...(previous.audit || []),
-      {
-        type: "sync",
-        actor: audit.actor || "system",
-        provider: "evermind",
-        operation: audit.operation || sync.operation || "sync",
-        occurred_at: updatedAt,
-        ok: Boolean(sync.sync_status === "synced" || sync.sync_status === "cleanup_required"),
-      },
-    ],
-  };
-  preferences[index] = next;
-  store.preferences = preferences;
-  await writeJson(user.preferencesPath, store);
-  return {
-    ok: true,
-    user_id: user.userId,
-    memory_root: user.root,
-    preference: next,
-  };
-}
-
 export async function confirmMemoryCandidate({workspaceRoot = config.storage.runtimeRoot, userId, candidateId: targetCandidateId, actor = "user", patch = {}}) {
   const user = await ensureMemoryUser({workspaceRoot, userId});
   const candidatesStore = await readJsonIfExists(user.candidatesPath, {
@@ -786,16 +742,7 @@ export async function readUserMemoryContext({workspaceRoot = config.storage.runt
   };
 }
 
-function compactEvermindMemory(item = {}) {
-  return {
-    memory_type: item.memory_type || item.type || "",
-    summary: String(item.summary || item.content || item.text || item.memory || "").slice(0, 260),
-    score: item.score ?? item.rank_score ?? null,
-    source: "evermind",
-  };
-}
-
-export async function readRecommendationMemoryContext({workspaceRoot = config.storage.runtimeRoot, userId, query = "", includeEvermind = true} = {}) {
+export async function readRecommendationMemoryContext({workspaceRoot = config.storage.runtimeRoot, userId} = {}) {
   const context = await readUserMemoryContext({workspaceRoot, userId});
   const confirmedPreferences = (context.preferences || [])
     .filter((item) => item.status === "active")
@@ -810,26 +757,10 @@ export async function readRecommendationMemoryContext({workspaceRoot = config.st
       statement: item.statement,
       explanation_hint: item.statement,
     }));
-  let evermindResult = {ok: false, error: "disabled", memories: []};
-  if (includeEvermind && evermindConfigStatus().configured) {
-    evermindResult = await searchEvermindMemories({
-      userId: context.user_id,
-      query: query || "饭点推荐 用户偏好 最近用餐上下文",
-      method: "hybrid",
-      topK: 8,
-      memoryTypes: ["episodic_memory", "profile"],
-    });
-  }
-  const evermindMemories = evermindResult.ok
-    ? (evermindResult.memories || []).map(compactEvermindMemory).filter((item) => item.summary).slice(0, 8)
-    : [];
   return {
     user_id: context.user_id,
-    policy: "local_active_confirmed_preferences_are_strong; evermind_memories_are_weak_context",
+    policy: "local_active_confirmed_preferences_are_strong",
     confirmed_preferences: confirmedPreferences,
     preference_count: confirmedPreferences.length,
-    evermind_weak_memories: evermindMemories,
-    evermind_memory_count: evermindMemories.length,
-    evermind_warning: evermindResult.ok ? "" : (evermindResult.error || ""),
   };
 }

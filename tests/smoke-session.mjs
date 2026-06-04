@@ -274,7 +274,7 @@ try {
   assert.ok(advanced.payload.session.direction_summary.summary_text);
   assert.equal(advanced.payload.session.direction_summary.mode, "local_fallback");
   assert.equal(advanced.payload.meta.fallback_used, true);
-  assert.equal(advanced.payload.meta.memory_context.evermind_memories, 0);
+  assert.equal(advanced.payload.meta.memory_context.policy, "local_active_confirmed_preferences_are_strong");
 
   const offerAdvance = await request("/api/session/advance", {
     method: "POST",
@@ -356,7 +356,8 @@ try {
   assert.ok(finalized.payload.result.context_cards[0].route);
   assert.ok(Object.hasOwn(finalized.payload.result.context_cards[0], "best_deal"));
   assert.ok(finalized.payload.result.deal_context);
-  assert.equal(finalized.payload.evermind_session_summary.skipped, "not_configured");
+  assert.equal(finalized.payload.session_summary.provider, "local");
+  assert.ok(finalized.payload.session_summary.observation_id);
   const persistedAfterFinalize = JSON.parse(await readFile(sessionFile, "utf8"));
   assert.equal(persistedAfterFinalize.stage, "final");
   assert.equal(persistedAfterFinalize.status, "finalized");
@@ -554,9 +555,9 @@ try {
   assert.equal(confirmed.payload.candidate.status, "confirmed");
   assert.equal(confirmed.payload.preference.status, "active");
   assert.equal(confirmed.payload.preference.source_candidate_id, candidateId);
-  assert.equal(confirmed.payload.preference.sync.provider, "evermind");
-  assert.equal(confirmed.payload.preference.sync.sync_status, "not_configured");
-  assert.equal(confirmed.payload.evermind_sync.sync_status, "not_configured");
+  assert.equal(confirmed.payload.preference.sync.provider, "local");
+  assert.equal(confirmed.payload.preference.sync.sync_status, "local_only");
+  assert.equal(Object.hasOwn(confirmed.payload, "evermind_sync"), false);
 
   const preferences = await request("/api/memory/preferences?user_id=smoke_user&status=active");
   assert.equal(preferences.status, 200);
@@ -574,14 +575,13 @@ try {
   assert.equal(offersAfterConfirm.status, 200);
   assert.equal(offersAfterConfirm.payload.ok, true);
   assert.equal(offersAfterConfirm.payload.ai_explanations.memory_context.confirmed_preferences, 0);
-  assert.equal(offersAfterConfirm.payload.ai_explanations.memory_context.policy, "local_active_confirmed_preferences_are_strong; evermind_memories_are_weak_context");
-  assert.equal(offersAfterConfirm.payload.ai_explanations.memory_context.evermind_memories, 0);
+  assert.equal(offersAfterConfirm.payload.ai_explanations.memory_context.policy, "local_active_confirmed_preferences_are_strong");
 
   const ledger = await request("/api/memory/ledger?user_id=smoke_user");
   assert.equal(ledger.status, 200);
   assert.equal(ledger.payload.ok, true);
   assert.equal(ledger.payload.provider_status.local.configured, true);
-  assert.equal(ledger.payload.provider_status.evermind.configured, false);
+  assert.equal(Object.hasOwn(ledger.payload.provider_status, "evermind"), false);
   assert.equal(ledger.payload.preferences.length, 1);
   assert.equal(ledger.payload.pending_candidates.length, feedback.payload.created_count - 1);
 
@@ -749,7 +749,6 @@ try {
     method: "POST",
     body: {
       session_id: "smoke_finalize_recovery_session",
-      sync_evermind_session: false,
     },
   });
   assert.equal(recoveredFinalize.status, 200);
