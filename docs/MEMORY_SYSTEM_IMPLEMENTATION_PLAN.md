@@ -4,15 +4,14 @@
 
 ## 1. 目标
 
-把 LifePilot 记忆系统从当前的 OpenClaw Dreaming、Memory Intelligence、Evermind、后端规则混合状态，收束成一个清晰、可实现、可向评委解释的架构：
+把 LifePilot 记忆系统从当前的 OpenClaw Dreaming、Memory Intelligence、后端规则混合状态，收束成一个清晰、可实现、可向评委解释的架构：
 
 ```text
-LifePilot 本地 JSON 账本 = 唯一记忆权威
+LifePilot 后端 memory service = 唯一记忆权威
 Memory Intelligence = 统一记忆加工系统
 OpenClaw / Ark / local_policy = Memory Intelligence 的执行器
 Agent tools = 通过后端 API 读写结构化记忆
 Recommendation Signals = 快速滑卡链路使用的机器可执行记忆
-Evermind = 当前比赛版本移除
 ```
 
 核心原则：
@@ -56,28 +55,7 @@ Memory Intelligence
 
 产品概念上已经希望把 dreaming 归入 Memory Intelligence，但工程实现上还没有完全收口。
 
-### 2.2 Evermind 增加了不必要复杂度
-
-当前文档和代码仍把 Evermind 作为外部记忆 provider：
-
-```text
-confirmed preference 同步 Evermind
-session finalize 写 Evermind summary
-推荐解释读取 Evermind weak memories
-```
-
-但比赛交付不需要外部 provider。它会带来：
-
-```text
-外部服务失败风险
-记忆权威边界不清
-prompt 里多一层 weak memory 解释
-代码和文档复杂度上升
-```
-
-当前决定：比赛版本移除 Evermind 主链路。
-
-### 2.3 后端仍有自然语言规则兜底
+### 2.2 后端仍有自然语言规则兜底
 
 例如餐后反馈里出现“太油”“排队久”“太辣”“喜欢吃面”，后端会用关键词生成 memory candidate。这可以保留为 demo fallback，但不能作为主设计。
 
@@ -89,7 +67,7 @@ Agent / Ark / OpenClaw 理解自然语言
 -> 后端校验后落库
 ```
 
-### 2.4 Session 记忆和长期记忆边界不清
+### 2.3 Session 记忆和长期记忆边界不清
 
 需要明确：
 
@@ -165,7 +143,7 @@ food_insight_profile 摘要
 
 ## 4. 存储设计
 
-统一以 `data/runtime` 下的本地 JSON 为权威。
+统一由产品后端 memory service 管理运行期记忆数据。
 
 ```text
 data/runtime/meal_sessions/<session_id>.json
@@ -221,18 +199,18 @@ data/runtime/memory_intelligence_jobs/<job_id>.json
 
 Memory Intelligence job 结果。
 
-## 5. 移除 Evermind 存储依赖
+## 5. 后端记忆边界
 
-当前版本不再调用 Evermind：
+当前版本的记忆读写统一通过产品后端完成：
 
 ```text
-不再同步 confirmed preference 到 Evermind
-不再在 session finalize 时写 Evermind summary
-不再在推荐解释中读取 Evermind weak memories
-不再在 memory ledger 中暴露 Evermind provider status
+confirmed preference 写入必须经过用户确认或明确授权
+session finalize 只写 session result、day context 和 observation
+推荐解释只读取 confirmed preferences、food insight profile 和 recommendation signals
+memory ledger 只暴露产品内记忆状态
 ```
 
-`preference.sync` 可以暂时保留本地字段以兼容旧数据，但产品展示和新写入不再依赖外部同步状态。
+`preference.sync` 可以暂时保留本地兼容字段，但产品展示和新写入只关心偏好本身的状态、来源和证据。
 
 ## 6. 后端 API 设计
 
@@ -425,7 +403,6 @@ Agent 不能：
 绕过用户确认直接创建 confirmed preference
 直接修改 runtime JSON
 直接把 weak hypothesis 当成 confirmed preference
-直接让外部 provider 成为权威
 ```
 
 ## 8. Memory Intelligence 设计
@@ -652,7 +629,6 @@ POST /api/session/finalize
 -> 更新 day_context
 -> 写 memory_observation
 -> 不直接写 confirmed preference
--> 不调用 Evermind
 ```
 
 ### 10.4 餐后反馈
@@ -736,28 +712,22 @@ TOOLS.md 和 BOOT.md 是 OpenClaw 实际操作约束
 待 Phase 2-4 完成后再更新：
 
 ```text
-docs/contracts/memory.md：更新权威账本、API、Evermind 移除后的正式合同
+docs/contracts/memory.md：更新权威账本和 API 合同
 docs/contracts/openclaw-dreaming.md：改为 Memory Intelligence day_dreaming 兼容入口说明
 docs/PROJECT_STATE.md：同步项目状态
 openclaw-workspace/TOOLS.md：只写已经存在且可调用的工具
 openclaw-workspace/BOOT.md：只写已经确定的运行边界
 ```
 
-待后续废弃：
-
-```text
-docs/contracts/evermind-memory.md
-```
-
-### Phase 2：移除 Evermind 主链路
+### Phase 2：收束记忆主链路
 
 后端目标：
 
 ```text
-不再 import evermind
-不再同步 external memory
-不再返回 evermind provider status
-不再把 evermind_weak_memories 放进 prompt
+记忆读写只走产品后端
+preference CRUD 只写产品内记忆账本
+session finalize 只写 observation / session summary
+推荐 prompt 只读取 confirmed preferences / profile / signals
 ```
 
 涉及模块：
@@ -920,7 +890,6 @@ signals 被刷新
 写 session result
 写 observation
 不写 confirmed preference
-不调用 Evermind
 ```
 
 ### 12.5 问小汪记忆搜索
@@ -945,7 +914,7 @@ agent 能按需搜索本地 session / preferences
 ```text
 商户排序读取 recommendation_signals
 scoring_features 包含 memory source
-不调用 OpenClaw / Evermind
+不调用 OpenClaw agent
 ```
 
 ### 12.7 汪记本
@@ -1013,8 +982,7 @@ OpenClaw skill 更新流程：
 ## 14. 决策结论
 
 ```text
-当前比赛版本抛弃 Evermind
-本地 JSON 是唯一记忆权威
+产品后端 memory service 是唯一记忆权威
 Memory Intelligence 是统一记忆加工系统
 OpenClaw Dreaming 收敛为 Memory Intelligence 的 day_dreaming engine
 当天复盘和每周复盘当前只做手动触发

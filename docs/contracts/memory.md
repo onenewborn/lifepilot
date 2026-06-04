@@ -6,7 +6,7 @@
 
 Memory 是小汪“允许记住什么、如何使用这些记忆”的可审计产品账本。
 
-当前比赛版本中，LifePilot 后端本地 JSON 账本是唯一记忆权威。Evermind 已从主链路移除。
+LifePilot 后端 memory service 是记忆读写、状态校验和可审计记录的唯一权威。
 
 ## 权威归属
 
@@ -98,15 +98,9 @@ signal_refresh   把长期记忆和画像转成推荐可执行 signals
   "strength": -0.72,
   "confidence": 0.82,
   "status": "active",
-  "source_candidate_id": "cand_...",
-  "sync": {
-    "provider": "local",
-    "sync_status": "local_only"
-  }
+  "source_candidate_id": "cand_..."
 }
 ```
-
-`sync` 字段保留为本地兼容元数据，不代表外部同步。新写入的 confirmed preference 使用 `provider: "local"`。
 
 ## CRUD 规则
 
@@ -156,7 +150,6 @@ Finalize 不会：
 
 ```text
 直接写 confirmed preference
-调用外部记忆 provider
 声称用户真实消费或真实评分
 ```
 

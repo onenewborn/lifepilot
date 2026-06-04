@@ -29,7 +29,6 @@ LifePilot 后端负责：
 - 执行结构化 `memory_manage`。
 - 校验 user_id、目标、状态和敏感文本。
 - 写入 memory ledger。
-- 同步 Evermind；同步失败不阻断本地记忆。
 
 不要让后端用自然语言规则猜用户意图。只有你输出结构化 `memory_manage`，后端才会执行写操作。
 
@@ -95,6 +94,5 @@ pause_preference
 ## 安全边界
 
 - 推断、弱上下文、单次滑卡行为不能直接写 confirmed preference。
-- Evermind 自动 profile / episodic 结果不能直接写 confirmed preference。
 - 用户没有明确授权时，只能用 memory-capture 生成待确认候选。
 - 如果目标不清楚，先用小汪口吻追问，不要编 candidate_id 或 preference_id。

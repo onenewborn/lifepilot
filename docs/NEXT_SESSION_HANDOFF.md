@@ -26,7 +26,7 @@ docs/CURRENT_ISSUES_SUMMARY.md
 
 ## 当前任务主线
 
-我们正在做微信小程序前端迁移和体验打磨。后端饭点闭环、记忆基础、OpenClaw bridge、Evermind 接入都已经有最小链路；当前刚开始把“问小汪 / 汪记本 / skill 调度”迁回新小程序。
+我们正在做微信小程序前端迁移和体验打磨。后端饭点闭环、记忆基础和 OpenClaw bridge 都已经有最小链路；当前刚开始把“问小汪 / 汪记本 / skill 调度”迁回新小程序。
 
 当前小程序入口：
 
@@ -60,7 +60,7 @@ API_MODE 开关已实现，当前可切 local / tunnel / custom
 汪记本最小版展示今日饭点记录、待确认长期记忆、已确认偏好，并支持“记住 / 先不记”
 ```
 
-阶段表也已同步：`docs/MIGRATION_PHASES.json` 里的 P6 是 `in_progress`，不是空白待办。OpenClaw memory bridge、dreaming skill 设计和 Evermind 读写已经有最小实现，后续主要补原生消息渠道、trace 展示和问小汪入口。
+阶段表也已同步：`docs/MIGRATION_PHASES.json` 里的 P6 是 `in_progress`，不是空白待办。OpenClaw memory bridge 和 dreaming skill 设计已经有最小实现，后续主要补原生消息渠道、trace 展示和问小汪入口。
 
 最新关键提交：
 
@@ -84,7 +84,7 @@ f88c3df chore: add miniprogram api mode switch
 5. 旧版视觉和小汪狗头很重要，新版不能太工程化、太丑。
 6. 方向卡第一阶段选的是方向；第二阶段选的是商家，不要再叫 offer。
 7. 实时滑卡链路可以走 Doubao/Ark API；OpenClaw 用在后台、问小汪、skills、dreaming。
-8. 记忆权威在产品后端，Evermind/OpenClaw 可以辅助理解和生成候选。
+8. 记忆权威在产品后端，OpenClaw 可以辅助理解和生成候选。
 ```
 
 ## 当前应优先做什么
@@ -97,7 +97,7 @@ f88c3df chore: add miniprogram api mode switch
 3. 继续把 merchant-intel / merchant-compare 接成真正的 OpenClaw 工具调用，而不是后端兜底。
 4. 在微信开发者工具/手机预览里测试默认进入问小汪，以及“直接帮我选 / 帮我走滑卡 → 开始滑卡”。
 5. 设计汪记本日级 UI：每一天的小汪总结、吃饭行为、偏好变化、待确认记忆。
-6. 接着做 session 启动时一次性读取长期记忆并缓存，避免每张商家卡请求 Evermind。
+6. 接着做 session 启动时一次性读取长期记忆并缓存，避免每张商家卡重复读取完整记忆上下文。
 ```
 
 ## 当前已知坑

@@ -66,7 +66,7 @@ skill_result_card    前端可渲染 deal_card
 trace                工具调用轨迹
 ```
 
-`LIFEPILOT_API_BASE` 必须是工具环境可访问的 LifePilot 后端地址。当前默认使用 `http://110.42.208.125`。不要改读 workspace 本地 JSON 或旧 demo data。
+`LIFEPILOT_API_BASE` 必须是工具环境可访问的 LifePilot 后端地址。当前默认使用 `http://110.42.208.125`。不要绕过产品后端读取旧 demo data。
 
 ## 证据边界
 

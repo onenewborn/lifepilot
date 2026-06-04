@@ -18,8 +18,8 @@ OpenClaw Runtime
   候选记忆复盘、需要工具调用和更长思考的 agent 能力。
 
 LifePilot Memory
-  本地 JSON 账本是唯一记忆权威。confirmed preferences、candidates、
-  observations、profile、signals 都由产品后端管理；当前比赛版本已移除 Evermind 主链路。
+  产品后端 memory service 是记忆权威。confirmed preferences、candidates、
+  observations、profile、signals 都由产品后端管理。
 ```
 
 硬边界：OpenClaw 不直接读写产品 runtime 文件；它通过产品后端 API 读 session、day context、memory，并提交候选结果。
@@ -120,11 +120,10 @@ memory dreaming
 当前记忆主链路：
 
 ```text
-LifePilot 本地 JSON 账本是唯一权威
+LifePilot 后端 memory service 是唯一权威
 Agent/OpenClaw 只能提交 observation、candidate、intelligence result 或结构化 memory_manage
 confirmed preference 必须来自用户确认或明确授权
 快速滑卡只读取本地 confirmed preferences / recommendation signals，不实时搜索历史
-Evermind 已从当前比赛版本主链路移除
 ```
 ```
 

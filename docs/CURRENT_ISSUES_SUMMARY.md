@@ -222,7 +222,6 @@ meal session 持久化
 day context
 memory candidates / confirmed preferences
 OpenClaw dreaming 基础桥
-Evermind 基础读写
 merchant reputation seed
 merchant-intel / merchant-compare 证据工具
 merchant-resolve 店名解析工具
@@ -290,4 +289,3 @@ LIFEPILOT_API_BASE=http://127.0.0.1:4331 \
 ```bash
 LIFEPILOT_API_BASE=https://api.lifepilot-xiaowang.cn
 ```
-
