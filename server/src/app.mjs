@@ -1274,6 +1274,7 @@ async function handleXiaowangDiaryRoute(res, url) {
   const payload = await readXiaowangDiary({
     userId: url.searchParams.get("user_id") || url.searchParams.get("userId") || "demo_weiyingru",
     date: url.searchParams.get("date") || "",
+    includeDayContext: url.searchParams.get("include_day_context") === "1" || url.searchParams.get("includeDayContext") === "1",
   });
   ok(res, payload);
 }

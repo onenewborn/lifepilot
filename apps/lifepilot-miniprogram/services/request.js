@@ -28,13 +28,15 @@ function request(path, options = {}) {
         resolve(payload);
       },
       fail(error) {
+        const errMsg = error && error.errMsg ? error.errMsg : "后端连接失败";
         reject({
           statusCode: 0,
           payload: null,
-          message: error && error.errMsg ? error.errMsg : "后端连接失败",
+          message: `${errMsg}\n${method} ${path}\nAPI: ${apiBaseUrl}`,
           apiBaseUrl,
           apiMode: getApiMode(),
-          path
+          path,
+          rawError: error || null
         });
       }
     });

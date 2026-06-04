@@ -13,9 +13,10 @@ function getChatJob(jobId) {
 }
 
 function getDiary(params = {}) {
-  const query = Object.keys(params)
-    .filter((key) => params[key] !== undefined && params[key] !== null && params[key] !== "")
-    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+  const queryParams = {...params, compact: params.compact === undefined ? "1" : params.compact};
+  const query = Object.keys(queryParams)
+    .filter((key) => queryParams[key] !== undefined && queryParams[key] !== null && queryParams[key] !== "")
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
     .join("&");
   return request(`/api/xiaowang/diary${query ? `?${query}` : ""}`, { method: "GET", timeout: 30000 });
 }

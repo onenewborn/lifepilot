@@ -1353,7 +1353,7 @@ export function getXiaowangChatJob(jobId) {
   return job;
 }
 
-export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date} = {}) {
+export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date, includeDayContext = false} = {}) {
   const dayId = createDayId(userId, date ? new Date(`${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}T12:00:00+08:00`) : new Date());
   const dayContext = await getDayContext(dayId);
   const pending = await listMemoryCandidates({userId, status: "pending"});
@@ -1387,7 +1387,7 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date} = {}) {
     ok: true,
     user_id: userId,
     day_id: dayId,
-    day_context: dayContext || null,
+    day_context: includeDayContext ? dayContext || null : undefined,
     diary_date: dayContext?.date || dayId.match(/^day_(\d{8})_/)?.[1] || "",
     daily_summary: dailySummary,
     meal_sessions: mealSessions,
