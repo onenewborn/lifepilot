@@ -7,7 +7,7 @@
 LifePilot 现在有三层环境：
 
 - 本地项目：`/Users/mona/Documents/lifepilot`，后台上传会先写到本机或当前后端服务器的 `assets/` 目录。
-- 云端后端：`http://110.42.208.125`，后台数据 JSON 部署到这里后，小程序请求云端接口才会看到。
+- 云端后端：`https://api.lifepilot-xiaowang.cn`，后台数据 JSON 部署到这里后，小程序请求云端接口才会看到。
 - 腾讯 COS：生产图片/视频实际放这里，小程序看到 `/assets/...` 路径时，会按项目里的 COS 域名规则去读 COS 上同路径的文件。
 
 所以，数据库里填：
