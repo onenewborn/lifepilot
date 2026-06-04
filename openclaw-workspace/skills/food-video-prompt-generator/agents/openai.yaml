@@ -1,0 +1,3 @@
+display_name: 餐饮视频 Prompt
+short_description: 基于菜品和门店图片生成食欲感短视频 prompt，并沉淀优秀探店视频范式。
+default_prompt: 请根据我发的菜品/门店图片和店铺特点，生成一条4s单菜展示或12s探店视频prompt，突出一个最值得去的亮点。

@@ -1,0 +1,16 @@
+{
+  "name": "lifepilot-douyin-video-dissector",
+  "version": "1.0.0",
+  "description": "LifePilot content-pipeline Douyin reference video resolver",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.59.1"
+  }
+}

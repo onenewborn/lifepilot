@@ -1,0 +1,39 @@
+{
+  "schema_version": "lifepilot.dreaming.memory_candidate_rules.v1",
+  "allowed_categories": [
+    "food_oiliness",
+    "queue",
+    "taste_quality",
+    "spice",
+    "budget",
+    "ambience",
+    "revisit_intent",
+    "staple_food",
+    "meal_context",
+    "merchant_experience",
+    "general"
+  ],
+  "candidate_types": [
+    "food_preference",
+    "situational_preference",
+    "merchant_experience",
+    "preference_update_suggestion"
+  ],
+  "hard_rules": [
+    "没有 evidence 不提交 memory candidate。",
+    "confidence 低于 0.75 不提交 memory candidate。",
+    "单次 swipe 不能单独成为长期偏好。",
+    "单次临时状态只能形成 situational signal。",
+    "商户体验优先落到 merchant_experience，不要直接泛化成全局口味偏好。",
+    "与 confirmed preference 冲突时提交 preference_update_suggestion，不直接覆盖。"
+  ],
+  "sensitive_reject_patterns": [
+    "\\\\b1[3-9]\\\\d{9}\\\\b",
+    "\\\\d{15,18}",
+    "\\\\d{16,19}",
+    "身份证",
+    "银行卡",
+    "手机号",
+    "住址"
+  ]
+}
