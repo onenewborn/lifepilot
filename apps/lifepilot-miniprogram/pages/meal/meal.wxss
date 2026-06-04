@@ -1489,25 +1489,17 @@ button::after {
 .chat-location-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
+  justify-content: flex-end;
   padding: 18rpx 28rpx 12rpx;
   box-sizing: border-box;
 }
 
-.chat-location-copy {
-  min-width: 0;
-}
-
-.chat-location-label {
-  color: rgba(75, 50, 31, 0.46);
-  font-size: 20rpx;
-  font-weight: 800;
-  line-height: 1.2;
-}
-
 .chat-location-chip {
-  max-width: 260rpx;
+  max-width: none;
+  min-width: 300rpx;
+  padding: 0 22rpx;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .chat-hero {
