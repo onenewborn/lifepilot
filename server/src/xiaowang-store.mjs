@@ -360,10 +360,10 @@ function compactCurrentContext(context = {}) {
 
 function normalizeOpenClawPromptMode(value = "") {
   const mode = String(value || "").trim();
-  return mode === "workspace_minimal" ? "workspace_minimal" : "full";
+  return mode === "full" ? "full" : "workspace_minimal";
 }
 
-function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = [], currentContext = null, promptMode = "full"}) {
+function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = [], currentContext = null, promptMode = "workspace_minimal"}) {
   const context = recentChatContext(session.messages || []);
   const openClawApiBase = (process.env.LIFEPILOT_OPENCLAW_API_BASE || process.env.LIFEPILOT_PUBLIC_API_BASE || `http://${config.host}:${config.port}`).replace(/\/$/, "");
   const mode = normalizeOpenClawPromptMode(promptMode);
