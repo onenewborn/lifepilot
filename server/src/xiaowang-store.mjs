@@ -1053,10 +1053,12 @@ function contentAfterMemoryOperation(content, memoryOperation = {}) {
   return content;
 }
 
-export async function handleXiaowangChat({body = {}} = {}) {
+export async function handleXiaowangChat({body = {}, onProgress = null} = {}) {
+  const reportProgress = typeof onProgress === "function" ? onProgress : () => {};
   const userId = body.user_id || body.userId || DEFAULT_USER_ID;
   const message = String(body.message || "").trim();
   const createdAt = nowIso();
+  reportProgress({step: "context", label: "正在读取今天的日记、待确认记忆和已确认偏好"});
   const existing = await readChatSession(body.session_id || body.sessionId);
   const session = existing || {
     schema_version: CHAT_SCHEMA,
@@ -1077,6 +1079,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
   const promptMode = normalizeOpenClawPromptMode(body.openclaw_prompt_mode || body.openclawPromptMode || process.env.LIFEPILOT_XIAOWANG_OPENCLAW_PROMPT_MODE);
   const mealSessionsForSummary = (dayContext?.meal_sessions || []).map(xiaowangMealDiaryItem);
   const latestDreamJob = await getLatestOpenClawJobForDay({userId, dayId});
+  reportProgress({step: "context_ready", label: "已整理今日上下文，准备交给 OpenClaw 判断"});
   const diarySummary = buildDiarySummary({
     mealSessions: mealSessionsForSummary,
     memoryCandidates: pending.candidates || [],
@@ -1096,6 +1099,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
   let aiMeta = null;
   if (message) {
     try {
+      reportProgress({step: "openclaw", label: "正在调用 OpenClaw 判断是否需要产品 skill"});
       const openclawReply = await getOpenClawChatReply({
         message,
         session,
@@ -1109,11 +1113,29 @@ export async function handleXiaowangChat({body = {}} = {}) {
       });
       content = openclawReply.content;
       skillCalls = openclawReply.skillCalls || [];
+      reportProgress({
+        step: "openclaw_done",
+        label: skillCalls.length
+          ? `OpenClaw 选择调用 ${skillCalls.map((item) => item.skill).filter(Boolean).join("、")}`
+          : "OpenClaw 已完成判断，本轮不需要额外工具",
+        skillCalls,
+        runId: openclawReply.raw?.runId || "",
+        parseMode: openclawReply.parseMode || "",
+      });
       skillCards = (openclawReply.skillCards && openclawReply.skillCards.length) ? openclawReply.skillCards : skillCardsFromCalls(skillCalls);
       skillResultCards = openclawReply.skillResultCards || [];
+      if (skillCalls.length) {
+        reportProgress({step: "skill_running", label: "正在调用 LifePilot 工具读取商户、优惠或记忆证据", skillCalls});
+      }
       const executed = await executeMerchantSkillCalls({skillCalls, message, userId, dayId, currentContext});
       skillResultCards = [...skillResultCards, ...executed.resultCards];
       skillTrace = executed.traces;
+      if (executed.traces.length) {
+        reportProgress({step: "skill_done", label: "工具证据已返回，正在整理给主人的回复", skillTrace});
+      }
+      if (skillCalls.some((item) => item.skill === "memory_manage")) {
+        reportProgress({step: "memory_manage", label: "正在执行记忆确认、修改或删除操作", skillCalls});
+      }
       memoryOperation = await executeMemoryManageSkillCalls({skillCalls, userId});
       skillTrace = [...skillTrace, ...memoryManageTrace(memoryOperation)];
       memoryPrompts = memoryPromptsFromCalls({
@@ -1122,6 +1144,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
         message,
       });
       if (skillCalls.some((item) => item.skill === "memory_capture")) {
+        reportProgress({step: "memory_capture", label: "正在把可记住的偏好整理成待确认记忆", skillCalls});
         memoryResult = await reviewMemoryPromptsAsObservations({
           userId,
           sessionId: session.session_id,
@@ -1132,6 +1155,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
         });
       }
       content = contentAfterMemoryOperation(content, memoryOperation);
+      reportProgress({step: "finalizing", label: "正在整理最终回复和可点击卡片", skillCalls, skillTrace});
       mode = "openclaw_gateway_client";
       openclawMeta = {
         status: openclawReply.raw?.status || "",
@@ -1142,11 +1166,17 @@ export async function handleXiaowangChat({body = {}} = {}) {
       };
     } catch (error) {
       if (isOpenClawTimeout(error)) resetOpenClawGatewayClient();
+      reportProgress({
+        step: "openclaw_error",
+        label: "OpenClaw 暂时不可用，正在切到 Ark 兜底",
+        error: error instanceof Error ? error.message : String(error),
+      });
       openclawMeta = {
         error: error instanceof Error ? error.message : String(error),
         prompt_mode: promptMode,
       };
       try {
+        reportProgress({step: "ark_fallback", label: "正在用 Ark 兜底理解问题和判断 skill"});
         const arkReply = await getArkChatReply({
           message,
           session,
@@ -1160,17 +1190,31 @@ export async function handleXiaowangChat({body = {}} = {}) {
         });
         content = arkReply.content;
         skillCalls = (arkReply.skillCalls || []).filter((item) => item.skill !== "memory_manage");
+        reportProgress({
+          step: "ark_done",
+          label: skillCalls.length
+            ? `Ark 兜底选择调用 ${skillCalls.map((item) => item.skill).filter(Boolean).join("、")}`
+            : "Ark 兜底已完成判断，本轮不需要额外工具",
+          skillCalls,
+        });
         skillCards = (arkReply.skillCards && arkReply.skillCards.length) ? arkReply.skillCards : skillCardsFromCalls(skillCalls);
         skillResultCards = arkReply.skillResultCards || [];
+        if (skillCalls.length) {
+          reportProgress({step: "skill_running", label: "正在调用 LifePilot 工具读取证据", skillCalls});
+        }
         const executed = await executeMerchantSkillCalls({skillCalls, message, userId, dayId, currentContext});
         skillResultCards = [...skillResultCards, ...executed.resultCards];
         skillTrace = executed.traces;
+        if (executed.traces.length) {
+          reportProgress({step: "skill_done", label: "工具证据已返回，正在整理兜底回复", skillTrace});
+        }
         memoryPrompts = memoryPromptsFromCalls({
           skillCalls,
           memoryPrompts: arkReply.memoryPrompts || [],
           message,
         });
         if (skillCalls.some((item) => item.skill === "memory_capture")) {
+          reportProgress({step: "memory_capture", label: "正在把可记住的偏好整理成待确认记忆", skillCalls});
           memoryResult = await reviewMemoryPromptsAsObservations({
             userId,
             sessionId: session.session_id,
@@ -1190,8 +1234,12 @@ export async function handleXiaowangChat({body = {}} = {}) {
           skill_trace: skillTrace,
         };
       } catch (arkError) {
+        reportProgress({step: "local_fallback", label: "AI 兜底也失败了，正在用本地规则生成可用回复"});
         skillCards = fallbackSkillCards(message);
         skillCalls = normalizeSkillCalls(skillCards.map((card) => ({skill: card.skill, args: {}})));
+        if (skillCalls.length) {
+          reportProgress({step: "skill_running", label: "正在用本地规则调用可用工具", skillCalls});
+        }
         const executed = await executeMerchantSkillCalls({skillCalls, message, userId, dayId, currentContext});
         skillResultCards = executed.resultCards;
         skillTrace = executed.traces;
@@ -1213,6 +1261,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
     }
   } else {
     mode = "local_empty_message";
+    reportProgress({step: "empty_message", label: "没有收到有效文本，正在返回本地提示"});
     content = buildAssistantReply({
       message,
       pendingCount: pending.count || 0,
@@ -1222,6 +1271,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
     });
   }
 
+  reportProgress({step: "saving", label: "正在保存这次聊天记录和日记索引"});
   const assistant = {
     id: `msg_${Date.now()}_${randomUUID().slice(0, 6)}`,
     role: "assistant",
@@ -1265,6 +1315,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
       updated_at: session.updated_at,
     },
   });
+  reportProgress({step: "done", label: "回复已准备好"});
 
   return {
     ok: true,
@@ -1305,6 +1356,64 @@ function createPendingAssistant({jobId, message}) {
   };
 }
 
+function normalizeProgressSkillCalls(skillCalls = []) {
+  return normalizeSkillCalls(skillCalls).map((item) => ({
+    skill: item.skill,
+    action: skillByName(item.skill)?.action || "",
+  }));
+}
+
+function normalizeProgressSkillTrace(skillTrace = []) {
+  return (Array.isArray(skillTrace) ? skillTrace : []).map((trace) => ({
+    skill: trace.skill || "",
+    ok: Boolean(trace.ok),
+    error: trace.error || "",
+    merchant_ids: Array.isArray(trace.merchant_ids) ? trace.merchant_ids : [],
+    tool: trace.tool || "",
+  })).filter((trace) => trace.skill || trace.tool || trace.error);
+}
+
+function appendUniqueProgress(lines = [], nextLine = "") {
+  const line = String(nextLine || "").trim();
+  if (!line) return lines;
+  const result = [...(Array.isArray(lines) ? lines : [])];
+  if (!result.includes(line)) result.push(line);
+  return result.slice(-8);
+}
+
+function updateChatJobProgress(jobId, patch = {}) {
+  const job = chatJobs.get(jobId);
+  if (!job || job.status !== "running") return;
+  const pendingAssistant = job.pending_assistant || createPendingAssistant({jobId, message: ""});
+  const currentOpenClaw = pendingAssistant.openclaw || {};
+  const progress = appendUniqueProgress(currentOpenClaw.progress || [], patch.label);
+  const skillCalls = patch.skillCalls ? normalizeProgressSkillCalls(patch.skillCalls) : (pendingAssistant.agent_skill_calls || []);
+  const skillTrace = patch.skillTrace ? normalizeProgressSkillTrace(patch.skillTrace) : (currentOpenClaw.skill_trace || []);
+  const nextAssistant = {
+    ...pendingAssistant,
+    content: patch.label || pendingAssistant.content,
+    agent_skill_calls: skillCalls,
+    openclaw: {
+      ...currentOpenClaw,
+      status: "running",
+      parse_mode: patch.parseMode || currentOpenClaw.parse_mode || "pending",
+      run_id: patch.runId || currentOpenClaw.run_id || "",
+      current_step: patch.step || currentOpenClaw.current_step || "",
+      progress,
+      skill_trace: skillTrace,
+      error: patch.error || currentOpenClaw.error || "",
+    },
+  };
+  chatJobs.set(jobId, {
+    ...job,
+    updated_at: nowIso(),
+    current_step: patch.step || job.current_step || "",
+    progress,
+    tool_trace: skillTrace,
+    pending_assistant: nextAssistant,
+  });
+}
+
 export function startXiaowangChatJob({body = {}} = {}) {
   const jobId = `xwj_${Date.now()}_${randomUUID().slice(0, 8)}`;
   const createdAt = nowIso();
@@ -1316,11 +1425,17 @@ export function startXiaowangChatJob({body = {}} = {}) {
     created_at: createdAt,
     updated_at: createdAt,
     pending_assistant: pendingAssistant,
+    current_step: "queued",
+    progress: pendingAssistant.openclaw.progress || [],
+    tool_trace: [],
     result: null,
     error: null,
   };
   chatJobs.set(jobId, job);
-  handleXiaowangChat({body})
+  handleXiaowangChat({
+    body,
+    onProgress: (patch) => updateChatJobProgress(jobId, patch),
+  })
     .then((result) => {
       chatJobs.set(jobId, {
         ...job,

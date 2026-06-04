@@ -1152,21 +1152,29 @@ Page({
           throw new Error("小汪这次思考太久了，先停在这里");
         }
         const elapsed = Math.round((Date.now() - startedAt) / 1000);
+        const pendingAssistant = payload.pending_assistant || payload.pendingAssistant || null;
         this.setData({
           chatMessages: this.data.chatMessages.map((item) => (
             item.id === pendingMessageId || item.id === `pending_${jobId}`
-              ? decorateChatMessage({
-                ...item,
-                isThinking: false,
-                openclaw: {
-                  ...(item.openclaw || {}),
-                  status: "running",
-                  progress: [
-                    "OpenClaw 仍在处理",
-                    `${elapsed}s：等待 skill 判断或工具结果`
-                  ]
+              ? decorateChatMessage(pendingAssistant
+                ? {
+                  ...item,
+                  ...pendingAssistant,
+                  id: item.id,
+                  isThinking: false
                 }
-              })
+                : {
+                  ...item,
+                  isThinking: false,
+                  openclaw: {
+                    ...(item.openclaw || {}),
+                    status: "running",
+                    progress: [
+                      "OpenClaw 仍在处理",
+                      `${elapsed}s：等待 skill 判断或工具结果`
+                    ]
+                  }
+                })
               : item
           ))
         });
