@@ -246,6 +246,8 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     "- rank_tier=strong_pick 时，matched[0] 要写成“它也很稳，但强项侧重点是什么”，语气不要超过第一名。",
     "- rank_tier=viable_pick 时，matched[0] 要写成“它适合作为某个具体需求下的可选项”，不要写得像最高推荐。",
     "- matched[0] 必须引用 top_positive_features 里的具体理由，或引用 score_gap_from_top/score_gap_from_previous 带来的排序强弱。",
+    "- 上面这些 rank_tier 规则是给你理解排序强弱的，不是用户文案；不要照抄“为什么它是这一轮最值得优先看”“它也很稳，但强项侧重点是什么”“它适合作为某个具体需求下的可选项”这类指令句。",
+    "- matched[0] 要直接写自然推荐语，例如“这家最强在……”“这家排得靠前，是因为……”“这家更像备选，但……”。",
     "- matched 写 1-3 条，说明为什么选这家店：优先连接“主人第一阶段保留的方向”，再结合入口需求，最后突出这家店自己的特点。",
     "- matched 要亲近、具体、像小汪在帮主人做决定；可以写“小汪觉得这家……”“主人不用太担心……”“这家刚好……”。",
     "- 不要写成生硬规则，例如不要只写“命中方向”“符合预算”“适合一个人吃”。",
