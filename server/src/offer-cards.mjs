@@ -8,6 +8,7 @@ import { parseJsonObjectFromText } from "./json-utils.mjs";
 import { buildDealSearchContext } from "./merchant-tools.mjs";
 import { readRecommendationMemoryContext } from "./memory-store.mjs";
 import { readMerchantFeedbackContext } from "./merchant-feedback-store.mjs";
+import { readRecommendationSignalsForScoring, scoreMemorySignalsForOffer } from "./recommendation-signals.mjs";
 
 const DATA_ROOT = path.join(REPO_ROOT, "data/synthetic_food_futian");
 const DIRECTIONS_PATH = path.join(DATA_ROOT, "food_directions.json");
@@ -174,6 +175,30 @@ function hasPreference(understanding = {}, facet, words = []) {
   return words.some((word) => text.includes(word));
 }
 
+function explicitSoloNeed(understanding = {}) {
+  const constraints = understanding.constraints || {};
+  if (Number(constraints.party_size || 0) !== 1) return false;
+  const text = [
+    understanding.normalized_goal,
+    understanding.raw_entry_text,
+    ...(understanding.soft_preferences || []).map((item) => `${item.value || ""} ${(item.evidence || []).join(" ")}`),
+    ...Object.values(understanding.dimensions || {}).filter(Boolean).map((item) => `${item.intent || ""} ${(item.evidence || []).join(" ")}`),
+  ].filter(Boolean).join(" ");
+  return /一个人|1个人|单人|独自|自己吃|独食|solo/i.test(text);
+}
+
+function explicitGroupNeed(understanding = {}) {
+  const constraints = understanding.constraints || {};
+  if (Number(constraints.party_size || 0) < 2) return false;
+  const text = [
+    understanding.normalized_goal,
+    understanding.raw_entry_text,
+    ...(understanding.soft_preferences || []).map((item) => `${item.value || ""} ${(item.evidence || []).join(" ")}`),
+    ...Object.values(understanding.dimensions || {}).filter(Boolean).map((item) => `${item.intent || ""} ${(item.evidence || []).join(" ")}`),
+  ].filter(Boolean).join(" ");
+  return /两个人|2个人|多人|朋友|同事|聚餐|一起吃|聊天/i.test(text);
+}
+
 function desiredCuisineTags(understanding = {}) {
   const foodPreferences = understanding.food_preferences || understanding.foodPreferences || {};
   const explicit = [
@@ -204,6 +229,38 @@ function desiredCuisineTags(understanding = {}) {
   return tags;
 }
 
+function desiredHardCuisineTags(understanding = {}) {
+  const foodPreferences = understanding.food_preferences || understanding.foodPreferences || {};
+  const explicit = [
+    ...normalizeArray(foodPreferences.cuisine_tags || foodPreferences.cuisineTags || []),
+    ...normalizeArray(understanding.cuisine_tags || understanding.cuisineTags || []),
+    ...normalizeArray(understanding.cuisine || ""),
+    ...normalizeArray(foodPreferences.cuisine || ""),
+  ];
+  const preferenceText = [
+    understanding.normalized_goal,
+    understanding.raw_entry_text,
+    ...(understanding.soft_preferences || []).map((item) => `${item.value || ""} ${(item.evidence || []).join(" ")}`),
+  ].filter(Boolean).join(" ");
+  for (const key of Object.keys(CUISINE_ALIASES)) {
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = new RegExp(`(想吃|要吃|吃点|吃个|来点|只看|只要|必须|明确|优先).*${escaped}|${escaped}.*(也行|可以|优先|就行|只看|只要)`);
+    if (pattern.test(preferenceText)) explicit.push(key);
+  }
+  const tags = new Set();
+  for (const item of explicit) {
+    const key = String(item || "").trim();
+    if (!key) continue;
+    tags.add(key);
+    tags.add(key.toLowerCase());
+    for (const alias of (CUISINE_ALIASES[key] || CUISINE_ALIASES[key.toLowerCase()] || [])) {
+      tags.add(alias);
+      tags.add(String(alias).toLowerCase());
+    }
+  }
+  return tags;
+}
+
 function cuisineMatch(offer = {}, merchant = {}, tags = new Set()) {
   if (!tags.size) return false;
   const values = [
@@ -218,19 +275,75 @@ function cuisineMatch(offer = {}, merchant = {}, tags = new Set()) {
   return values.some((value) => [...tags].some((tag) => value.includes(String(tag).toLowerCase())));
 }
 
-function hardConflicts(offer, merchant, context) {
+function hardFilterReasons(offer, merchant, context) {
   const reasons = [];
   const constraints = context.understanding?.constraints || {};
+  const cuisineTags = desiredHardCuisineTags(context.understanding || {});
+  if (cuisineTags.size && !cuisineMatch(offer, merchant, cuisineTags)) {
+    reasons.push({
+      key: "cuisine.hard_mismatch",
+      reason: "没有命中本轮明确想吃的菜系",
+    });
+  }
   const budgetMax = Number(constraints.budget_per_person_max || 0);
-  if (budgetMax && Number(offer.price_per_person) > budgetMax) reasons.push(`人均 ${offer.price_per_person} 超过预算 ${budgetMax}`);
-  if (Number(constraints.party_size || 0) === 1 && offer.solo_friendly === false) reasons.push("不适合一个人吃");
+  if (budgetMax && Number(offer.price_per_person) > budgetMax) {
+    reasons.push({
+      key: "budget.over_max",
+      reason: `人均 ${offer.price_per_person} 超过预算 ${budgetMax}`,
+    });
+  }
+  if (explicitSoloNeed(context.understanding || {}) && offer.solo_friendly === false) {
+    reasons.push({
+      key: "party.solo_blocked",
+      reason: "不适合一个人吃",
+    });
+  }
   if (hasPreference(context.understanding, "", ["不吃辣", "不能吃辣", "不要辣"]) && SPICE_RANK[offer.spice_level] >= SPICE_RANK.medium) {
-    reasons.push("辣度和不吃辣冲突");
+    reasons.push({
+      key: "spice.no_spicy_blocked",
+      reason: "辣度和不吃辣冲突",
+    });
   }
   if (context.dislikedDirections.size && offer.direction_ids?.some((id) => context.dislikedDirections.has(id)) && !offer.direction_ids?.some((id) => context.keptDirections.has(id))) {
-    reasons.push("属于刚刚放弃的方向");
+    reasons.push({
+      key: "swipe.disliked_direction_only",
+      reason: "属于刚刚放弃的方向",
+    });
   }
   return reasons;
+}
+
+function scoreFeature(source, key, score, reason, extra = {}) {
+  return {
+    source,
+    key,
+    score,
+    reason,
+    ...extra,
+  };
+}
+
+function addFeature(features, source, key, score, reason, extra = {}) {
+  if (!score) return;
+  features.push(scoreFeature(source, key, score, reason, extra));
+}
+
+function summarizeFeatures(features = [], filterReasons = []) {
+  const matched = features
+    .filter((item) => Number(item.score || 0) > 0)
+    .map((item) => item.reason)
+    .filter(Boolean);
+  const watchouts = features
+    .filter((item) => Number(item.score || 0) < 0)
+    .map((item) => item.reason)
+    .filter(Boolean);
+  if (!matched.length) matched.push("有基础匹配点");
+  return {
+    matched: [...new Set(matched)].slice(0, 4),
+    watchouts: [...new Set(watchouts)].slice(0, 3),
+    conflicts: [...new Set(filterReasons.map((item) => item.reason).filter(Boolean))].slice(0, 3),
+    unknown: ["真实营业状态和价格需要出发前确认"],
+  };
 }
 
 function userFeedbackForOffer(offer, merchant, context) {
@@ -248,10 +361,8 @@ function userFeedbackForOffer(offer, merchant, context) {
 }
 
 function scoreOffer(offer, merchant, context) {
-  let score = 0;
-  const matched = [];
-  const watchouts = [];
-  const conflicts = hardConflicts(offer, merchant, context);
+  const features = [];
+  const filterReasons = hardFilterReasons(offer, merchant, context);
   const understanding = context.understanding || {};
   const distanceKm = distanceKmFromMerchant(merchant);
   const userFeedback = userFeedbackForOffer(offer, merchant, context);
@@ -259,119 +370,103 @@ function scoreOffer(offer, merchant, context) {
 
   if (cuisineTags.size) {
     if (cuisineMatch(offer, merchant, cuisineTags)) {
-      score += 18;
-      matched.push("命中想吃的菜系");
-    } else {
-      score -= 4;
+      addFeature(features, "current_need", "cuisine.match", 18, "命中想吃的菜系");
     }
   }
 
   if (offer.direction_ids?.some((id) => context.keptDirections.has(id))) {
-    score += 12;
-    matched.push("命中主人刚刚保留的方向");
+    addFeature(features, "swipe", "direction.kept", 12, "命中主人刚刚保留的方向");
   }
-  if (!context.keptDirections.size) score += 2;
+  if (!context.keptDirections.size) addFeature(features, "default_tiebreaker", "direction.no_kept_baseline", 2, "没有保留方向时保留一点探索空间");
 
   const budgetMax = Number(understanding.constraints?.budget_per_person_max || 0);
   if (budgetMax) {
     if (Number(offer.price_per_person) <= budgetMax) {
-      score += 6;
-      matched.push(`人均 ${offer.price_per_person}，符合预算`);
-    } else {
-      score -= 8;
+      addFeature(features, "current_need", "budget.within_max", 6, `人均 ${offer.price_per_person}，符合预算`);
     }
   }
 
-  if (Number(understanding.constraints?.party_size || 0) === 1 && offer.solo_friendly) {
-    score += 5;
-    matched.push("适合一个人吃");
+  if (explicitSoloNeed(understanding) && offer.solo_friendly) {
+    addFeature(features, "current_need", "party.solo_friendly", 5, "适合一个人吃");
   }
-  if (Number(understanding.constraints?.party_size || 0) >= 2 && merchant.environment?.chat_friendly) {
-    score += 5;
-    matched.push("适合两个人坐下来聊");
+  if (explicitGroupNeed(understanding) && merchant.environment?.chat_friendly) {
+    addFeature(features, "current_need", "party.chat_friendly", 5, "适合两个人坐下来聊");
   }
 
   if (hasPreference(understanding, "flavor.satisfaction", ["下饭", "满足"])) {
     if (["large", "generous"].includes(offer.portion_size) || ["high", "steady"].includes(offer.satisfaction_level)) {
-      score += 5;
-      matched.push("更有满足感");
+      addFeature(features, "current_need", "flavor.satisfaction", 5, "更有满足感");
     }
   }
   if (hasPreference(understanding, "health_load", ["清爽", "低负担"])) {
     if (offer.oil_level === "low") {
-      score += 6;
-      matched.push("油负担低一些");
+      addFeature(features, "current_need", "health.low_oil", 6, "油负担低一些");
     } else if (offer.oil_level === "high") {
-      score -= 6;
-      watchouts.push("这份会偏油");
+      addFeature(features, "current_need", "health.high_oil", -6, "这份会偏油");
     }
   }
   if (hasPreference(understanding, "temperature", ["热乎"])) {
     if (offer.temperature === "hot") {
-      score += 4;
-      matched.push("是热乎的一顿");
+      addFeature(features, "current_need", "temperature.hot", 4, "是热乎的一顿");
     }
   }
   if (hasPreference(understanding, "queue", ["少排队"])) {
     if (merchant.queue_risk === "low") {
-      score += 4;
-      matched.push("排队风险低");
+      addFeature(features, "current_need", "queue.low", 4, "排队风险低");
     } else {
-      score -= merchant.queue_risk === "high" ? 5 : 2;
-      watchouts.push(QUEUE_LABELS[merchant.queue_risk] || "排队情况需确认");
+      addFeature(features, "current_need", `queue.${merchant.queue_risk || "unknown"}`, merchant.queue_risk === "high" ? -5 : -2, QUEUE_LABELS[merchant.queue_risk] || "排队情况需确认");
     }
   }
   if (hasPreference(understanding, "distance", ["附近", "少走路"]) && Number.isFinite(distanceKm)) {
     if (distanceKm <= 0.8) {
-      score += 5;
-      matched.push(`距离约 ${distanceText(distanceKm)}，很省脚程`);
+      addFeature(features, "current_need", "distance.near", 5, `距离约 ${distanceText(distanceKm)}，很省脚程`);
     } else if (distanceKm <= 1.5) {
-      score += 3;
-      matched.push(`距离约 ${distanceText(distanceKm)}`);
+      addFeature(features, "current_need", "distance.ok", 3, `距离约 ${distanceText(distanceKm)}`);
     } else {
-      score -= 2;
-      watchouts.push(`距离约 ${distanceText(distanceKm)}，不算最近`);
+      addFeature(features, "current_need", "distance.far", -2, `距离约 ${distanceText(distanceKm)}，不算最近`);
     }
   }
   if (hasPreference(understanding, "social_friction", ["身上味道", "狼狈", "尴尬"])) {
     if (offer.spice_level === "none" && offer.oil_level !== "high" && merchant.environment?.comfort_level !== "basic") {
-      score += 5;
-      matched.push("吃相和气味压力小一些");
+      addFeature(features, "current_need", "social_friction.low", 5, "吃相和气味压力小一些");
     } else {
-      watchouts.push("可能不够适合低尴尬场景");
+      addFeature(features, "current_need", "social_friction.watchout", -1, "可能不够适合低尴尬场景");
     }
   }
   if (hasPreference(understanding, "environment", ["聊天", "舒服", "安静"])) {
     if (merchant.environment?.chat_friendly || merchant.environment?.noise_level === "low") {
-      score += 5;
-      matched.push("环境更适合坐下来聊");
+      addFeature(features, "current_need", "environment.chat_or_quiet", 5, "环境更适合坐下来聊");
     } else {
-      watchouts.push("环境可能更适合快吃");
+      addFeature(features, "current_need", "environment.quick_meal", -1, "环境可能更适合快吃");
     }
   }
 
-  if (conflicts.length) score -= conflicts.length * 8;
-  if (merchant.queue_risk === "low") score += 1;
-  if (offer.service_speed === "fast") score += 1;
+  if (merchant.queue_risk === "low") addFeature(features, "default_tiebreaker", "queue.low_baseline", 1, "排队风险低");
+  if (offer.service_speed === "fast") addFeature(features, "default_tiebreaker", "service.fast_baseline", 1, "出餐速度快");
   if (userFeedback.score) {
-    score += userFeedback.score;
-    if (userFeedback.score > 0) matched.push("主人上次反馈不错");
-    if (userFeedback.score < 0) watchouts.push("主人之前对这家有过负反馈");
+    addFeature(
+      features,
+      "merchant_feedback",
+      userFeedback.score > 0 ? "feedback.positive" : "feedback.negative",
+      userFeedback.score,
+      userFeedback.score > 0 ? "主人上次反馈不错" : "主人之前对这家有过负反馈",
+      {feedback_count: userFeedback.feedback_count}
+    );
   }
-  if (!matched.length) matched.push(offer.hook || "有基础匹配点");
+  for (const memoryFeature of scoreMemorySignalsForOffer({signals: context.recommendationSignals || [], offer, merchant})) {
+    features.push(memoryFeature);
+  }
+  const score = features.reduce((sum, item) => sum + Number(item.score || 0), 0);
 
   return {
     score,
-    explanation: {
-      matched: [...new Set(matched)].slice(0, 4),
-      watchouts: [...new Set(watchouts)].slice(0, 3),
-      conflicts: [...new Set(conflicts)].slice(0, 3),
-      unknown: ["真实营业状态和价格需要出发前确认"],
-    },
+    scoring_features: features,
+    filter_reasons: filterReasons,
+    explanation: summarizeFeatures(features, filterReasons),
   };
 }
 
-function normalizeOfferCard(offer, merchant, score, explanation, context = {}) {
+function normalizeOfferCard(offer, merchant, scoring, context = {}) {
   const media = mediaForOffer(offer, merchant);
   const distanceKm = distanceKmFromMerchant(merchant);
   const userFeedback = userFeedbackForOffer(offer, merchant, context);
@@ -385,7 +480,8 @@ function normalizeOfferCard(offer, merchant, score, explanation, context = {}) {
     display_title: offer.display_title,
     hook: offer.hook,
     tags: offer.decision_tags || [],
-    score,
+    score: scoring.score,
+    scoring_features: scoring.scoring_features || [],
     ...media,
     facts: {
       price_per_person: offer.price_per_person,
@@ -422,7 +518,7 @@ function normalizeOfferCard(offer, merchant, score, explanation, context = {}) {
         updated_at: userFeedback.updated_at,
       } : null,
     },
-    explanation,
+    explanation: scoring.explanation,
     synthetic_only: true,
   };
 }
@@ -480,17 +576,32 @@ export async function buildFoodOffers({session = {}, body = {}, limit = DEFAULT_
     dislikedDirections: dislikedDirectionIds(session, body),
     merchantFeedback: await readMerchantFeedbackContext({userId}),
   };
+  const memoryContext = body.memory_context || body.memoryContext || session.memory_context || null;
+  const recommendationSignalContext = await readRecommendationSignalsForScoring({userId, memoryContext});
+  context.recommendationSignals = recommendationSignalContext.signals || [];
   const directionContext = {
     kept: [...context.keptDirections].map((id) => compactDirection(directions.get(id) || {direction_id: id})),
     disliked: [...context.dislikedDirections].map((id) => compactDirection(directions.get(id) || {direction_id: id})),
   };
   const cards = [];
+  const filteredOffers = [];
+  let scannedOfferCount = 0;
   for (const offer of offers) {
     if (candidateMerchantIds.size && !candidateMerchantIds.has(offer.merchant_id)) continue;
     const merchant = merchants.get(offer.merchant_id);
     if (!merchant) continue;
-    const {score, explanation} = scoreOffer(offer, merchant, context);
-    const card = normalizeOfferCard(offer, merchant, score, explanation, context);
+    scannedOfferCount += 1;
+    const filterReasons = hardFilterReasons(offer, merchant, context);
+    if (filterReasons.length) {
+      filteredOffers.push({
+        offer_id: offer.offer_id,
+        merchant_id: offer.merchant_id,
+        reasons: filterReasons,
+      });
+      continue;
+    }
+    const scoring = scoreOffer(offer, merchant, context);
+    const card = normalizeOfferCard(offer, merchant, scoring, context);
     card.matched_directions = (offer.direction_ids || [])
       .map((id) => directions.get(id))
       .filter(Boolean)
@@ -503,17 +614,35 @@ export async function buildFoodOffers({session = {}, body = {}, limit = DEFAULT_
   });
   const merchantCards = collapseToMerchantCards(cards);
   let topCards = merchantCards.slice(0, Number(limit || DEFAULT_OFFER_LIMIT));
-  const aiExplanations = await maybeApplyAiExplanations(topCards, session, body, directionContext);
+  const aiExplanations = topCards.length
+    ? await maybeApplyAiExplanations(topCards, session, body, directionContext)
+    : {
+      cards: topCards,
+      meta: {
+        mode: "skipped_empty",
+        fallback_used: false,
+      },
+    };
   topCards = aiExplanations.cards;
   return {
     cards: topCards,
     candidate_count: merchantCards.length,
-    raw_offer_count: cards.length,
+    raw_offer_count: scannedOfferCount,
     ai_explanations: aiExplanations.meta,
     offer_payload_meta: {
       card_grain: "merchant",
       recommended_offer_policy: "one_best_offer_per_merchant",
       limit: Number(limit || DEFAULT_OFFER_LIMIT),
+      filtered_offer_count: filteredOffers.length,
+      scored_offer_count: cards.length,
+      hard_filter_policy: "filter_before_scoring_no_irrelevant_fill",
+      hard_filter_sample: filteredOffers.slice(0, 12),
+      recommendation_signals: {
+        stored_count: recommendationSignalContext.stored_count || 0,
+        derived_count: recommendationSignalContext.derived_count || 0,
+        active_count: (recommendationSignalContext.signals || []).length,
+        rejected_count: (recommendationSignalContext.rejected || []).length,
+      },
       candidate_merchant_ids: [...candidateMerchantIds],
       kept_direction_ids: [...context.keptDirections],
       disliked_direction_ids: [...context.dislikedDirections],
