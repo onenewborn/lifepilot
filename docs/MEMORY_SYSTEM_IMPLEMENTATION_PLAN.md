@@ -759,6 +759,15 @@ POST /api/memory/candidates
 支持 query / type / limit
 ```
 
+当前实现状态：
+
+```text
+GET /api/memory/search：新增，支持 compact memory object 搜索
+GET /api/session/memory：新增，支持按 session_id/day_id 读取 compact session memory
+POST /api/memory/observations：新增路由，复用后端 observation store
+POST /api/memory/candidates：新增路由，写入 pending candidate，不直接写 confirmed preference
+```
+
 ### Phase 4：OpenClaw 工具化
 
 新增 Python wrapper：

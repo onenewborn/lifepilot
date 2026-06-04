@@ -466,6 +466,71 @@ export async function createMemoryCandidatesFromOpenClaw({workspaceRoot = config
   };
 }
 
+export async function createMemoryCandidate({workspaceRoot = config.storage.runtimeRoot, userId, body = {}} = {}) {
+  const user = await ensureMemoryUser({workspaceRoot, userId: userId || body.user_id || body.userId});
+  const statement = String(body.statement || body.confirmation_text || body.confirmationText || body.text || "").trim();
+  const confirmationText = String(body.confirmation_text || body.confirmationText || statement).trim();
+  const evidence = Array.isArray(body.evidence)
+    ? body.evidence
+    : [body.evidence || body.reason || body.text].filter(Boolean);
+  const confidence = Number(body.confidence ?? 0.72);
+  if (!statement && !confirmationText) {
+    return {ok: false, user_id: user.userId, memory_root: user.root, error: "candidate_statement_required"};
+  }
+  if (hasSensitiveText(`${statement} ${confirmationText} ${JSON.stringify(evidence)}`)) {
+    return {ok: false, user_id: user.userId, memory_root: user.root, error: "sensitive_text_rejected"};
+  }
+  const createdAt = nowIso();
+  const candidate = {
+    candidate_id: candidateId(),
+    schema_version: "lifepilot.memory_candidate.v1",
+    user_id: user.userId,
+    source: body.source || "agent_memory_capture",
+    source_event: body.source_event || body.sourceEvent || {
+      type: body.source_event_type || body.sourceEventType || "agent_memory_capture",
+      day_id: body.day_id || body.dayId || "",
+      session_id: body.session_id || body.sessionId || "",
+      message_id: body.message_id || body.messageId || "",
+    },
+    type: body.type || "food_preference",
+    kind: body.kind || "agent_memory_capture",
+    category: String(body.category || "general").trim() || "general",
+    polarity: String(body.polarity || "neutral").trim() || "neutral",
+    scope: String(body.scope || "food").trim() || "food",
+    strength: Number(body.strength ?? 0),
+    confidence: Number.isFinite(confidence) ? confidence : 0.72,
+    statement: statement || `主人可能想让小汪记住：${confirmationText}`,
+    confirmation_text: confirmationText || statement,
+    evidence,
+    status: "pending",
+    needs_confirmation: body.needs_confirmation !== false && body.needsConfirmation !== false,
+    created_at: createdAt,
+    updated_at: createdAt,
+    extraction: body.extraction || {
+      method: "agent_structured_memory_capture",
+      ai_used: Boolean(body.ai_used || body.aiUsed),
+    },
+    safety: {
+      sensitive_text_rejected: false,
+      writes_confirmed_preference: false,
+      requires_user_confirmation: true,
+    },
+  };
+  const store = await readJsonIfExists(user.candidatesPath, {
+    schema_version: SCHEMA_CANDIDATES,
+    user_id: user.userId,
+    candidates: [],
+  });
+  store.candidates = [...(store.candidates || []), candidate];
+  await writeJson(user.candidatesPath, store);
+  return {
+    ok: true,
+    user_id: user.userId,
+    memory_root: user.root,
+    candidate,
+  };
+}
+
 export async function listMemoryCandidates({workspaceRoot = config.storage.runtimeRoot, userId, status}) {
   const user = await ensureMemoryUser({workspaceRoot, userId});
   const store = await readJsonIfExists(user.candidatesPath, {

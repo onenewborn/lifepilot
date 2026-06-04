@@ -11,9 +11,10 @@ import { parseEntry } from "./entry-parser.mjs";
 import { buildFoodOffers, explainOneOfferCard, selectFinalDecisionWithContext } from "./offer-cards.mjs";
 import { queuePayload, routePayload, weatherPayload } from "./context-providers.mjs";
 import { fail, ok, readBody, sendJson } from "./http.mjs";
-import { appendMemoryCandidatesToDayContext, appendSwipeEvent, applyDirectionSummary, applyFinalDecision, applyOfferCards, createSession, getDayContext, getSession, normalizeSwipeEvent, setSessionMemoryContext, updateCurrentOfferCard, updateSessionEntry } from "./session-store.mjs";
+import { appendMemoryCandidatesToDayContext, appendSwipeEvent, applyDirectionSummary, applyFinalDecision, applyOfferCards, createDayId, createSession, getDayContext, getSession, normalizeSwipeEvent, setSessionMemoryContext, updateCurrentOfferCard, updateSessionEntry } from "./session-store.mjs";
 import {
   confirmMemoryCandidate,
+  createMemoryCandidate,
   createConfirmedPreference,
   createPostMealMemoryCandidates,
   listConfirmedPreferences,
@@ -51,6 +52,123 @@ function memoryContextMeta(memoryContext = {}, source = "") {
     ...(source ? {source} : {}),
     confirmed_preferences: memoryContext.preference_count || 0,
     policy: memoryContext.policy || "local_active_confirmed_preferences_are_strong",
+  };
+}
+
+function compactText(value, max = 180) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+function queryTokens(value) {
+  return String(value || "")
+    .toLowerCase()
+    .split(/[\s,，;；、]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function matchesQuery(value, tokens = []) {
+  if (!tokens.length) return true;
+  const haystack = JSON.stringify(value || {}).toLowerCase();
+  return tokens.every((token) => haystack.includes(token));
+}
+
+function memoryTimestamp(item = {}) {
+  return item.updated_at || item.stored_at || item.created_at || item.confirmed_at || item.finalized_at || "";
+}
+
+function compactPreferenceForSearch(item = {}) {
+  return {
+    type: "confirmed_preference",
+    id: item.preference_id || "",
+    status: item.status || "",
+    category: item.category || "",
+    polarity: item.polarity || "",
+    title: item.statement || item.confirmation_text || "",
+    text: item.statement || item.confirmation_text || "",
+    confidence: item.confidence ?? null,
+    source_id: item.source_candidate_id || "",
+    occurred_at: memoryTimestamp(item),
+  };
+}
+
+function compactCandidateForSearch(item = {}) {
+  return {
+    type: "memory_candidate",
+    id: item.candidate_id || "",
+    status: item.status || "",
+    category: item.category || "",
+    polarity: item.polarity || "",
+    title: item.confirmation_text || item.statement || "",
+    text: item.statement || item.confirmation_text || "",
+    confidence: item.confidence ?? null,
+    source_id: item.source_event?.session_id || item.source_event?.dream_id || "",
+    occurred_at: memoryTimestamp(item),
+  };
+}
+
+function compactObservationForSearch(item = {}) {
+  return {
+    type: "memory_observation",
+    id: item.observation_id || "",
+    status: item.review_status || item.status || "",
+    category: item.type || "",
+    polarity: "",
+    title: item.summary || item.text || "",
+    text: item.summary || item.text || "",
+    confidence: item.confidence ?? null,
+    source_id: item.source_event?.session_id || item.source_event?.message_id || "",
+    day_id: item.day_id || "",
+    occurred_at: memoryTimestamp(item),
+  };
+}
+
+function compactMemoryJobForSearch(item = {}) {
+  return {
+    type: "memory_intelligence_job",
+    id: item.job_id || "",
+    status: item.status || "",
+    category: item.mode || "",
+    polarity: "",
+    title: item.summary || `${item.mode || "memory"} job`,
+    text: item.summary || "",
+    confidence: null,
+    source_id: item.source_observation_id || "",
+    day_id: item.day_id || "",
+    occurred_at: memoryTimestamp(item),
+  };
+}
+
+function compactMealSessionForMemory(session = {}) {
+  return {
+    type: "meal_session",
+    session_id: session.session_id || "",
+    user_id: session.user_id || "",
+    day_id: session.day_id || "",
+    meal_slot: session.meal_slot || "",
+    status: session.status || "",
+    stage: session.stage || "",
+    goal: session.goal || session.understanding?.normalized_goal || "",
+    source_message: session.source_message || "",
+    entry_mode: session.entry_mode || "",
+    location: session.location || null,
+    constraints: session.understanding?.constraints || {},
+    hard_constraints: session.understanding?.hard_constraints || [],
+    soft_preferences: session.understanding?.soft_preferences || [],
+    direction_event_count: session.direction_events?.length || 0,
+    offer_event_count: session.offer_events?.length || 0,
+    current_card_count: session.current_cards?.length || 0,
+    final_offer_id: session.result?.primary?.offer_id || "",
+    final_merchant_id: session.result?.primary?.merchant_id || "",
+    final_merchant_name: session.result?.primary?.merchant_name || "",
+    summary: compactText([
+      session.goal || session.understanding?.normalized_goal || "",
+      session.result?.summary || session.result?.primary?.merchant_name || "",
+    ].filter(Boolean).join("；")),
+    created_at: session.created_at || "",
+    updated_at: session.updated_at || "",
+    finalized_at: session.finalized_at || "",
   };
 }
 
@@ -862,11 +980,141 @@ async function handleMemoryLedger(res, url) {
   });
 }
 
+async function handleMemorySearch(res, url) {
+  const userId = userIdFromUrl(url);
+  const query = url.searchParams.get("query") || url.searchParams.get("q") || "";
+  const tokens = queryTokens(query);
+  const typeFilter = new Set(normalizeStringArray(url.searchParams.get("type") || "all"));
+  const includesType = (type) => typeFilter.has("all") || typeFilter.has(type);
+  const limit = Math.max(1, Math.min(Number(url.searchParams.get("limit") || 20), 80));
+  const dayId = url.searchParams.get("day_id") || url.searchParams.get("dayId") || "";
+  const [candidates, preferences, observations, jobs, profile] = await Promise.all([
+    includesType("memory_candidate") || includesType("candidate")
+      ? listMemoryCandidates({userId, status: url.searchParams.get("status") || ""})
+      : {candidates: []},
+    includesType("confirmed_preference") || includesType("preference")
+      ? listConfirmedPreferences({userId, status: url.searchParams.get("preference_status") || url.searchParams.get("status") || ""})
+      : {preferences: []},
+    includesType("memory_observation") || includesType("observation")
+      ? listMemoryObservations({userId, dayId, limit: 120, status: url.searchParams.get("observation_status") || ""})
+      : {observations: []},
+    includesType("memory_intelligence_job") || includesType("job")
+      ? listMemoryIntelligenceJobs({userId, dayId, mode: url.searchParams.get("mode") || "", limit: 80})
+      : {jobs: []},
+    includesType("food_insight_profile") || includesType("profile")
+      ? readFoodInsightProfile({userId})
+      : null,
+  ]);
+  const results = [
+    ...(preferences.preferences || []).map(compactPreferenceForSearch),
+    ...(candidates.candidates || []).map(compactCandidateForSearch),
+    ...(observations.observations || []).map(compactObservationForSearch),
+    ...(jobs.jobs || []).map(compactMemoryJobForSearch),
+    profile ? {
+      type: "food_insight_profile",
+      id: profile.user_id || userId,
+      status: "active",
+      category: "profile",
+      polarity: "",
+      title: "食物选择画像",
+      text: compactText(JSON.stringify({
+        top_motives: profile.top_motives || [],
+        novelty_tolerance: profile.novelty_tolerance || {},
+        reward_profile: profile.reward_profile || {},
+      }), 320),
+      confidence: profile.confidence ?? null,
+      source_id: "",
+      occurred_at: profile.updated_at || profile.generated_at || "",
+    } : null,
+  ].filter(Boolean)
+    .filter((item) => matchesQuery(item, tokens))
+    .sort((left, right) => String(right.occurred_at || "").localeCompare(String(left.occurred_at || "")))
+    .slice(0, limit);
+  ok(res, {
+    user_id: userId,
+    query,
+    type: [...typeFilter],
+    results,
+    count: results.length,
+  });
+}
+
+async function handleSessionMemory(res, url) {
+  const userId = userIdFromUrl(url);
+  const sessionId = url.searchParams.get("session_id") || url.searchParams.get("sessionId") || "";
+  const dayId = url.searchParams.get("day_id") || url.searchParams.get("dayId") || createDayId(userId, new Date());
+  const tokens = queryTokens(url.searchParams.get("query") || url.searchParams.get("q") || "");
+  const limit = Math.max(1, Math.min(Number(url.searchParams.get("limit") || 20), 80));
+  let sessions = [];
+  if (sessionId) {
+    const session = await getSession(sessionId);
+    if (!session || session.user_id !== userId) {
+      fail(res, 404, "session_not_found", "Session not found.");
+      return;
+    }
+    sessions = [compactMealSessionForMemory(session)];
+  } else {
+    const dayContext = await getDayContext(dayId);
+    const refs = (dayContext?.meal_sessions || []).slice(-limit);
+    const loaded = [];
+    for (const ref of refs) {
+      const session = await getSession(ref.session_id);
+      loaded.push(session ? compactMealSessionForMemory(session) : {
+        type: "meal_session",
+        ...ref,
+        summary: compactText([ref.goal, ref.final_merchant_name].filter(Boolean).join("；")),
+      });
+    }
+    sessions = loaded;
+  }
+  sessions = sessions.filter((item) => matchesQuery(item, tokens)).slice(0, limit);
+  const dayContext = await getDayContext(dayId);
+  ok(res, {
+    user_id: userId,
+    day_id: dayId,
+    session_id: sessionId,
+    query: url.searchParams.get("query") || url.searchParams.get("q") || "",
+    sessions,
+    xiaowang_chat_sessions: (dayContext?.xiaowang_chat_sessions || [])
+      .filter((item) => matchesQuery(item, tokens))
+      .slice(-limit)
+      .map((item) => ({
+        type: "xiaowang_chat_session",
+        session_id: item.session_id || "",
+        title: item.title || "",
+        summary: item.summary || "",
+        latest_user_message: item.latest_user_message || "",
+        message_count: item.message_count || 0,
+        skill_calls: item.skill_calls || [],
+        created_at: item.created_at || "",
+        updated_at: item.updated_at || "",
+      })),
+    count: sessions.length,
+  });
+}
+
 async function handleMemoryCandidates(res, url) {
   const payload = await listMemoryCandidates({
     userId: userIdFromUrl(url),
     status: url.searchParams.get("status") || "",
   });
+  ok(res, payload);
+}
+
+async function handleMemoryCandidateCreate(req, res) {
+  const body = await readBody(req);
+  const payload = await createMemoryCandidate({
+    userId: body.user_id || body.userId || "demo_weiyingru",
+    body,
+  });
+  if (!payload.ok) {
+    fail(res, 422, payload.error || "invalid_memory_candidate", payload.error || "Invalid memory candidate.");
+    return;
+  }
+  const dayId = payload.candidate?.source_event?.day_id || body.day_id || body.dayId || "";
+  if (dayId) {
+    await appendMemoryCandidatesToDayContext({dayId, candidateIds: [payload.candidate.candidate_id]});
+  }
   ok(res, payload);
 }
 
@@ -983,6 +1231,19 @@ async function handleMemoryObservations(res, url) {
     limit: url.searchParams.get("limit") || 50,
     status: url.searchParams.get("status") || "",
   });
+  ok(res, payload);
+}
+
+async function handleMemoryObservationCreate(req, res) {
+  const body = await readBody(req);
+  const payload = await createMemoryObservation({
+    userId: body.user_id || body.userId || "demo_weiyingru",
+    body,
+  });
+  if (!payload.ok) {
+    fail(res, 422, payload.error || "invalid_memory_observation", payload.error || "Invalid memory observation.");
+    return;
+  }
   ok(res, payload);
 }
 
@@ -1464,8 +1725,16 @@ async function route(req, res) {
       await handleMemoryIntelligenceJobs(res, url);
       return;
     }
+    if (req.method === "GET" && url.pathname === "/api/memory/search") {
+      await handleMemorySearch(res, url);
+      return;
+    }
     if (req.method === "GET" && url.pathname === "/api/memory/observations") {
       await handleMemoryObservations(res, url);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/memory/observations") {
+      await handleMemoryObservationCreate(req, res);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/xiaowang/chat") {
@@ -1520,6 +1789,10 @@ async function route(req, res) {
       await handleMemoryCandidates(res, url);
       return;
     }
+    if (req.method === "POST" && url.pathname === "/api/memory/candidates") {
+      await handleMemoryCandidateCreate(req, res);
+      return;
+    }
     if (req.method === "GET" && url.pathname === "/api/memory/preferences") {
       await handleMemoryPreferencesList(res, url);
       return;
@@ -1553,6 +1826,10 @@ async function route(req, res) {
         await handleMemoryCandidateReject(req, res, suffix.slice(0, -"/reject".length));
         return;
       }
+    }
+    if (req.method === "GET" && url.pathname === "/api/session/memory") {
+      await handleSessionMemory(res, url);
+      return;
     }
     if (req.method === "GET" && url.pathname.startsWith("/api/session/")) {
       await handleSessionView(res, decodeURIComponent(url.pathname.slice("/api/session/".length)));

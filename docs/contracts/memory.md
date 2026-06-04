@@ -117,8 +117,10 @@ signal_refresh   把长期记忆和画像转成推荐可执行 signals
 ```text
 POST /api/memory/post-meal-feedback
 GET  /api/memory/ledger
+GET  /api/memory/search
 POST /api/memory/manage
 GET  /api/memory/candidates
+POST /api/memory/candidates
 POST /api/memory/candidates/:id/confirm
 POST /api/memory/candidates/:id/reject
 GET  /api/memory/preferences
@@ -127,11 +129,52 @@ PATCH /api/memory/preferences/:id
 DELETE /api/memory/preferences/:id
 POST /api/memory/preferences/:id/pause
 GET  /api/memory/observations
+POST /api/memory/observations
+GET  /api/session/memory
 GET  /api/memory/intelligence/input
 POST /api/memory/intelligence/run
 POST /api/memory/intelligence/result
 GET  /api/memory/intelligence/jobs
 ```
+
+## Phase 3 Agent API
+
+这些接口给 OpenClaw / 小汪 agent 使用，返回 compact objects，不返回完整媒体、商户卡或长 prompt。
+
+```text
+GET /api/memory/search
+```
+
+按 `query` / `q`、`type`、`day_id`、`limit` 搜索记忆对象。
+
+支持 type：
+
+```text
+all
+preference / confirmed_preference
+candidate / memory_candidate
+observation / memory_observation
+job / memory_intelligence_job
+profile / food_insight_profile
+```
+
+```text
+GET /api/session/memory
+```
+
+按 `session_id` 或 `day_id` 读取 compact session memory，包括饭点 session 摘要和 day context 里的小汪聊天摘要。支持 `query` 和 `limit`。
+
+```text
+POST /api/memory/observations
+```
+
+写入一条 observation。适合 agent 在对话、滑卡或汪记本分析后沉淀短期观察；默认 `review_status` 是 `pending_review`。
+
+```text
+POST /api/memory/candidates
+```
+
+写入一条待确认记忆候选。适合 agent 在用户表达长期偏好但尚未确认时使用；默认 `status` 是 `pending`，不会直接成为 confirmed preference。
 
 ## Session Finalize 边界
 
