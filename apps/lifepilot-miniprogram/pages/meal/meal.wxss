@@ -1486,6 +1486,41 @@ button::after {
   min-height: 0;
 }
 
+.chat-location-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 18rpx 28rpx 12rpx;
+  box-sizing: border-box;
+}
+
+.chat-location-copy {
+  min-width: 0;
+}
+
+.chat-location-label {
+  color: rgba(75, 50, 31, 0.46);
+  font-size: 20rpx;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.chat-location-text {
+  margin-top: 4rpx;
+  color: rgba(45, 33, 24, 0.82);
+  font-size: 24rpx;
+  font-weight: 900;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-location-chip {
+  max-width: 260rpx;
+}
+
 .chat-hero {
   display: flex;
   align-items: center;
@@ -1524,8 +1559,8 @@ button::after {
 }
 
 .chat-list {
-  height: calc(100vh - 244rpx - env(safe-area-inset-bottom));
-  padding: 28rpx 28rpx 24rpx;
+  height: calc(100vh - 318rpx - env(safe-area-inset-bottom));
+  padding: 12rpx 28rpx 24rpx;
   box-sizing: border-box;
 }
 

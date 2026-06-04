@@ -464,6 +464,13 @@
   </view>
 
   <view wx:elif="{{activeTab === 'chat'}}" class="chat-panel">
+    <view class="chat-location-bar">
+      <view class="chat-location-copy">
+        <view class="chat-location-label">当前位置</view>
+        <view class="chat-location-text">{{locationText}}</view>
+      </view>
+      <button class="location-chip chat-location-chip" bindtap="getLocation">{{locationText}}</button>
+    </view>
     <scroll-view class="chat-list" scroll-y enhanced show-scrollbar="{{false}}">
       <view class="chat-time">今天</view>
       <view class="chat-message-row assistant-row">
