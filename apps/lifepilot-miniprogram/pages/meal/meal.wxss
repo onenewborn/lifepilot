@@ -1749,15 +1749,19 @@ button::after {
   font-size: 24rpx;
   font-weight: 900;
   line-height: 58rpx;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .chat-send-button {
-  width: 130rpx;
+  width: 148rpx;
   padding: 0;
   border-radius: 8rpx;
 }
 
 .skill-launcher-button {
+  width: 188rpx;
+  padding: 0;
   background: #ff6334;
   color: #ffffff;
 }
