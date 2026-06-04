@@ -735,7 +735,7 @@ async function requestAiExplanationBatch(cards, session, body, directionContext,
       ok: false,
       reason: "invalid_ai_json",
       status: null,
-      raw: null,
+      raw: ai.text || null,
       usage: ai.usage || null,
       explanations,
     };
@@ -765,6 +765,7 @@ async function requestAiExplanationForCards(cards, session, body, directionConte
       ok: result.ok,
       reason: result.reason,
       status: result.status,
+      raw_text_sample: result.reason === "invalid_ai_json" && result.raw ? String(result.raw).slice(0, 500) : undefined,
     });
     if (result.usage) meta.usage.push(result.usage);
     if (!result.ok) {

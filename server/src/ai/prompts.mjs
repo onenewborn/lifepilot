@@ -214,6 +214,39 @@ function compactRankedOfferCard(card = {}, index = 0, cards = []) {
   };
 }
 
+function compactRankSummaryCard(card = {}, index = 0, cards = []) {
+  const rankedCard = compactRankedOfferCard(card, index, cards);
+  return {
+    offer_id: rankedCard.offer_id,
+    merchant_name: rankedCard.merchant_name,
+    recommended_item: rankedCard.recommended_item,
+    rank_position: rankedCard.rank_position,
+    rank_tier: rankedCard.rank_tier,
+    score: rankedCard.score,
+    score_gap_from_top: rankedCard.score_gap_from_top,
+    score_gap_from_previous: rankedCard.score_gap_from_previous,
+    leading_positive_reason: rankedCard.top_positive_features[0]?.reason || "",
+    leading_negative_reason: rankedCard.top_negative_features[0]?.reason || "",
+  };
+}
+
+function selectOfferDetailCards(cards = [], targetOfferIds = []) {
+  if (!targetOfferIds.length) return cards.map((card, index) => ({card, index}));
+  const targetSet = new Set(targetOfferIds);
+  const selectedIndexes = new Set();
+  for (const [index, card] of cards.entries()) {
+    if (!targetSet.has(card.offer_id)) continue;
+    selectedIndexes.add(0);
+    selectedIndexes.add(index - 1);
+    selectedIndexes.add(index);
+    selectedIndexes.add(index + 1);
+  }
+  return [...selectedIndexes]
+    .filter((index) => index >= 0 && index < cards.length)
+    .sort((left, right) => left - right)
+    .map((index) => ({card: cards[index], index}));
+}
+
 export function buildDirectionSummaryPrompt({goal, events = [], entryContext = null, memoryContext = null}) {
   const kept = events.filter((event) => event.action === "keep");
   const disliked = events.filter((event) => event.action === "dislike");
@@ -259,6 +292,10 @@ export function buildDirectionSummaryPrompt({goal, events = [], entryContext = n
 }
 
 export function buildOfferExplanationPrompt({goal, directionSummary = {}, understanding = {}, directionContext = {}, memoryContext = null, cards = [], targetOfferIds = []} = {}) {
+  const effectiveTargetOfferIds = targetOfferIds.length
+    ? targetOfferIds
+    : cards.map((card) => card.offer_id).filter(Boolean);
+  const detailCards = selectOfferDetailCards(cards, effectiveTargetOfferIds);
   const compactUnderstanding = {
     constraints: understanding.constraints || {},
     dimensions: understanding.dimensions || {},
@@ -281,9 +318,10 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     "- 不要把主人刚刚放弃的方向写成偏好；如果商家和放弃方向有关，只能在明确事实冲突时写进 conflicts。",
     "",
     "要求：",
-    "- 商家卡事实会包含完整排序上下文，但你只需要为 target_offer_ids 里的商家返回解释。",
+    "- 完整排序摘要会告诉你所有候选的排名强弱；商家卡事实只给目标卡及其前后附近卡的详细信息。",
+    "- 你只需要为 target_offer_ids 里的商家返回解释。",
     "- 输出 cards 只能包含 target_offer_ids 里的 offer_id；不要为上下文里的其他商家输出解释。",
-    "- 商家卡事实里有后端排序上下文：rank_position 越小越靠前，score 越高代表后端越推荐，score_gap_from_top 表示和第一名的差距。",
+    "- 完整排序摘要和商家卡事实里都有后端排序上下文：rank_position 越小越靠前，score 越高代表后端越推荐，score_gap_from_top 表示和第一名的差距。",
     "- matched[0] 是前端最醒目的主推荐理由，必须体现这张卡的 rank_tier 和最关键加分点，不能写成所有店都能套用的“我推荐你吃这个”。",
     "- rank_tier=top_pick 时，matched[0] 要写成“为什么它是这一轮最值得优先看”的强理由。",
     "- rank_tier=strong_pick 时，matched[0] 要写成“它也很稳，但强项侧重点是什么”，语气不要超过第一名。",
@@ -329,7 +367,8 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     }, null, 2)}`,
     `方向小结：${JSON.stringify(directionSummary || {}, null, 2)}`,
     `记忆上下文：${JSON.stringify(compactMemoryContext(memoryContext || {}), null, 2)}`,
-    `target_offer_ids：${JSON.stringify(targetOfferIds.length ? targetOfferIds : cards.map((card) => card.offer_id).filter(Boolean), null, 2)}`,
-    `商家卡事实：${JSON.stringify(cards.map((card, index) => compactRankedOfferCard(card, index, cards)), null, 2)}`,
+    `target_offer_ids：${JSON.stringify(effectiveTargetOfferIds, null, 2)}`,
+    `完整排序摘要：${JSON.stringify(cards.map((card, index) => compactRankSummaryCard(card, index, cards)), null, 2)}`,
+    `商家卡事实：${JSON.stringify(detailCards.map(({card, index}) => compactRankedOfferCard(card, index, cards)), null, 2)}`,
   ].join("\n");
 }
