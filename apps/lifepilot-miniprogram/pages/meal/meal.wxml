@@ -467,7 +467,6 @@
     <view class="chat-location-bar">
       <view class="chat-location-copy">
         <view class="chat-location-label">当前位置</view>
-        <view class="chat-location-text">{{locationText}}</view>
       </view>
       <button class="location-chip chat-location-chip" bindtap="getLocation">{{locationText}}</button>
     </view>

@@ -1506,17 +1506,6 @@ button::after {
   line-height: 1.2;
 }
 
-.chat-location-text {
-  margin-top: 4rpx;
-  color: rgba(45, 33, 24, 0.82);
-  font-size: 24rpx;
-  font-weight: 900;
-  line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .chat-location-chip {
   max-width: 260rpx;
 }
