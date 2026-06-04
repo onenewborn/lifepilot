@@ -604,6 +604,53 @@
     </view>
 
     <view class="diary-section">
+      <view class="mini-title">今日观察</view>
+      <view wx:if="{{diary && diary.observations && diary.observations.length}}">
+        <view wx:for="{{diary.observations}}" wx:key="observation_id" class="diary-item observation-item">
+          <view class="diary-item-meta">
+            <text>{{item.display_date}}</text>
+            <text>{{item.display_time}}</text>
+            <text>{{item.review_status === 'reviewed' ? '已审查' : item.review_status === 'weak_hypothesis' ? '弱假设' : '观察中'}}</text>
+          </view>
+          <view class="diary-item-title">{{item.diary_title}}</view>
+          <view class="diary-item-text">{{item.diary_text}}</view>
+        </view>
+      </view>
+      <view wx:else class="diary-empty">小汪还没攒到足够观察。你和我聊聊今天怎么吃，我会先放进短期观察里。</view>
+    </view>
+
+    <view wx:if="{{diary && diary.food_insight_profile}}" class="diary-section">
+      <view class="mini-title">食物选择画像</view>
+      <view class="food-profile-card">
+        <view class="food-profile-head">
+          <view>
+            <view class="food-profile-title">推荐偏好洞察</view>
+            <view class="food-profile-subtitle">{{diary.food_insight_profile.evidence_window}}</view>
+          </view>
+          <view class="food-profile-confidence">{{diary.food_insight_profile.confidence_percent || 0}}%</view>
+        </view>
+        <view class="motivation-list">
+          <view
+            wx:for="{{diary.food_insight_profile.top_motives}}"
+            wx:key="key"
+            class="motivation-row"
+          >
+            <view class="motivation-label">{{item.label}}</view>
+            <view class="motivation-track">
+              <view class="motivation-fill" style="width: {{item.score}}%;"></view>
+            </view>
+            <view class="motivation-score">{{item.score}}</view>
+          </view>
+        </view>
+        <view class="profile-chip-row">
+          <view class="profile-chip">新店探索 {{diary.food_insight_profile.novelty_tolerance.restaurants.score}}</view>
+          <view class="profile-chip">高脂咸鲜 {{diary.food_insight_profile.reward_profile.high_fat_savory.score}}</view>
+          <view class="profile-chip">清爽咸鲜 {{diary.food_insight_profile.reward_profile.low_fat_savory.score}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="diary-section">
       <view class="mini-title">今天吃饭记录</view>
       <view wx:if="{{diary && diary.meal_sessions && diary.meal_sessions.length}}">
         <view wx:for="{{diary.meal_sessions}}" wx:key="session_id" class="diary-item">

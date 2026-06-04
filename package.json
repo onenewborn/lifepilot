@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "node server/src/index.mjs",
     "start": "node server/src/index.mjs",
-    "check": "node --check server/src/index.mjs && node --check tests/smoke-session.mjs && node --check tests/smoke-memory-manager.mjs && node --check tests/smoke-deal-search.mjs && node --check tests/smoke-admin.mjs && node --check tests/smoke-merchant-media.mjs && node --check apps/lifepilot-miniprogram/utils/card-normalizer.js && node --check apps/lifepilot-miniprogram/pages/meal/meal.js",
+    "check": "node --check server/src/index.mjs && node --check tests/smoke-session.mjs && node --check tests/smoke-memory-manager.mjs && node --check tests/smoke-memory-intelligence.mjs && node --check tests/smoke-deal-search.mjs && node --check tests/smoke-admin.mjs && node --check tests/smoke-merchant-media.mjs && node --check apps/lifepilot-miniprogram/utils/card-normalizer.js && node --check apps/lifepilot-miniprogram/pages/meal/meal.js",
     "smoke:session": "node tests/smoke-session.mjs",
     "smoke:memory": "node tests/smoke-memory-manager.mjs",
+    "smoke:memory-intelligence": "node tests/smoke-memory-intelligence.mjs",
     "smoke:deals": "node tests/smoke-deal-search.mjs",
     "smoke:admin": "node tests/smoke-admin.mjs",
     "smoke:merchant-media": "node tests/smoke-merchant-media.mjs",

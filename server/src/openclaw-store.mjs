@@ -5,6 +5,7 @@ import { config } from "./config.mjs";
 import { getDayContext, getSession, createDayId } from "./session-store.mjs";
 import { readUserMemoryContext, createMemoryCandidatesFromOpenClaw } from "./memory-store.mjs";
 import { readMerchantFeedbackContext } from "./merchant-feedback-store.mjs";
+import { storeMemoryIntelligenceResult } from "./memory-intelligence-store.mjs";
 
 const DREAM_INPUT_SCHEMA = "lifepilot.openclaw_dream_input.v1";
 const DREAM_JOB_SCHEMA = "lifepilot.openclaw_dream_job.v1";
@@ -232,6 +233,24 @@ export async function storeOpenClawDreamResult({body = {}} = {}) {
     user_id: job.user_id,
     day_id: job.day_id,
     stored_at: job.stored_at,
+  });
+  await storeMemoryIntelligenceResult({
+    mode: "day_dreaming",
+    userId: normalized.user_id,
+    dayId: normalized.day_id,
+    result: {
+      mode: "day_dreaming",
+      user_id: normalized.user_id,
+      day_id: normalized.day_id,
+      summary: normalized.summary,
+      observations: [],
+      weak_hypotheses: [],
+      memory_candidates: [],
+      preference_update_suggestions: normalized.preference_update_suggestions,
+      food_insight_profile: null,
+      xiaowang_next_interaction_ideas: normalized.xiaowang_next_interaction_ideas,
+    },
+    source: "openclaw_dreaming_compat",
   });
   return {
     ok: true,

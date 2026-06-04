@@ -109,6 +109,25 @@ function defaultDayContext(session) {
   };
 }
 
+function defaultDayContextForUser({userId, dayId, createdAt = nowIso()} = {}) {
+  const safeUserId = userId || "demo_weiyingru";
+  const resolvedDayId = dayId || createDayId(safeUserId, createdAt);
+  return {
+    schema_version: DAY_CONTEXT_SCHEMA_VERSION,
+    day_id: resolvedDayId,
+    user_id: safeUserId,
+    date: resolvedDayId.match(/^day_(\d{8})_/)?.[1] || dateKey(createdAt),
+    timezone: "Asia/Shanghai",
+    meal_sessions: [],
+    xiaowang_chat_sessions: [],
+    push_interactions: [],
+    background_jobs: [],
+    memory_candidate_ids: [],
+    created_at: createdAt,
+    updated_at: createdAt,
+  };
+}
+
 async function readDayContext(dayId) {
   try {
     return JSON.parse(await readFile(dayContextPath(dayId), "utf8"));
@@ -154,6 +173,36 @@ export async function appendMemoryCandidatesToDayContext({dayId, candidateIds = 
   const dayContext = await readDayContext(dayId);
   if (!dayContext) return null;
   dayContext.memory_candidate_ids = [...new Set([...(dayContext.memory_candidate_ids || []), ...ids])];
+  dayContext.updated_at = nowIso();
+  return writeDayContext(dayContext);
+}
+
+export async function appendXiaowangChatToDayContext({dayId, userId, chat = {}} = {}) {
+  if (!dayId || !chat?.session_id) return null;
+  const existing = await readDayContext(dayId);
+  const dayContext = existing || defaultDayContextForUser({userId, dayId});
+  const item = {
+    session_id: chat.session_id,
+    user_id: userId || chat.user_id || dayContext.user_id,
+    title: chat.title || "和小汪聊聊",
+    summary: chat.summary || "",
+    latest_user_message: chat.latest_user_message || "",
+    message_count: Number(chat.message_count || 0),
+    memory_candidate_created_count: Number(chat.memory_candidate_created_count || 0),
+    skill_calls: Array.isArray(chat.skill_calls) ? chat.skill_calls.slice(0, 8) : [],
+    created_at: chat.created_at || nowIso(),
+    updated_at: chat.updated_at || nowIso(),
+  };
+  const index = (dayContext.xiaowang_chat_sessions || []).findIndex((entry) => entry.session_id === item.session_id);
+  if (index >= 0) {
+    dayContext.xiaowang_chat_sessions[index] = {
+      ...(dayContext.xiaowang_chat_sessions[index] || {}),
+      ...item,
+    };
+  } else {
+    dayContext.xiaowang_chat_sessions = [...(dayContext.xiaowang_chat_sessions || []), item];
+  }
+  dayContext.xiaowang_chat_sessions.sort((left, right) => String(left.created_at).localeCompare(String(right.created_at)));
   dayContext.updated_at = nowIso();
   return writeDayContext(dayContext);
 }

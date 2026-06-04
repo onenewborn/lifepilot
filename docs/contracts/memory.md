@@ -20,10 +20,41 @@ Evermind 是外部记忆 provider，负责把已确认偏好或会话摘要转�
 
 ```text
 session_events
+memory_observations
 memory_candidates
 confirmed_preferences
-profile_summary
+food_insight_profile
 recommendation_context
+```
+
+## 统一 Memory Intelligence
+
+Reviewer 和 dreaming 统一为 LifePilot Memory Intelligence，只是触发窗口不同：
+
+```text
+instant_review   小汪聊天、餐后反馈、session finalize 后的即时 observation 审查
+day_dreaming     日级复盘，兼容旧 openclaw dreaming
+week_dreaming    跨天重复模式分析
+profile_update   FCQ / food neophobia / reward profile 汪记本画像
+```
+
+后端仍是权威账本。OpenClaw 或本地 policy 只能提交 observations、weak hypotheses、pending candidates、profile patch 和 interaction ideas。confirmed preference 仍必须由用户确认。
+
+新增账本：
+
+```text
+memory_observations.json
+food_insight_profile.json
+```
+
+新增 API：
+
+```text
+GET  /api/memory/observations
+GET  /api/memory/intelligence/input
+POST /api/memory/intelligence/run
+POST /api/memory/intelligence/result
+GET  /api/memory/intelligence/jobs
 ```
 
 ## 候选记忆

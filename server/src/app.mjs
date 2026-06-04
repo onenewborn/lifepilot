@@ -38,6 +38,15 @@ import { buildDealSearchContext, buildMerchantCompareContext, buildMerchantIntel
 import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
 import { runOpenClawDreamAgent } from "./openclaw-runner.mjs";
 import { getXiaowangChatJob, handleXiaowangChat, listXiaowangSkills, readXiaowangDiary, startXiaowangChatJob } from "./xiaowang-store.mjs";
+import {
+  buildMemoryIntelligenceInput,
+  createMemoryObservation,
+  listMemoryIntelligenceJobs,
+  listMemoryObservations,
+  readFoodInsightProfile,
+  runMemoryIntelligence,
+  storeMemoryIntelligenceResult,
+} from "./memory-intelligence-store.mjs";
 
 let latestLocationProbe = null;
 
@@ -465,6 +474,29 @@ async function handleSessionFinalize(req, res) {
   const evermindSummary = body.sync_evermind_session === false || body.syncEvermindSession === false
     ? {ok: false, skipped: "disabled"}
     : await writeMealSessionSummaryToEvermind(session);
+  const observationResult = await createMemoryObservation({
+    userId: session.user_id,
+    body: {
+      day_id: session.day_id,
+      source: "meal_session_finalize",
+      type: "finalized_meal_session",
+      text: [
+        `主人完成了一轮饭点选择：${session.goal || ""}`,
+        result?.primary?.merchant_name ? `最终推荐：${result.primary.merchant_name} ${result.primary.title || ""}` : "",
+      ].filter(Boolean).join("。"),
+      summary: result?.primary?.merchant_name
+        ? `主人最后选了 ${result.primary.merchant_name}。`
+        : "主人完成了一轮饭点选择。",
+      confidence: 0.7,
+      source_event: {
+        source: "meal_session",
+        session_id: session.session_id,
+        day_id: session.day_id,
+        final_merchant_id: result?.primary?.merchant_id || "",
+        final_merchant_name: result?.primary?.merchant_name || "",
+      },
+    },
+  });
   ok(res, {
     session: publicSession(session),
     result,
@@ -476,6 +508,10 @@ async function handleSessionFinalize(req, res) {
     },
     meta: {
       recovered_from_stage: recoveredFrom || null,
+      memory_observation: observationResult.ok ? {
+        observation_id: observationResult.observation.observation_id,
+        review_status: observationResult.observation.review_status,
+      } : null,
     },
   });
 }
@@ -598,10 +634,12 @@ function userIdFromUrl(url, fallback = "demo_weiyingru") {
 
 async function handleMemoryLedger(res, url) {
   const userId = userIdFromUrl(url);
-  const [candidates, preferences, context] = await Promise.all([
+  const [candidates, preferences, context, observations, foodInsightProfile] = await Promise.all([
     listMemoryCandidates({userId}),
     listConfirmedPreferences({userId}),
     readUserMemoryContext({userId}),
+    listMemoryObservations({userId, limit: 30}),
+    readFoodInsightProfile({userId}),
   ]);
   ok(res, {
     user_id: context.user_id,
@@ -614,6 +652,8 @@ async function handleMemoryLedger(res, url) {
     pending_candidates: candidates.candidates.filter((candidate) => candidate.status === "pending"),
     preferences: preferences.preferences,
     active_preferences: preferences.preferences.filter((preference) => preference.status === "active"),
+    observations: observations.observations,
+    food_insight_profile: foodInsightProfile,
     profile_text: context.profile_text,
   });
 }
@@ -639,10 +679,107 @@ async function handleMemoryPostMealFeedback(req, res) {
       candidateIds: payload.candidates.map((candidate) => candidate.candidate_id),
     });
   }
+  const feedbackText = String(body.feedback_text || body.feedbackText || body.text || "").trim();
+  const observationResult = feedbackText ? await createMemoryObservation({
+    userId: body.user_id || body.userId || session?.user_id || "demo_weiyingru",
+    body: {
+      day_id: session?.day_id || body.day_id || body.dayId || "",
+      source: "post_meal_feedback",
+      type: "post_meal_feedback",
+      text: feedbackText,
+      summary: feedbackText,
+      confidence: 0.76,
+      tags: [
+        /油|油腻/.test(feedbackText) ? "油腻反馈" : "",
+        /排队|等位|等待/.test(feedbackText) ? "排队反馈" : "",
+        /辣/.test(feedbackText) ? "辣度反馈" : "",
+      ].filter(Boolean),
+      source_event: {
+        source: body.source || "miniapp",
+        session_id: body.session_id || body.sessionId || "",
+        day_id: session?.day_id || body.day_id || body.dayId || "",
+        merchant_id: body.merchant_id || body.merchantId || "",
+        merchant_name: body.merchant_name || body.merchantName || "",
+      },
+    },
+  }) : {ok: false};
+  const shouldRunInstantReview = observationResult.ok && !payload.candidates?.length;
+  const intelligence = shouldRunInstantReview
+    ? await runMemoryIntelligence({
+      mode: "instant_review",
+      userId: observationResult.user_id,
+      dayId: observationResult.observation.day_id,
+      observationId: observationResult.observation.observation_id,
+    })
+    : null;
   ok(res, {
     ...payload,
     merchant_feedback: merchantFeedback,
+    memory_observation: observationResult.ok ? observationResult.observation : null,
+    memory_intelligence: intelligence ? {
+      ok: intelligence.ok,
+      job_id: intelligence.job?.job_id || "",
+      accepted_memory_candidates: intelligence.job?.accepted_memory_candidates?.length || 0,
+    } : null,
   });
+}
+
+async function handleMemoryIntelligenceInput(res, url) {
+  const payload = await buildMemoryIntelligenceInput({
+    mode: url.searchParams.get("mode") || "day_dreaming",
+    userId: userIdFromUrl(url),
+    dayId: url.searchParams.get("day_id") || url.searchParams.get("dayId") || "",
+    observationId: url.searchParams.get("observation_id") || url.searchParams.get("observationId") || "",
+    lookbackDays: url.searchParams.get("lookback_days") || url.searchParams.get("lookbackDays") || 7,
+  });
+  ok(res, payload);
+}
+
+async function handleMemoryIntelligenceRun(req, res) {
+  const body = await readBody(req);
+  const payload = await runMemoryIntelligence({
+    mode: body.mode || "day_dreaming",
+    userId: body.user_id || body.userId || "demo_weiyingru",
+    dayId: body.day_id || body.dayId || "",
+    observationId: body.observation_id || body.observationId || "",
+    lookbackDays: body.lookback_days || body.lookbackDays || 7,
+    source: body.source || "local_policy",
+  });
+  ok(res, payload);
+}
+
+async function handleMemoryIntelligenceResult(req, res) {
+  const body = await readBody(req);
+  const payload = await storeMemoryIntelligenceResult({
+    mode: body.mode || body.result?.mode || "day_dreaming",
+    userId: body.user_id || body.userId || body.result?.user_id || "demo_weiyingru",
+    dayId: body.day_id || body.dayId || body.result?.day_id || "",
+    observationId: body.observation_id || body.observationId || "",
+    input: body.input || null,
+    result: body.result || body,
+    source: body.source || "openclaw_memory_intelligence",
+  });
+  ok(res, payload);
+}
+
+async function handleMemoryIntelligenceJobs(res, url) {
+  const payload = await listMemoryIntelligenceJobs({
+    userId: userIdFromUrl(url, ""),
+    dayId: url.searchParams.get("day_id") || url.searchParams.get("dayId") || "",
+    mode: url.searchParams.get("mode") || "",
+    limit: url.searchParams.get("limit") || 20,
+  });
+  ok(res, payload);
+}
+
+async function handleMemoryObservations(res, url) {
+  const payload = await listMemoryObservations({
+    userId: userIdFromUrl(url),
+    dayId: url.searchParams.get("day_id") || url.searchParams.get("dayId") || "",
+    limit: url.searchParams.get("limit") || 50,
+    status: url.searchParams.get("status") || "",
+  });
+  ok(res, payload);
 }
 
 async function handleMemoryPreferencesList(res, url) {
@@ -1116,6 +1253,26 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/openclaw/run-dream") {
       await handleOpenClawRunDream(req, res);
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/memory/intelligence/input") {
+      await handleMemoryIntelligenceInput(res, url);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/memory/intelligence/run") {
+      await handleMemoryIntelligenceRun(req, res);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/memory/intelligence/result") {
+      await handleMemoryIntelligenceResult(req, res);
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/memory/intelligence/jobs") {
+      await handleMemoryIntelligenceJobs(res, url);
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/memory/observations") {
+      await handleMemoryObservations(res, url);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/xiaowang/chat") {

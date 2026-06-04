@@ -3,8 +3,15 @@ import { existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { config } from "./config.mjs";
-import { createDayId, getDayContext } from "./session-store.mjs";
-import { createMemoryCandidatesFromOpenClaw, listConfirmedPreferences, listMemoryCandidates } from "./memory-store.mjs";
+import { appendXiaowangChatToDayContext, createDayId, getDayContext } from "./session-store.mjs";
+import { listConfirmedPreferences, listMemoryCandidates } from "./memory-store.mjs";
+import {
+  createMemoryObservation,
+  listMemoryIntelligenceJobs,
+  listMemoryObservations,
+  readFoodInsightProfile,
+  runMemoryIntelligence,
+} from "./memory-intelligence-store.mjs";
 import { executeMemoryManageOperations } from "./memory-manager.mjs";
 import { requestOpenClawAgent, resetOpenClawGatewayClient } from "./openclaw-gateway-client.mjs";
 import { callArkChat } from "./ai/ark-provider.mjs";
@@ -211,24 +218,6 @@ function skillCard(name) {
     title: skill.title,
     description: skill.description,
     cta: skill.cta,
-  };
-}
-
-function candidateFromChat({message, userId, sessionId, confirmationText}) {
-  const confirmation = String(confirmationText || message).trim();
-  return {
-    type: "food_preference",
-    category: "xiaowang_chat",
-    polarity: /(不喜欢|讨厌|少推荐|别推|不要推)/.test(confirmation) ? "negative" : "positive",
-    statement: `主人在问小汪时提到：${confirmation}`,
-    confirmation_text: confirmation.replace(/^记住[：:，,\s]*/, "") || confirmation,
-    confidence: 0.78,
-    evidence: [{
-      source: "xiaowang_chat",
-      session_id: sessionId,
-      reason: message || confirmation,
-    }],
-    needs_confirmation: true,
   };
 }
 
@@ -615,6 +604,16 @@ function xiaowangPreferenceItem(preference = {}) {
   };
 }
 
+function xiaowangObservationItem(observation = {}) {
+  const time = formatDiaryDateTime(observation.updated_at || observation.created_at);
+  return {
+    ...observation,
+    ...time,
+    diary_title: observation.type === "weak_hypothesis" ? "小汪的弱假设" : "小汪观察",
+    diary_text: observation.summary || observation.text || "",
+  };
+}
+
 function keywordsFromText(text) {
   const value = String(text || "");
   return [
@@ -956,7 +955,7 @@ async function executeMerchantSkillCalls({skillCalls = [], message, userId, dayI
   return {resultCards, traces};
 }
 
-async function createMemoryCandidatesFromPrompts({userId, sessionId, dayId, message, skillCalls = [], memoryPrompts = []}) {
+async function reviewMemoryPromptsAsObservations({userId, sessionId, dayId, message, skillCalls = [], memoryPrompts = []}) {
   const prompts = memoryPromptsFromCalls({skillCalls, memoryPrompts, message})
     .map((item) => ({
       text: String(item?.text || "").trim(),
@@ -965,20 +964,56 @@ async function createMemoryCandidatesFromPrompts({userId, sessionId, dayId, mess
     .filter((item) => item.confirmation_text);
 
   if (!prompts.length) {
-    return {created_count: 0, candidates: []};
+    return {
+      created_count: 0,
+      candidates: [],
+      observations: [],
+      intelligence_jobs: [],
+    };
   }
 
-  return createMemoryCandidatesFromOpenClaw({
-    userId,
-    dreamId: "",
-    dayId,
-    candidates: prompts.slice(0, 3).map((prompt) => candidateFromChat({
-      message,
+  const observations = [];
+  const jobs = [];
+  const candidates = [];
+  for (const prompt of prompts.slice(0, 3)) {
+    const observationResult = await createMemoryObservation({
       userId,
-      sessionId,
-      confirmationText: prompt.confirmation_text,
-    })),
-  });
+      body: {
+        day_id: dayId,
+        source: "xiaowang_chat",
+        type: "explicit_memory_prompt",
+        text: prompt.confirmation_text,
+        summary: `主人在问小汪时提到：${prompt.confirmation_text}`,
+        confidence: 0.78,
+        tags: ["待确认偏好", "小汪聊天"],
+        source_event: {
+          source: "xiaowang_chat",
+          session_id: sessionId,
+          day_id: dayId,
+          reason: message || prompt.confirmation_text,
+        },
+      },
+    });
+    if (!observationResult.ok) continue;
+    observations.push(observationResult.observation);
+    const intelligence = await runMemoryIntelligence({
+      mode: "instant_review",
+      userId,
+      dayId,
+      observationId: observationResult.observation.observation_id,
+      source: "xiaowang_memory_capture",
+    });
+    if (intelligence?.job) {
+      jobs.push(intelligence.job);
+      candidates.push(...(intelligence.job.accepted_memory_candidates || []));
+    }
+  }
+  return {
+    created_count: candidates.length,
+    candidates,
+    observations,
+    intelligence_jobs: jobs,
+  };
 }
 
 async function executeMemoryManageSkillCalls({skillCalls = [], userId}) {
@@ -1087,7 +1122,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
         message,
       });
       if (skillCalls.some((item) => item.skill === "memory_capture")) {
-        memoryResult = await createMemoryCandidatesFromPrompts({
+        memoryResult = await reviewMemoryPromptsAsObservations({
           userId,
           sessionId: session.session_id,
           dayId,
@@ -1136,7 +1171,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
           message,
         });
         if (skillCalls.some((item) => item.skill === "memory_capture")) {
-          memoryResult = await createMemoryCandidatesFromPrompts({
+          memoryResult = await reviewMemoryPromptsAsObservations({
             userId,
             sessionId: session.session_id,
             dayId,
@@ -1214,6 +1249,22 @@ export async function handleXiaowangChat({body = {}} = {}) {
   session.summary = assistant.content;
   session.updated_at = nowIso();
   await writeJson(chatPath(session.session_id), session);
+  await appendXiaowangChatToDayContext({
+    dayId,
+    userId,
+    chat: {
+      session_id: session.session_id,
+      user_id: userId,
+      title: session.title,
+      summary: session.summary,
+      latest_user_message: message,
+      message_count: session.messages.length,
+      memory_candidate_created_count: memoryResult.created_count || 0,
+      skill_calls: skillCalls.map((item) => item.skill).filter(Boolean),
+      created_at: session.created_at,
+      updated_at: session.updated_at,
+    },
+  });
 
   return {
     ok: true,
@@ -1307,11 +1358,24 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date} = {}) {
   const dayContext = await getDayContext(dayId);
   const pending = await listMemoryCandidates({userId, status: "pending"});
   const preferences = await listConfirmedPreferences({userId});
+  const observations = await listMemoryObservations({userId, dayId, limit: 12});
+  const intelligenceJobs = await listMemoryIntelligenceJobs({userId, dayId, limit: 6});
+  let foodInsightProfile = await readFoodInsightProfile({userId});
   const mealSessions = (dayContext?.meal_sessions || [])
     .map(xiaowangMealDiaryItem)
     .sort((left, right) => String(right.created_at || "").localeCompare(String(left.created_at || "")));
   const memoryCandidates = (pending.candidates || []).map(xiaowangMemoryCandidateItem);
   const confirmedPreferences = (preferences.preferences || []).map(xiaowangPreferenceItem);
+  const observationItems = (observations.observations || []).map(xiaowangObservationItem);
+  if ((observationItems.length || confirmedPreferences.length) && Number(foodInsightProfile.confidence || 0) < 0.3) {
+    const profileJob = await runMemoryIntelligence({
+      mode: "profile_update",
+      userId,
+      dayId,
+      source: "diary_profile_refresh",
+    });
+    if (profileJob?.profile) foodInsightProfile = profileJob.profile;
+  }
   const latestDreamJob = await getLatestOpenClawJobForDay({userId, dayId});
   const dailySummary = buildDiarySummary({
     mealSessions,
@@ -1327,6 +1391,9 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date} = {}) {
     diary_date: dayContext?.date || dayId.match(/^day_(\d{8})_/)?.[1] || "",
     daily_summary: dailySummary,
     meal_sessions: mealSessions,
+    observations: observationItems,
+    memory_intelligence_jobs: intelligenceJobs.jobs || [],
+    food_insight_profile: foodInsightProfile,
     memory_candidates: memoryCandidates,
     confirmed_preferences: confirmedPreferences,
     prompts: memoryCandidates.slice(0, 3).map((candidate) => ({

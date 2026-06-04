@@ -2029,6 +2029,106 @@ button::after {
   box-shadow: inset 0 0 0 1rpx rgba(125, 78, 44, 0.1);
 }
 
+.observation-item {
+  background: rgba(255, 248, 236, 0.78);
+}
+
+.food-profile-card {
+  margin-top: 14rpx;
+  padding: 22rpx;
+  border-radius: 18rpx;
+  background: linear-gradient(135deg, rgba(45, 33, 24, 0.94), rgba(122, 59, 36, 0.9));
+  color: #fff8ec;
+  box-shadow: 0 18rpx 42rpx rgba(45, 33, 24, 0.16);
+}
+
+.food-profile-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.food-profile-title {
+  font-size: 28rpx;
+  font-weight: 950;
+}
+
+.food-profile-subtitle {
+  margin-top: 6rpx;
+  color: rgba(255, 248, 236, 0.66);
+  font-size: 21rpx;
+  font-weight: 800;
+}
+
+.food-profile-confidence {
+  min-width: 84rpx;
+  height: 54rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 248, 236, 0.14);
+  color: #ffd09c;
+  font-size: 24rpx;
+  font-weight: 950;
+  line-height: 54rpx;
+  text-align: center;
+}
+
+.motivation-list {
+  margin-top: 18rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.motivation-row {
+  display: grid;
+  grid-template-columns: 120rpx 1fr 52rpx;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.motivation-label {
+  color: rgba(255, 248, 236, 0.86);
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.motivation-track {
+  height: 16rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 248, 236, 0.13);
+  overflow: hidden;
+}
+
+.motivation-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #ff6334, #ffd09c);
+}
+
+.motivation-score {
+  color: #ffd09c;
+  font-size: 22rpx;
+  font-weight: 950;
+  text-align: right;
+}
+
+.profile-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 18rpx;
+}
+
+.profile-chip {
+  padding: 8rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 248, 236, 0.12);
+  color: rgba(255, 248, 236, 0.76);
+  font-size: 20rpx;
+  font-weight: 850;
+}
+
 .diary-item-title {
   margin-top: 8rpx;
   color: #2d2118;
