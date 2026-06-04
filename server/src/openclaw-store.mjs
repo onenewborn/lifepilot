@@ -69,6 +69,71 @@ function compactEvent(event = {}) {
   };
 }
 
+function compactScoringFeatures(features = []) {
+  return (Array.isArray(features) ? features : [])
+    .slice(0, 6)
+    .map((feature) => ({
+      source: feature.source || "",
+      key: feature.key || "",
+      score: Number(feature.score || 0),
+      reason: feature.reason || "",
+    }));
+}
+
+function compactOfferLike(card = {}) {
+  if (!card || typeof card !== "object") return null;
+  return {
+    offer_id: card.offer_id || "",
+    merchant_id: card.merchant_id || "",
+    merchant_name: card.merchant_name || "",
+    title: card.title || card.display_title || "",
+    score: Number(card.score || 0),
+    tags: Array.isArray(card.tags) ? card.tags.slice(0, 8) : [],
+    scoring_features: compactScoringFeatures(card.scoring_features || card.scoringFeatures || []),
+    facts: {
+      price_per_person: card.facts?.price_per_person,
+      distance_text: card.facts?.distance_text,
+      oil_level: card.facts?.oil_level,
+      spice_level: card.facts?.spice_level,
+      temperature: card.facts?.temperature,
+      service_speed: card.facts?.service_speed,
+      solo_friendly: card.facts?.solo_friendly,
+      queue_risk: card.facts?.queue_risk,
+      cuisine_tags: Array.isArray(card.facts?.cuisine_tags) ? card.facts.cuisine_tags.slice(0, 8) : [],
+      decision_tags: Array.isArray(card.facts?.decision_tags) ? card.facts.decision_tags.slice(0, 8) : [],
+    },
+    explanation: {
+      matched: Array.isArray(card.explanation?.matched) ? card.explanation.matched.slice(0, 4) : [],
+      watchouts: Array.isArray(card.explanation?.watchouts) ? card.explanation.watchouts.slice(0, 3) : [],
+      conflicts: Array.isArray(card.explanation?.conflicts) ? card.explanation.conflicts.slice(0, 3) : [],
+    },
+  };
+}
+
+function compactFinalDecision(result = {}) {
+  if (!result || typeof result !== "object") return null;
+  return {
+    has_selection: Boolean(result.hasSelection || result.has_selection),
+    primary: compactOfferLike(result.primary || {}),
+    alternatives: (Array.isArray(result.alternatives) ? result.alternatives : [])
+      .slice(0, 3)
+      .map(compactOfferLike)
+      .filter(Boolean),
+    selected_merchants: (Array.isArray(result.selected_merchants || result.selectedMerchants)
+      ? (result.selected_merchants || result.selectedMerchants)
+      : [])
+      .slice(0, 5)
+      .map((merchant) => ({
+        merchant_id: merchant.merchant_id || "",
+        merchant_name: merchant.merchant_name || merchant.name || "",
+      })),
+    ranking_basis: Array.isArray(result.ranking_basis || result.rankingBasis)
+      ? (result.ranking_basis || result.rankingBasis).slice(0, 8)
+      : [],
+    summary_text: result.summary_text || result.summaryText || "",
+  };
+}
+
 function compactSession(session = {}) {
   return {
     session_id: session.session_id,
@@ -91,7 +156,7 @@ function compactSession(session = {}) {
     direction_events: (session.direction_events || []).map(compactEvent),
     offer_events: (session.offer_events || []).map(compactEvent),
     direction_summary: session.direction_summary || null,
-    final_decision: session.result || null,
+    final_decision: compactFinalDecision(session.result || null),
     offer_payload_meta: session.offer_payload_meta || null,
     created_at: session.created_at,
     updated_at: session.updated_at,
@@ -154,8 +219,12 @@ export async function buildOpenClawDreamInput({userId = "demo_weiyingru", dayId,
   if (!dayContext) {
     return {ok: false, error: "day_context_not_found", day_id: resolvedDayId};
   }
+  const sessionRefs = (dayContext.meal_sessions || [])
+    .slice()
+    .sort((left, right) => String(right.updated_at || right.created_at || "").localeCompare(String(left.updated_at || left.created_at || "")))
+    .slice(0, 30);
   const sessions = [];
-  for (const item of dayContext.meal_sessions || []) {
+  for (const item of sessionRefs) {
     const session = await getSession(item.session_id);
     if (session) sessions.push(compactSession(session));
   }
