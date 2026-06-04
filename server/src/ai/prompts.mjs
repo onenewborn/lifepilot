@@ -136,6 +136,44 @@ function rankTier(index, total) {
   return total <= 4 ? "strong_pick" : "viable_pick";
 }
 
+function compactOfferFacts(facts = {}) {
+  return {
+    price_per_person: facts.price_per_person,
+    distance_text: facts.distance_text,
+    cuisine_tags: facts.cuisine_tags,
+    decision_tags: facts.decision_tags,
+    signature_items: facts.signature_items,
+    recommended_items: facts.recommended_items,
+    oil_level: facts.oil_level,
+    spice_level: facts.spice_level,
+    temperature: facts.temperature,
+    service_speed: facts.service_speed,
+    portion_size: facts.portion_size,
+    satisfaction_level: facts.satisfaction_level,
+    solo_friendly: facts.solo_friendly,
+    queue_risk: facts.queue_risk,
+    environment_note: facts.environment_note,
+  };
+}
+
+function compactAlternativeOffer(offer = {}) {
+  return {
+    offer_id: offer.offer_id,
+    title: offer.title,
+    price_per_person: offer.price_per_person,
+    score: offer.score,
+  };
+}
+
+function compactMatchedDirection(direction = {}) {
+  return {
+    direction_id: direction.direction_id,
+    title: direction.title,
+    tags: Array.isArray(direction.tags) ? direction.tags.slice(0, 8) : direction.tags,
+    budget_band: direction.budget_band,
+  };
+}
+
 function compactRankedOfferCard(card = {}, index = 0, cards = []) {
   const score = Number(card.score || 0);
   const topScore = Number(cards[0]?.score || score || 0);
@@ -165,10 +203,14 @@ function compactRankedOfferCard(card = {}, index = 0, cards = []) {
     score_gap_from_previous: Math.max(0, previousScore - score),
     top_positive_features: positiveFeatures,
     top_negative_features: negativeFeatures,
-    alternative_offers: card.alternative_offers || [],
-    matched_directions: card.matched_directions || [],
-    tags: card.tags,
-    facts: card.facts,
+    alternative_offers: Array.isArray(card.alternative_offers)
+      ? card.alternative_offers.slice(0, 2).map(compactAlternativeOffer)
+      : [],
+    matched_directions: Array.isArray(card.matched_directions)
+      ? card.matched_directions.slice(0, 3).map(compactMatchedDirection)
+      : [],
+    tags: Array.isArray(card.tags) ? card.tags.slice(0, 10) : card.tags,
+    facts: compactOfferFacts(card.facts || {}),
   };
 }
 
@@ -216,7 +258,7 @@ export function buildDirectionSummaryPrompt({goal, events = [], entryContext = n
   ].join("\n");
 }
 
-export function buildOfferExplanationPrompt({goal, directionSummary = {}, understanding = {}, directionContext = {}, memoryContext = null, cards = []} = {}) {
+export function buildOfferExplanationPrompt({goal, directionSummary = {}, understanding = {}, directionContext = {}, memoryContext = null, cards = [], targetOfferIds = []} = {}) {
   const compactUnderstanding = {
     constraints: understanding.constraints || {},
     dimensions: understanding.dimensions || {},
@@ -239,7 +281,8 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     "- 不要把主人刚刚放弃的方向写成偏好；如果商家和放弃方向有关，只能在明确事实冲突时写进 conflicts。",
     "",
     "要求：",
-    "- 每张输入卡都要返回一项。",
+    "- 商家卡事实会包含完整排序上下文，但你只需要为 target_offer_ids 里的商家返回解释。",
+    "- 输出 cards 只能包含 target_offer_ids 里的 offer_id；不要为上下文里的其他商家输出解释。",
     "- 商家卡事实里有后端排序上下文：rank_position 越小越靠前，score 越高代表后端越推荐，score_gap_from_top 表示和第一名的差距。",
     "- matched[0] 是前端最醒目的主推荐理由，必须体现这张卡的 rank_tier 和最关键加分点，不能写成所有店都能套用的“我推荐你吃这个”。",
     "- rank_tier=top_pick 时，matched[0] 要写成“为什么它是这一轮最值得优先看”的强理由。",
@@ -286,6 +329,7 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     }, null, 2)}`,
     `方向小结：${JSON.stringify(directionSummary || {}, null, 2)}`,
     `记忆上下文：${JSON.stringify(compactMemoryContext(memoryContext || {}), null, 2)}`,
+    `target_offer_ids：${JSON.stringify(targetOfferIds.length ? targetOfferIds : cards.map((card) => card.offer_id).filter(Boolean), null, 2)}`,
     `商家卡事实：${JSON.stringify(cards.map((card, index) => compactRankedOfferCard(card, index, cards)), null, 2)}`,
   ].join("\n");
 }

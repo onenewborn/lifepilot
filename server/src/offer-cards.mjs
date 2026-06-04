@@ -690,10 +690,15 @@ function normalizeAiExplanationPayloadForCards(parsed, cards = []) {
   return byOffer;
 }
 
-async function requestAiExplanationBatch(cards, session, body, directionContext, memoryContext) {
+function targetOfferIdsFromCards(cards = []) {
+  return cards.map((card) => card?.offer_id).filter(Boolean);
+}
+
+async function requestAiExplanationBatch(cards, session, body, directionContext, memoryContext, targetCards = cards) {
+  const targetOfferIds = targetOfferIdsFromCards(targetCards);
   const ai = await callArkChat({
     timeoutMs: body.offer_ai_timeout_ms || body.offerAiTimeoutMs || 8000,
-    maxTokens: Math.max(500, Math.min(1200, 240 + cards.length * 140)),
+    maxTokens: Math.max(500, Math.min(1000, 260 + Math.max(1, targetOfferIds.length) * 180)),
     responseFormat: {type: "json_object"},
     messages: [
       {role: "system", content: "你是饭点定了小程序里的小汪，只输出符合要求的 JSON。"},
@@ -707,6 +712,7 @@ async function requestAiExplanationBatch(cards, session, body, directionContext,
         directionContext,
         memoryContext,
         cards,
+        targetOfferIds,
       })},
     ],
   });
@@ -721,6 +727,9 @@ async function requestAiExplanationBatch(cards, session, body, directionContext,
     };
   }
   const explanations = normalizeAiExplanationPayloadForCards(parseJsonObjectFromText(ai.text), cards);
+  const targetExplanations = new Map(
+    [...explanations.entries()].filter(([offerId]) => !targetOfferIds.length || targetOfferIds.includes(offerId))
+  );
   if (!explanations.size) {
     return {
       ok: false,
@@ -731,14 +740,15 @@ async function requestAiExplanationBatch(cards, session, body, directionContext,
       explanations,
     };
   }
+  const expectedCount = targetOfferIds.length || cards.length;
   return {
-    ok: explanations.size >= cards.length,
-    reason: explanations.size >= cards.length ? null : "partial_ai_json",
+    ok: targetExplanations.size >= expectedCount,
+    reason: targetExplanations.size >= expectedCount ? null : "partial_ai_json",
     status: null,
     raw: null,
     usage: ai.usage || null,
-    explanations,
-    explained_count: explanations.size,
+    explanations: targetExplanations,
+    explained_count: targetExplanations.size,
   };
 }
 
@@ -746,9 +756,10 @@ async function requestAiExplanationForCards(cards, session, body, directionConte
   const explanations = new Map();
   const contextCards = Array.isArray(rankContextCards) && rankContextCards.length ? rankContextCards : cards;
   for (const card of cards) {
-    const result = await requestAiExplanationBatch(contextCards, session, body, directionContext, memoryContext);
+    const result = await requestAiExplanationBatch(contextCards, session, body, directionContext, memoryContext, [card]);
     meta.attempts.push({
       card_count: contextCards.length,
+      target_count: 1,
       offer_id: card.offer_id,
       depth: 0,
       ok: result.ok,
@@ -840,9 +851,15 @@ async function maybeApplyAiExplanations(cards, session, body, directionContext =
   };
   const perCardCount = Number(body.offer_ai_per_card_count || body.offerAiPerCardCount || 0);
   const explanationTargets = perCardCount > 0 ? cards.slice(0, perCardCount) : cards;
-  const explanations = perCardCount > 0
-    ? await requestAiExplanationForCards(explanationTargets, session, body, directionContext, memoryContext, splitMeta, cards)
-    : await explainCardsWithSplitFallback(cards, session, body, directionContext, memoryContext, splitMeta);
+  const explanations = await requestAiExplanationForCards(
+    explanationTargets,
+    session,
+    body,
+    directionContext,
+    memoryContext,
+    splitMeta,
+    cards
+  );
   if (!explanations.size) {
     return {
       cards,
@@ -881,7 +898,7 @@ async function maybeApplyAiExplanations(cards, session, body, directionContext =
       mode: "ark",
       fallback_used: explainedCount < cards.length,
       fallback_reason: explainedCount < cards.length ? "partial_ai_explanations" : null,
-      strategy: perCardCount > 0 ? "per_card" : "batch",
+      strategy: "single_card",
       total_ms: Date.now() - startedAt,
       explained_count: explainedCount,
       requested_count: cards.length,

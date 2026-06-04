@@ -48,6 +48,7 @@ const prompt = buildOfferExplanationPrompt({
     food_preferences: {cuisine_tags: ["川菜"]},
   },
   cards,
+  targetOfferIds: ["offer_strong"],
 });
 
 assert.match(prompt, /rank_position/);
@@ -55,10 +56,14 @@ assert.match(prompt, /rank_tier/);
 assert.match(prompt, /score_gap_from_top/);
 assert.match(prompt, /top_positive_features/);
 assert.match(prompt, /top_negative_features/);
+assert.match(prompt, /target_offer_ids/);
+assert.match(prompt, /只需要为 target_offer_ids/);
+assert.match(prompt, /只能包含 target_offer_ids/);
 assert.match(prompt, /matched\[0\]/);
 assert.match(prompt, /top_pick/);
 assert.match(prompt, /strong_pick/);
 assert.match(prompt, /viable_pick/);
+assert.match(prompt, /offer_strong/);
 
 const factsJson = prompt.match(/商家卡事实：([\s\S]+)$/)?.[1];
 assert.ok(factsJson, "prompt should include card facts JSON");
@@ -80,3 +85,8 @@ assert.deepEqual(rankedCards[0].top_positive_features.map((item) => item.key), [
   "service.fast_baseline",
 ]);
 assert.deepEqual(rankedCards[1].top_negative_features.map((item) => item.key), ["health.high_oil"]);
+assert.deepEqual(rankedCards[0].facts, {
+  distance_text: "0.7km",
+  cuisine_tags: ["sichuan"],
+  price_per_person: 22,
+});
