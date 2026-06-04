@@ -66,6 +66,23 @@ try {
   assert.match(adminHtml, /data-upload-append/);
   assert.match(adminHtml, /商家视频列表/);
   assert.match(adminHtml, /商家\/菜品多图/);
+  const memoryDebugHtml = await readFile("server/public/admin/memory-debug.html", "utf8");
+  assert.match(memoryDebugHtml, /Memory Pipeline 调试面板/);
+  assert.match(memoryDebugHtml, /只读调试页/);
+  assert.match(memoryDebugHtml, /pipeline_events/);
+  assert.doesNotMatch(memoryDebugHtml, /method\s*:\s*["']POST/);
+  const memoryDebugResponse = await fetch(`${baseUrl}/admin/memory-debug.html`);
+  assert.equal(memoryDebugResponse.ok, true);
+  assert.match(await memoryDebugResponse.text(), /Memory Pipeline 调试面板/);
+  const memoryPipeline = await expectOk("/api/admin/memory-pipeline?user_id=demo_weiyingru");
+  assert.ok(Array.isArray(memoryPipeline.observations));
+  assert.ok(Array.isArray(memoryPipeline.memory_intelligence_jobs));
+  assert.ok(Array.isArray(memoryPipeline.memory_candidates));
+  assert.ok(Array.isArray(memoryPipeline.confirmed_preferences));
+  assert.ok(memoryPipeline.food_insight_profile);
+  assert.ok(memoryPipeline.provider_status?.local?.configured);
+  assert.ok(Array.isArray(memoryPipeline.pipeline_events));
+  assert.ok(Array.isArray(memoryPipeline.pipeline_edges));
 
   await expectOk("/api/admin/merchants", {
     method: "POST",

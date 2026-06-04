@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LifePilot Memory Pipeline</title>
+  <style>
+    :root { --bg:#f7f5f0; --panel:#fffdf8; --line:#ded7cc; --text:#27221d; --muted:#746a5f; --accent:#176b5b; --soft:#eef5f2; --warn:#9b6a1e; --bad:#9b2f22; --good:#207250; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    header { position:sticky; top:0; z-index:5; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; align-items:center; padding:14px 18px; background:rgba(255,253,248,.96); border-bottom:1px solid var(--line); backdrop-filter:blur(10px); }
+    h1 { margin:0; font-size:18px; }
+    button { min-height:34px; border:1px solid var(--line); border-radius:8px; padding:0 12px; background:#fff; color:var(--text); font:inherit; font-weight:800; cursor:pointer; }
+    button:hover { border-color:var(--accent); }
+    input, select { min-height:36px; border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:#fff; color:var(--text); font:inherit; }
+    main { display:grid; grid-template-columns:300px minmax(360px,1fr) minmax(360px,520px); min-height:calc(100vh - 65px); }
+    aside, section { min-width:0; overflow:auto; }
+    aside { border-right:1px solid var(--line); background:#fbf8f1; }
+    section { padding:16px; }
+    .filters { display:grid; grid-template-columns:160px 190px 1fr auto; gap:8px; align-items:center; margin-top:8px; }
+    .token-box { display:flex; gap:8px; align-items:center; }
+    .token-box input { width:230px; }
+    .status { color:var(--muted); font-size:13px; }
+    .notice { margin:12px; padding:12px; border:1px solid var(--line); border-radius:8px; background:#fffaf1; color:var(--muted); }
+    .summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+    .metric { border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:12px; }
+    .metric-value { font-size:22px; font-weight:900; }
+    .metric-label { color:var(--muted); font-size:12px; }
+    .timeline { padding:8px; }
+    .event { width:100%; display:block; margin:0 0 8px; padding:10px; text-align:left; border:1px solid transparent; border-radius:8px; background:transparent; }
+    .event.active { background:#fff; border-color:var(--line); box-shadow:0 1px 5px rgba(39,34,29,.08); }
+    .event-type { display:inline-flex; margin-bottom:6px; padding:2px 7px; border-radius:999px; background:var(--soft); color:var(--accent); font-size:11px; font-weight:900; }
+    .event-title { font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .event-subtitle { margin-top:3px; color:var(--muted); font-size:12px; }
+    .event-time { margin-top:5px; color:var(--muted); font-size:11px; }
+    .stage-row { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:14px; }
+    .stage { border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:10px; min-height:82px; }
+    .stage-title { font-size:12px; color:var(--muted); font-weight:900; }
+    .stage-value { margin-top:6px; font-size:20px; font-weight:900; }
+    .stage-note { margin-top:4px; color:var(--muted); font-size:12px; }
+    .card { border:1px solid var(--line); border-radius:8px; background:var(--panel); padding:12px; margin-bottom:12px; }
+    .card-head { display:flex; justify-content:space-between; gap:10px; align-items:start; }
+    .card-title { font-weight:900; }
+    .pill { display:inline-flex; align-items:center; min-height:22px; padding:2px 8px; border-radius:999px; background:var(--soft); color:var(--accent); font-size:12px; font-weight:900; }
+    .pill.warn { background:#fff4d8; color:var(--warn); }
+    .pill.bad { background:#f6dfdc; color:var(--bad); }
+    .pill.good { background:#e6f3ed; color:var(--good); }
+    .edges { display:grid; gap:8px; }
+    .edge { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:8px; align-items:center; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--muted); }
+    .edge strong { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .detail-head { display:flex; align-items:start; justify-content:space-between; gap:12px; margin-bottom:10px; }
+    .detail-title { font-size:18px; font-weight:900; }
+    .kv { display:grid; grid-template-columns:150px minmax(0,1fr); gap:8px; padding:7px 0; border-top:1px solid var(--line); }
+    .kv:first-child { border-top:0; }
+    .key { color:var(--muted); font-weight:900; }
+    pre { margin:0; padding:12px; border:1px solid var(--line); border-radius:8px; background:#191714; color:#f8f0df; overflow:auto; max-height:54vh; font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    .empty { padding:38px 18px; text-align:center; color:var(--muted); }
+    @media (max-width:1080px) {
+      main { grid-template-columns:1fr; }
+      aside { border-right:0; border-bottom:1px solid var(--line); max-height:42vh; }
+      header { grid-template-columns:1fr; }
+      .filters { grid-template-columns:1fr; }
+      .summary-grid, .stage-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .token-box { flex-wrap:wrap; }
+      .token-box input { width:100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Memory Pipeline 调试面板</h1>
+      <div class="status" id="status">只读查看 observation、candidate、preference、画像和 Evermind 同步状态</div>
+      <div class="filters">
+        <input id="userId" value="demo_weiyingru" placeholder="user_id">
+        <input id="dayId" placeholder="day_id，可留空">
+        <select id="typeFilter">
+          <option value="">全部节点</option>
+          <option value="observation">Observation</option>
+          <option value="memory_intelligence_job">Job</option>
+          <option value="memory_candidate">Candidate</option>
+          <option value="confirmed_preference">Preference</option>
+          <option value="food_insight_profile">Food Insight Profile</option>
+          <option value="evermind_sync">Evermind Sync</option>
+        </select>
+        <button id="refreshButton">刷新</button>
+      </div>
+    </div>
+    <div class="token-box">
+      <input id="adminToken" placeholder="云端后台口令（如已配置）">
+      <button id="saveToken">保存口令</button>
+    </div>
+  </header>
+  <main>
+    <aside>
+      <div class="notice">
+        这是只读调试页。没有确认、拒绝、删除、重跑或同步按钮；所有数据来自后端账本和 job snapshot。
+      </div>
+      <div class="timeline" id="timeline"></div>
+    </aside>
+    <section>
+      <div class="summary-grid" id="summary"></div>
+      <div class="stage-row" id="stages"></div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Pipeline Links</div>
+            <div class="status">后端整理出的生成关系；缺失链路会以节点数量和状态体现。</div>
+          </div>
+          <span class="pill" id="edgeCount">0 links</span>
+        </div>
+        <div class="edges" id="edges"></div>
+      </div>
+    </section>
+    <section>
+      <div class="detail-head">
+        <div>
+          <div class="detail-title" id="detailTitle">选择左侧节点</div>
+          <div class="status" id="detailSubtitle">点击任意节点查看原始 JSON、权重和状态。</div>
+        </div>
+        <button id="copyButton">复制 JSON</button>
+      </div>
+      <div class="card" id="detailMetrics"></div>
+      <pre id="detailJson">{}</pre>
+    </section>
+  </main>
+  <script>
+    const state = {payload:null, selectedId:"", selected:null};
+    const $ = (id) => document.getElementById(id);
+    const token = () => localStorage.getItem("lifepilot_admin_token") || "";
+    const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const fmt = (value) => value ? new Date(value).toLocaleString("zh-CN", {hour12:false}) : "无时间";
+    const short = (value, size = 42) => {
+      const text = String(value || "");
+      return text.length > size ? `${text.slice(0, size)}...` : text;
+    };
+    const statusClass = (status) => {
+      const s = String(status || "");
+      if (/active|completed|synced|confirmed/.test(s)) return "good";
+      if (/failed|rejected|forgotten|delete/.test(s)) return "bad";
+      if (/pending|not_configured|not_synced|low/.test(s)) return "warn";
+      return "";
+    };
+    const typeLabel = {
+      observation: "Observation",
+      memory_intelligence_job: "Job",
+      memory_candidate: "Candidate",
+      confirmed_preference: "Preference",
+      food_insight_profile: "Profile",
+      evermind_sync: "Evermind",
+    };
+
+    function setStatus(text) { $("status").textContent = text; }
+
+    async function api(path) {
+      const response = await fetch(path, {
+        headers: {"content-type":"application/json", "x-lifepilot-admin-token": token()},
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok === false) {
+        throw new Error(payload.error?.message || payload.error || response.statusText);
+      }
+      return payload;
+    }
+
+    function eventById(id) {
+      return (state.payload?.pipeline_events || []).find((item) => item.event_id === id) || null;
+    }
+
+    function renderSummary() {
+      const p = state.payload || {};
+      const metrics = [
+        ["Observations", p.observations?.length || 0],
+        ["Jobs", p.memory_intelligence_jobs?.length || 0],
+        ["Candidates", p.memory_candidates?.length || 0],
+        ["Preferences", p.confirmed_preferences?.length || 0],
+      ];
+      $("summary").innerHTML = metrics.map(([label, value]) => `
+        <div class="metric"><div class="metric-value">${esc(value)}</div><div class="metric-label">${esc(label)}</div></div>
+      `).join("");
+    }
+
+    function renderStages() {
+      const p = state.payload || {};
+      const profile = p.food_insight_profile || {};
+      const evermind = p.provider_status?.evermind || {};
+      const stages = [
+        ["Observation", p.observations?.length || 0, "原始观察"],
+        ["Job", p.memory_intelligence_jobs?.length || 0, "审查/复盘"],
+        ["Candidate", p.memory_candidates?.filter((item) => item.status === "pending").length || 0, "待确认"],
+        ["Preference", p.confirmed_preferences?.filter((item) => item.status === "active").length || 0, "已启用"],
+        ["Profile", `${profile.confidence_percent || 0}%`, profile.evidence_window || "暂无画像"],
+        ["Evermind", evermind.configured ? "已配置" : "未配置", evermind.base_url || "外部记忆"],
+      ];
+      $("stages").innerHTML = stages.map(([title, value, note]) => `
+        <div class="stage">
+          <div class="stage-title">${esc(title)}</div>
+          <div class="stage-value">${esc(value)}</div>
+          <div class="stage-note">${esc(note)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderTimeline() {
+      const filter = $("typeFilter").value;
+      const events = (state.payload?.pipeline_events || []).filter((item) => !filter || item.type === filter);
+      if (!events.length) {
+        $("timeline").innerHTML = '<div class="empty">暂无节点。调整 user_id/day_id 后刷新。</div>';
+        return;
+      }
+      $("timeline").innerHTML = events.map((item) => `
+        <button class="event ${item.event_id === state.selectedId ? "active" : ""}" data-id="${esc(item.event_id)}">
+          <span class="event-type">${esc(typeLabel[item.type] || item.type)}</span>
+          <div class="event-title">${esc(item.title)}</div>
+          <div class="event-subtitle">${esc(item.status || "")} · ${esc(item.subtitle || "")}</div>
+          <div class="event-time">${esc(fmt(item.occurred_at))}</div>
+        </button>
+      `).join("");
+      $("timeline").querySelectorAll("button").forEach((button) => {
+        button.onclick = () => selectEvent(button.dataset.id);
+      });
+    }
+
+    function renderEdges() {
+      const edges = state.payload?.pipeline_edges || [];
+      $("edgeCount").textContent = `${edges.length} links`;
+      if (!edges.length) {
+        $("edges").innerHTML = '<div class="empty">暂无可识别生成关系。</div>';
+        return;
+      }
+      $("edges").innerHTML = edges.slice(0, 80).map((edge) => {
+        const from = eventById(edge.from);
+        const to = eventById(edge.to);
+        return `<div class="edge">
+          <strong>${esc(short(from?.title || edge.from))}</strong>
+          <span class="pill">${esc(edge.label)}</span>
+          <strong>${esc(short(to?.title || edge.to))}</strong>
+        </div>`;
+      }).join("");
+    }
+
+    function renderDetail() {
+      const item = state.selected;
+      if (!item) {
+        $("detailTitle").textContent = "选择左侧节点";
+        $("detailSubtitle").textContent = "点击任意节点查看原始 JSON、权重和状态。";
+        $("detailMetrics").innerHTML = '<div class="empty">暂无选中节点。</div>';
+        $("detailJson").textContent = "{}";
+        return;
+      }
+      $("detailTitle").textContent = item.title || item.event_id;
+      $("detailSubtitle").innerHTML = `${esc(typeLabel[item.type] || item.type)} · <span class="pill ${statusClass(item.status)}">${esc(item.status || "unknown")}</span>`;
+      const metrics = {
+        id: item.entity_id,
+        type: item.type,
+        occurred_at: item.occurred_at,
+        ...item.metrics,
+        ...item.links,
+      };
+      $("detailMetrics").innerHTML = Object.entries(metrics).map(([key, value]) => `
+        <div class="kv"><div class="key">${esc(key)}</div><div>${esc(Array.isArray(value) || typeof value === "object" ? JSON.stringify(value) : value)}</div></div>
+      `).join("");
+      $("detailJson").textContent = JSON.stringify(item.raw || item, null, 2);
+    }
+
+    function selectEvent(id) {
+      state.selectedId = id;
+      state.selected = eventById(id);
+      renderTimeline();
+      renderDetail();
+    }
+
+    function render() {
+      renderSummary();
+      renderStages();
+      renderTimeline();
+      renderEdges();
+      renderDetail();
+    }
+
+    async function load() {
+      const userId = $("userId").value.trim() || "demo_weiyingru";
+      const dayId = $("dayId").value.trim();
+      const params = new URLSearchParams({user_id:userId});
+      if (dayId) params.set("day_id", dayId);
+      setStatus("正在加载记忆流水线");
+      state.payload = await api(`/api/admin/memory-pipeline?${params.toString()}`);
+      state.selectedId = state.payload.pipeline_events?.[0]?.event_id || "";
+      state.selected = eventById(state.selectedId);
+      setStatus(`已加载 ${userId}${dayId ? ` · ${dayId}` : ""}`);
+      render();
+    }
+
+    $("adminToken").value = token();
+    $("saveToken").onclick = () => {
+      localStorage.setItem("lifepilot_admin_token", $("adminToken").value.trim());
+      setStatus("后台口令已保存");
+    };
+    $("refreshButton").onclick = () => load().catch((error) => setStatus(`加载失败：${error.message}`));
+    $("typeFilter").onchange = renderTimeline;
+    $("copyButton").onclick = async () => {
+      const text = $("detailJson").textContent || "{}";
+      await navigator.clipboard?.writeText(text).catch(() => {});
+      setStatus("已复制当前 JSON");
+    };
+    load().catch((error) => setStatus(`加载失败：${error.message}`));
+  </script>
+</body>
+</html>

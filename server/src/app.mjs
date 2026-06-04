@@ -632,6 +632,265 @@ function userIdFromUrl(url, fallback = "demo_weiyingru") {
   return url.searchParams.get("user_id") || url.searchParams.get("userId") || fallback;
 }
 
+function memoryEntityTime(entity = {}, fallback = "") {
+  return entity.stored_at || entity.updated_at || entity.created_at || entity.confirmed_at || entity.last_synced_at || fallback || "";
+}
+
+function memoryEntityDay(entity = {}) {
+  return entity.day_id
+    || entity.source_event?.day_id
+    || entity.input_snapshot?.day_id
+    || entity.raw_result?.day_id
+    || "";
+}
+
+function matchesMemoryDay(entity = {}, dayId = "") {
+  if (!dayId) return true;
+  if (memoryEntityDay(entity) === dayId) return true;
+  const evidence = Array.isArray(entity.evidence) ? entity.evidence : [];
+  return evidence.some((item) => item?.day_id === dayId || item?.source_event?.day_id === dayId);
+}
+
+function compactMemoryRaw(raw = {}) {
+  return raw;
+}
+
+function memoryPipelineEvent({type, id, title, subtitle = "", status = "", occurredAt = "", raw = {}, metrics = {}, links = {}}) {
+  return {
+    event_id: `${type}:${id || title}`,
+    type,
+    entity_id: id || "",
+    title,
+    subtitle,
+    status,
+    occurred_at: occurredAt || memoryEntityTime(raw),
+    metrics,
+    links,
+    raw: compactMemoryRaw(raw),
+  };
+}
+
+function buildMemoryPipeline({observations = [], jobs = [], candidates = [], preferences = [], foodInsightProfile = null, providerStatus = {}} = {}) {
+  const events = [];
+  const edges = [];
+  const candidateIds = new Set(candidates.map((item) => item.candidate_id).filter(Boolean));
+  const preferenceByCandidate = new Map(preferences
+    .filter((item) => item.source_candidate_id)
+    .map((item) => [item.source_candidate_id, item]));
+
+  for (const observation of observations) {
+    events.push(memoryPipelineEvent({
+      type: "observation",
+      id: observation.observation_id,
+      title: observation.summary || observation.text || "Memory observation",
+      subtitle: `${observation.source || "unknown"} · ${observation.type || "observation"}`,
+      status: observation.review_status || observation.status || "active",
+      occurredAt: memoryEntityTime(observation),
+      metrics: {
+        confidence: observation.confidence ?? null,
+        strength: observation.strength ?? null,
+        tags: observation.tags || [],
+      },
+      raw: observation,
+    }));
+  }
+
+  for (const job of jobs) {
+    events.push(memoryPipelineEvent({
+      type: "memory_intelligence_job",
+      id: job.job_id,
+      title: job.summary || `${job.mode || "memory"} job`,
+      subtitle: `${job.mode || "unknown"} · ${job.source || "unknown"}`,
+      status: job.status || "completed",
+      occurredAt: memoryEntityTime(job),
+      metrics: {
+        accepted_candidates: job.accepted_memory_candidates?.length || 0,
+        rejected_candidates: job.rejected_memory_candidates?.length || 0,
+        created_observations: job.created_observations?.length || 0,
+        profile_updated: Boolean(job.food_insight_profile_updated),
+      },
+      links: {
+        source_observation_id: job.source_observation_id || "",
+      },
+      raw: job,
+    }));
+    if (job.source_observation_id) {
+      edges.push({
+        from: `observation:${job.source_observation_id}`,
+        to: `memory_intelligence_job:${job.job_id}`,
+        label: "reviewed_by",
+      });
+    }
+    for (const candidate of job.accepted_memory_candidates || []) {
+      const candidateId = candidate.candidate_id || "";
+      if (candidateId) {
+        edges.push({
+          from: `memory_intelligence_job:${job.job_id}`,
+          to: `memory_candidate:${candidateId}`,
+          label: candidateIds.has(candidateId) ? "created_candidate" : "accepted_candidate_snapshot",
+        });
+      }
+    }
+  }
+
+  for (const candidate of candidates) {
+    const preference = preferenceByCandidate.get(candidate.candidate_id);
+    events.push(memoryPipelineEvent({
+      type: "memory_candidate",
+      id: candidate.candidate_id,
+      title: candidate.confirmation_text || candidate.statement || "Memory candidate",
+      subtitle: `${candidate.category || "general"} · ${candidate.polarity || "neutral"}`,
+      status: candidate.status || "pending",
+      occurredAt: memoryEntityTime(candidate),
+      metrics: {
+        confidence: candidate.confidence ?? null,
+        strength: candidate.strength ?? null,
+        evidence_count: Array.isArray(candidate.evidence) ? candidate.evidence.length : 0,
+        needs_confirmation: candidate.needs_confirmation !== false,
+      },
+      links: {
+        source_candidate_id: "",
+        preference_id: preference?.preference_id || "",
+        source_observation_id: candidate.source_event?.observation_id || "",
+        source_dream_id: candidate.source_event?.dream_id || "",
+      },
+      raw: candidate,
+    }));
+    if (candidate.source_event?.observation_id) {
+      edges.push({
+        from: `observation:${candidate.source_event.observation_id}`,
+        to: `memory_candidate:${candidate.candidate_id}`,
+        label: "created_candidate",
+      });
+    }
+    if (preference) {
+      edges.push({
+        from: `memory_candidate:${candidate.candidate_id}`,
+        to: `confirmed_preference:${preference.preference_id}`,
+        label: "confirmed_as",
+      });
+    }
+  }
+
+  for (const preference of preferences) {
+    events.push(memoryPipelineEvent({
+      type: "confirmed_preference",
+      id: preference.preference_id,
+      title: preference.statement || "Confirmed preference",
+      subtitle: `${preference.category || "general"} · ${preference.polarity || "neutral"}`,
+      status: preference.status || "active",
+      occurredAt: memoryEntityTime(preference),
+      metrics: {
+        confidence: preference.confidence ?? null,
+        strength: preference.strength ?? null,
+        sync_status: preference.sync?.sync_status || "not_synced",
+      },
+      links: {
+        source_candidate_id: preference.source_candidate_id || "",
+        evermind_memory_id: preference.sync?.evermind_memory_id || "",
+      },
+      raw: preference,
+    }));
+    if (preference.sync) {
+      const syncId = preference.sync.evermind_memory_id || preference.preference_id;
+      events.push(memoryPipelineEvent({
+        type: "evermind_sync",
+        id: syncId,
+        title: `Evermind ${preference.sync.sync_status || "not_synced"}`,
+        subtitle: preference.statement || preference.preference_id,
+        status: preference.sync.sync_status || "not_synced",
+        occurredAt: preference.sync.last_synced_at || preference.updated_at || preference.created_at || "",
+        links: {
+          preference_id: preference.preference_id,
+          evermind_memory_id: preference.sync.evermind_memory_id || "",
+        },
+        raw: {
+          preference_id: preference.preference_id,
+          statement: preference.statement,
+          sync: preference.sync,
+          provider_status: providerStatus.evermind || null,
+        },
+      }));
+      edges.push({
+        from: `confirmed_preference:${preference.preference_id}`,
+        to: `evermind_sync:${syncId}`,
+        label: "sync_status",
+      });
+    }
+  }
+
+  if (foodInsightProfile) {
+    events.push(memoryPipelineEvent({
+      type: "food_insight_profile",
+      id: foodInsightProfile.user_id || "profile",
+      title: "Food insight profile",
+      subtitle: foodInsightProfile.evidence_window || "profile",
+      status: foodInsightProfile.confidence_percent ? `${foodInsightProfile.confidence_percent}% confidence` : "low_confidence",
+      occurredAt: foodInsightProfile.updated_at || foodInsightProfile.created_at || "",
+      metrics: {
+        confidence: foodInsightProfile.confidence ?? null,
+        confidence_percent: foodInsightProfile.confidence_percent ?? null,
+        top_motives: foodInsightProfile.top_motives || [],
+      },
+      raw: foodInsightProfile,
+    }));
+    for (const job of jobs.filter((item) => item.food_insight_profile_updated)) {
+      edges.push({
+        from: `memory_intelligence_job:${job.job_id}`,
+        to: `food_insight_profile:${foodInsightProfile.user_id || "profile"}`,
+        label: "updated_profile",
+      });
+    }
+  }
+
+  return {
+    pipeline_events: events.sort((left, right) => String(right.occurred_at || "").localeCompare(String(left.occurred_at || ""))),
+    pipeline_edges: edges,
+  };
+}
+
+async function handleAdminMemoryPipeline(req, res, url) {
+  if (!requireAdmin(req, res)) return;
+  const userId = userIdFromUrl(url);
+  const dayId = url.searchParams.get("day_id") || url.searchParams.get("dayId") || "";
+  const limit = Number(url.searchParams.get("limit") || 80);
+  const [candidatesResult, preferencesResult, observationsResult, jobsResult, foodInsightProfile, memoryContext] = await Promise.all([
+    listMemoryCandidates({userId}),
+    listConfirmedPreferences({userId}),
+    listMemoryObservations({userId, dayId, limit}),
+    listMemoryIntelligenceJobs({userId, dayId, limit}),
+    readFoodInsightProfile({userId}),
+    readUserMemoryContext({userId}),
+  ]);
+  const memoryCandidates = (candidatesResult.candidates || []).filter((item) => matchesMemoryDay(item, dayId));
+  const confirmedPreferences = preferencesResult.preferences || [];
+  const providerStatus = {
+    local: {configured: true},
+    evermind: evermindConfigStatus(),
+  };
+  const pipeline = buildMemoryPipeline({
+    observations: observationsResult.observations || [],
+    jobs: jobsResult.jobs || [],
+    candidates: memoryCandidates,
+    preferences: confirmedPreferences,
+    foodInsightProfile,
+    providerStatus,
+  });
+  ok(res, {
+    user_id: userId,
+    day_id: dayId,
+    memory_root: memoryContext.memory_root,
+    provider_status: providerStatus,
+    observations: observationsResult.observations || [],
+    memory_intelligence_jobs: jobsResult.jobs || [],
+    memory_candidates: memoryCandidates,
+    confirmed_preferences: confirmedPreferences,
+    food_insight_profile: foodInsightProfile,
+    profile_text: memoryContext.profile_text,
+    ...pipeline,
+  });
+}
+
 async function handleMemoryLedger(res, url) {
   const userId = userIdFromUrl(url);
   const [candidates, preferences, context, observations, foodInsightProfile] = await Promise.all([
@@ -1141,6 +1400,10 @@ async function route(req, res) {
     }
     if (req.method === "GET" && url.pathname === "/api/admin/catalog") {
       await handleAdminCatalog(req, res);
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/admin/memory-pipeline") {
+      await handleAdminMemoryPipeline(req, res, url);
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/admin/assets/upload") {
