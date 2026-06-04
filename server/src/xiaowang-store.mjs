@@ -19,7 +19,7 @@ const SKILL_REGISTRY = [
   {
     skill: "meal_swipe",
     title: "饭点滑卡",
-    description: "由 OpenClaw 判断饭点入口；泛需求打开需求确认页，明确需求直接创建商户滑卡。",
+    description: "打开饭点滑卡产品流程。",
     trigger_examples: ["今天吃什么", "帮我选饭", "不知道吃啥", "我想吃川菜"],
     action: "open_meal_entry",
     cta: "去确认需求",
@@ -358,11 +358,20 @@ function compactCurrentContext(context = {}) {
   };
 }
 
-function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = [], currentContext = null}) {
+function normalizeOpenClawPromptMode(value = "") {
+  const mode = String(value || "").trim();
+  return mode === "workspace_minimal" ? "workspace_minimal" : "full";
+}
+
+function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = [], currentContext = null, promptMode = "full"}) {
   const context = recentChatContext(session.messages || []);
   const openClawApiBase = (process.env.LIFEPILOT_OPENCLAW_API_BASE || process.env.LIFEPILOT_PUBLIC_API_BASE || `http://${config.host}:${config.port}`).replace(/\/$/, "");
-  const skills = SKILL_REGISTRY.map((skill) => (
+  const mode = normalizeOpenClawPromptMode(promptMode);
+  const fullSkills = SKILL_REGISTRY.map((skill) => (
     `- ${skill.skill}: ${skill.description} action=${skill.action} cta=${skill.cta} status=${skill.status}`
+  )).join("\n");
+  const minimalSkills = SKILL_REGISTRY.map((skill) => (
+    `- ${skill.skill}: title=${skill.title} action=${skill.action} cta=${skill.cta} status=${skill.status}`
   )).join("\n");
   const preferenceText = preferences.slice(0, 6)
     .map((item) => `- ${item.confirmation_text || item.statement}`)
@@ -370,26 +379,30 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
   const pendingText = pending.slice(0, 4)
     .map((item) => `- ${item.confirmation_text || item.statement}`)
     .join("\n") || "暂无";
-  return [
+  const baseLines = [
     "你是 LifePilot 小汪。请按 OpenClaw workspace 的 SOUL.md 和 AGENTS.md 处理用户消息，并自行判断是否需要调用 LifePilot 独立 skills/tools。",
     "",
-    "用户正在和小汪聊天。你需要自己判断是否调用 LifePilot 产品 tool。不要再通过二级 router skill 处理。",
+    "用户正在和小汪聊天。你需要自己判断是否调用 LifePilot 产品 tool。",
     "请只输出 JSON，不要加 Markdown，不要解释 JSON。",
     "",
     "JSON schema:",
     "{\"message\":\"小汪要发给用户的一段自然回复，最多 3 句。\",\"skill_calls\":[],\"skill_cards\":[],\"skill_result_cards\":[],\"memory_prompts\":[]}",
     "",
     "可用 LifePilot tool ids（当前 JSON 兼容层仍使用 snake_case；OpenClaw skill 目录使用 hyphen 命名）:",
-    skills,
+    mode === "workspace_minimal" ? minimalSkills : fullSkills,
     "",
     "不要暴露 gateway、runner、transport、schema、OpenClaw 等内部实现。",
+    "自然语言理解和目标选择由 OpenClaw 完成；LifePilot 后端只执行结构化工具和 API，不会帮你用规则猜用户意思。",
+    `OpenClaw 工具调用 LifePilot API 时必须使用这个 api base：${openClawApiBase}`,
+  ];
+  const fullRoutingLines = [
+    "不要再通过二级 router skill 处理。",
     "记忆规则：自然语言理解和目标选择由你完成；LifePilot 后端只执行结构化 memory_manage，不会帮你用规则猜用户意思。",
     "如果用户只是表达可能的长期偏好、但没有明确要求确认/写入，用 memory_capture 生成待确认候选，并在 memory_prompts 中给出待确认文本。",
     "如果用户明确说可以确认、记住、改一下、删掉、暂停、先不记、或查询记忆，使用 memory_manage。不要让用户再去汪记本点确认。",
     "memory_manage args.operation 支持 list_memory、create_confirmed_preference、confirm_pending、confirm_latest_pending、reject_pending、update_preference、delete_preference、pause_preference。",
     "memory_manage args.target 可带 candidate_id/preference_id/match_text；如果用户说“刚刚那条/可以确认下来”，优先用 confirm_latest_pending。",
     "无待确认候选且用户明确要求记住某个偏好时，用 create_confirmed_preference，并给出 confirmation_text 或 statement。",
-    `OpenClaw 工具调用 LifePilot API 时必须使用这个 api base：${openClawApiBase}`,
     "饭点滑卡入口由 OpenClaw 判断，不由 LifePilot 后端按固定话术路由。",
     "泛需求（如不知道吃什么、帮我选饭、没想法）不要直接创建 session；返回 skill_cards: [{skill:\"meal_swipe\", action:\"open_meal_entry\", cta:\"去确认需求\", payload:{prefill_text:\"用户原话\"}}]。",
     "明确需求（如想吃川菜、找环境好/少排队/附近/适合聊天的店）应调用 meal-swipe skill 脚本创建 offer-stage session，再返回脚本输出的 open_meal_session skill card。",
@@ -402,6 +415,16 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     "商户评分、评论数和口碑分布必须来自 LifePilot 工具证据；只有当工具调用不可用时，才用 skill_calls 作为临时兼容层。",
     "如果当前上下文里有 current_merchant，用户说“这家/这店”时优先使用它的 merchant_id。",
     "如果不需要 skill，skill_calls 返回空数组。",
+  ];
+  const minimalLines = [
+    "请以 OpenClaw workspace 中的 AGENTS.md、TOOLS.md、MEMORY.md、SOUL.md 和 skills/*/SKILL.md 作为业务 skill 规则来源。",
+    "后端只提供当前上下文、输出 JSON 契约和 API base；饭点、商户、优惠、记忆等业务路由不要依赖本消息里的额外规则。",
+    "如果不需要 skill，skill_calls、skill_cards、skill_result_cards 和 memory_prompts 返回空数组。",
+  ];
+  return [
+    ...baseLines,
+    "",
+    ...(mode === "workspace_minimal" ? minimalLines : fullRoutingLines),
     "",
     `当前已确认偏好数量：${preferenceCount}`,
     `待确认记忆数量：${pendingCount}`,
@@ -417,12 +440,12 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
   ].join("\n");
 }
 
-async function getOpenClawChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext}) {
+async function getOpenClawChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}) {
   const result = await requestOpenClawAgent({
     sessionId: `lifepilot-chat-${session.session_id}`,
     timeoutSeconds: process.env.LIFEPILOT_XIAOWANG_OPENCLAW_TIMEOUT_SECONDS || 90,
     idempotencyKey: `lifepilot-chat-${session.session_id}-${Date.now()}-${randomUUID().slice(0, 6)}`,
-    message: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext}),
+    message: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}),
   });
   const text = parseOpenClawText(result);
   if (result?.status !== "ok" || !text) {
@@ -439,6 +462,7 @@ async function getOpenClawChatReply({message, session, pendingCount, preferenceC
     skillResultCards: response.skill_result_cards || [],
     memoryPrompts: response.memory_prompts,
     parseMode: response.parse_mode,
+    promptMode: normalizeOpenClawPromptMode(promptMode),
     raw: result,
   };
 }
@@ -447,7 +471,7 @@ function isOpenClawTimeout(error) {
   return /timeout/i.test(error instanceof Error ? error.message : String(error));
 }
 
-async function getArkChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext}) {
+async function getArkChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}) {
   const ai = await callArkChat({
     timeoutMs: Number(process.env.LIFEPILOT_XIAOWANG_ARK_TIMEOUT_MS || 12000),
     maxTokens: 700,
@@ -460,7 +484,7 @@ async function getArkChatReply({message, session, pendingCount, preferenceCount,
       },
       {
         role: "user",
-        content: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext}),
+        content: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}),
       },
     ],
   });
@@ -482,6 +506,7 @@ async function getArkChatReply({message, session, pendingCount, preferenceCount,
     skillResultCards: response.skill_result_cards || [],
     memoryPrompts: response.memory_prompts,
     parseMode: response.parse_mode,
+    promptMode: normalizeOpenClawPromptMode(promptMode),
     raw: ai,
   };
 }
@@ -1014,6 +1039,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
   const dayId = body.day_id || body.dayId || createDayId(userId, new Date());
   const dayContext = await getDayContext(dayId);
   const currentContext = compactCurrentContext(body.current_context || body.currentContext || {});
+  const promptMode = normalizeOpenClawPromptMode(body.openclaw_prompt_mode || body.openclawPromptMode || process.env.LIFEPILOT_XIAOWANG_OPENCLAW_PROMPT_MODE);
   const mealSessionsForSummary = (dayContext?.meal_sessions || []).map(xiaowangMealDiaryItem);
   const latestDreamJob = await getLatestOpenClawJobForDay({userId, dayId});
   const diarySummary = buildDiarySummary({
@@ -1044,6 +1070,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
         preferences: preferences.preferences || [],
         pending: pending.candidates || [],
         currentContext,
+        promptMode,
       });
       content = openclawReply.content;
       skillCalls = openclawReply.skillCalls || [];
@@ -1075,12 +1102,14 @@ export async function handleXiaowangChat({body = {}} = {}) {
         status: openclawReply.raw?.status || "",
         run_id: openclawReply.raw?.runId || "",
         parse_mode: openclawReply.parseMode || "",
+        prompt_mode: openclawReply.promptMode || promptMode,
         skill_trace: skillTrace,
       };
     } catch (error) {
       if (isOpenClawTimeout(error)) resetOpenClawGatewayClient();
       openclawMeta = {
         error: error instanceof Error ? error.message : String(error),
+        prompt_mode: promptMode,
       };
       try {
         const arkReply = await getArkChatReply({
@@ -1092,6 +1121,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
           preferences: preferences.preferences || [],
           pending: pending.candidates || [],
           currentContext,
+          promptMode,
         });
         content = arkReply.content;
         skillCalls = (arkReply.skillCalls || []).filter((item) => item.skill !== "memory_manage");
@@ -1120,6 +1150,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
           provider: arkReply.raw?.provider || "ark_doubao",
           model: arkReply.raw?.model || "",
           parse_mode: arkReply.parseMode || "",
+          prompt_mode: arkReply.promptMode || promptMode,
           timing: arkReply.raw?.timing || null,
           skill_trace: skillTrace,
         };
@@ -1140,6 +1171,7 @@ export async function handleXiaowangChat({body = {}} = {}) {
         aiMeta = {
           provider: "ark_doubao",
           error: arkError instanceof Error ? arkError.message : String(arkError),
+          prompt_mode: promptMode,
           raw: arkError?.ai || null,
         };
       }

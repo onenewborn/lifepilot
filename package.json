@@ -11,6 +11,7 @@
     "smoke:memory": "node tests/smoke-memory-manager.mjs",
     "smoke:deals": "node tests/smoke-deal-search.mjs",
     "smoke:admin": "node tests/smoke-admin.mjs",
-    "smoke:merchant-media": "node tests/smoke-merchant-media.mjs"
+    "smoke:merchant-media": "node tests/smoke-merchant-media.mjs",
+    "eval:xiaowang-openclaw": "node tests/eval-xiaowang-openclaw-prompt.mjs"
   }
 }
