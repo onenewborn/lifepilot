@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
@@ -56,7 +56,7 @@ const SKILL_REGISTRY = [
   {
     skill: "diary_review",
     title: "小汪日记本",
-    description: "查看今天吃饭记录、待确认记忆和已确认偏好。",
+    description: "查看今日小结、本周小结、食物选择画像和待确认偏好。",
     trigger_examples: ["你记得我什么", "看看汪记本", "今天小汪记了什么"],
     action: "open_diary",
     cta: "打开汪记本",
@@ -179,6 +179,74 @@ async function readChatSession(sessionId) {
     if (error?.code === "ENOENT") return null;
     throw error;
   }
+}
+
+function publicChatMessage(message = {}) {
+  return {
+    id: message.id || "",
+    role: message.role || "",
+    content: message.content || "",
+    mode: message.mode || "",
+    skill_cards: Array.isArray(message.skill_cards) ? message.skill_cards : [],
+    skill_result_cards: Array.isArray(message.skill_result_cards) ? message.skill_result_cards : [],
+    agent_skill_calls: Array.isArray(message.agent_skill_calls) ? message.agent_skill_calls : [],
+    memory_candidate_created_count: Number(message.memory_candidate_created_count || 0),
+    memory_operation_result: message.memory_operation_result || null,
+    openclaw: message.openclaw || null,
+    ai: message.ai || null,
+    created_at: message.created_at || "",
+  };
+}
+
+function publicChatSession(session = {}) {
+  const messages = Array.isArray(session.messages) ? session.messages : [];
+  const latestUser = [...messages].reverse().find((message) => message?.role === "user");
+  return {
+    session_id: session.session_id || "",
+    user_id: session.user_id || DEFAULT_USER_ID,
+    title: session.title || titleFromMessage(latestUser?.content || ""),
+    summary: session.summary || "",
+    latest_user_message: latestUser?.content || "",
+    message_count: messages.length,
+    created_at: session.created_at || "",
+    updated_at: session.updated_at || session.created_at || "",
+  };
+}
+
+export async function listXiaowangChatSessions({userId = DEFAULT_USER_ID, limit = 24} = {}) {
+  if (!existsSync(chatRoot())) {
+    return {ok: true, user_id: userId, sessions: []};
+  }
+  const files = await readdir(chatRoot());
+  const sessions = [];
+  for (const file of files) {
+    if (!file.endsWith(".json")) continue;
+    try {
+      const session = JSON.parse(await readFile(path.join(chatRoot(), file), "utf8"));
+      if (userId && session.user_id && session.user_id !== userId) continue;
+      sessions.push(publicChatSession(session));
+    } catch {
+      // Ignore incomplete runtime files; history is a convenience view.
+    }
+  }
+  sessions.sort((left, right) => String(right.updated_at || "").localeCompare(String(left.updated_at || "")));
+  return {
+    ok: true,
+    user_id: userId,
+    sessions: sessions.slice(0, Number(limit || 24)),
+  };
+}
+
+export async function getXiaowangChatSession({sessionId, userId = DEFAULT_USER_ID} = {}) {
+  const session = await readChatSession(sessionId);
+  if (!session || (userId && session.user_id && session.user_id !== userId)) {
+    return {ok: false, error: "chat_session_not_found"};
+  }
+  return {
+    ok: true,
+    session: publicChatSession(session),
+    messages: (session.messages || []).map(publicChatMessage),
+  };
 }
 
 function wantsMealSkill(text) {
@@ -661,6 +729,23 @@ function buildDiarySummary({mealSessions = [], memoryCandidates = [], confirmedP
       ? "主人，要不要先确认一条小汪觉得有用的偏好？"
       : "主人如果现在要吃饭，小汪可以结合今天的记录帮你继续挑。",
     dream_job_id: "",
+  };
+}
+
+function buildWeeklySummary({latestWeekJob = null} = {}) {
+  if (latestWeekJob?.summary) {
+    return {
+      source: "memory_intelligence_week_dreaming",
+      text: latestWeekJob.summary,
+      job_id: latestWeekJob.job_id || "",
+      updated_at: latestWeekJob.stored_at || "",
+    };
+  }
+  return {
+    source: "empty",
+    text: "本周小结还没生成。等小汪多复盘几次，会把这一周的吃饭模式整理在这里。",
+    job_id: "",
+    updated_at: "",
   };
 }
 
@@ -1475,6 +1560,7 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date, include
   const preferences = await listConfirmedPreferences({userId});
   const observations = await listMemoryObservations({userId, dayId, limit: 12});
   const intelligenceJobs = await listMemoryIntelligenceJobs({userId, dayId, limit: 6});
+  const weekJobs = await listMemoryIntelligenceJobs({userId, mode: "week_dreaming", limit: 1});
   let foodInsightProfile = await readFoodInsightProfile({userId});
   const mealSessions = (dayContext?.meal_sessions || [])
     .map(xiaowangMealDiaryItem)
@@ -1498,6 +1584,7 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date, include
     confirmedPreferences,
     latestDreamJob,
   });
+  const weeklySummary = buildWeeklySummary({latestWeekJob: (weekJobs.jobs || [])[0] || null});
   return {
     ok: true,
     user_id: userId,
@@ -1505,6 +1592,7 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date, include
     day_context: includeDayContext ? dayContext || null : undefined,
     diary_date: dayContext?.date || dayId.match(/^day_(\d{8})_/)?.[1] || "",
     daily_summary: dailySummary,
+    weekly_summary: weeklySummary,
     meal_sessions: mealSessions,
     observations: observationItems,
     memory_intelligence_jobs: intelligenceJobs.jobs || [],

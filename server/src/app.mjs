@@ -37,7 +37,7 @@ import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
 import { buildDealSearchContext, buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantsFromText, searchMerchantCandidates } from "./merchant-tools.mjs";
 import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
 import { runOpenClawDreamAgent } from "./openclaw-runner.mjs";
-import { getXiaowangChatJob, handleXiaowangChat, listXiaowangSkills, readXiaowangDiary, startXiaowangChatJob } from "./xiaowang-store.mjs";
+import { getXiaowangChatJob, getXiaowangChatSession, handleXiaowangChat, listXiaowangChatSessions, listXiaowangSkills, readXiaowangDiary, startXiaowangChatJob } from "./xiaowang-store.mjs";
 import {
   buildMemoryIntelligenceInput,
   createMemoryObservation,
@@ -1270,6 +1270,26 @@ async function handleXiaowangChatJobRoute(res, jobId) {
   ok(res, payload);
 }
 
+async function handleXiaowangChatSessionsRoute(res, url) {
+  const payload = await listXiaowangChatSessions({
+    userId: url.searchParams.get("user_id") || url.searchParams.get("userId") || "demo_weiyingru",
+    limit: url.searchParams.get("limit") || 24,
+  });
+  ok(res, payload);
+}
+
+async function handleXiaowangChatSessionRoute(res, url, sessionId) {
+  const payload = await getXiaowangChatSession({
+    sessionId,
+    userId: url.searchParams.get("user_id") || url.searchParams.get("userId") || "demo_weiyingru",
+  });
+  if (!payload.ok) {
+    fail(res, 404, payload.error || "chat_session_not_found", payload.error || "Chat session not found.");
+    return;
+  }
+  ok(res, payload);
+}
+
 async function handleXiaowangDiaryRoute(res, url) {
   const payload = await readXiaowangDiary({
     userId: url.searchParams.get("user_id") || url.searchParams.get("userId") || "demo_weiyingru",
@@ -1549,6 +1569,14 @@ async function route(req, res) {
     }
     if (req.method === "GET" && url.pathname.startsWith("/api/xiaowang/chat-jobs/")) {
       await handleXiaowangChatJobRoute(res, decodeURIComponent(url.pathname.slice("/api/xiaowang/chat-jobs/".length)));
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/xiaowang/chat-sessions") {
+      await handleXiaowangChatSessionsRoute(res, url);
+      return;
+    }
+    if (req.method === "GET" && url.pathname.startsWith("/api/xiaowang/chats/")) {
+      await handleXiaowangChatSessionRoute(res, url, decodeURIComponent(url.pathname.slice("/api/xiaowang/chats/".length)));
       return;
     }
     if (req.method === "GET" && url.pathname === "/api/xiaowang/diary") {

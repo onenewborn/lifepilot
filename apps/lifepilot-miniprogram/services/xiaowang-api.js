@@ -12,6 +12,22 @@ function getChatJob(jobId) {
   return request(`/api/xiaowang/chat-jobs/${encodeURIComponent(jobId)}`, { method: "GET", timeout: 10000 });
 }
 
+function listChatSessions(params = {}) {
+  const query = Object.keys(params)
+    .filter((key) => params[key] !== undefined && params[key] !== null && params[key] !== "")
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+    .join("&");
+  return request(`/api/xiaowang/chat-sessions${query ? `?${query}` : ""}`, { method: "GET", timeout: 15000 });
+}
+
+function getChatSession(sessionId, params = {}) {
+  const query = Object.keys(params)
+    .filter((key) => params[key] !== undefined && params[key] !== null && params[key] !== "")
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+    .join("&");
+  return request(`/api/xiaowang/chats/${encodeURIComponent(sessionId)}${query ? `?${query}` : ""}`, { method: "GET", timeout: 15000 });
+}
+
 function getDiary(params = {}) {
   const queryParams = {...params, compact: params.compact === undefined ? "1" : params.compact};
   const query = Object.keys(queryParams)
@@ -29,6 +45,8 @@ module.exports = {
   chat,
   chatAsync,
   getChatJob,
+  getChatSession,
   getDiary,
+  listChatSessions,
   runDreaming
 };

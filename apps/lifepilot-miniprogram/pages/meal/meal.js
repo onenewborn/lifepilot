@@ -173,6 +173,36 @@ function todayDayId(userId) {
   return `day_${year}${month}${day}_${userId}`;
 }
 
+function formatRelativeTime(value) {
+  const time = value ? new Date(value).getTime() : 0;
+  if (!time) return "";
+  const diff = Date.now() - time;
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (diff < hour) return `${Math.max(1, Math.round(diff / minute))} 分钟前`;
+  if (diff < day) return `${Math.round(diff / hour)} 小时前`;
+  if (diff < 7 * day) return `${Math.round(diff / day)} 天前`;
+  const date = new Date(time);
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function decorateChatHistoryItem(item = {}, activeSessionId = "") {
+  const latest = String(item.latest_user_message || item.summary || "").trim();
+  return {
+    ...item,
+    isActive: item.session_id === activeSessionId,
+    displayTitle: item.title || latest || "和小汪聊聊",
+    displayPreview: latest || item.summary || "还没有摘要",
+    displayTime: formatRelativeTime(item.updated_at || item.created_at),
+    messageCountText: `${Number(item.message_count || 0)} 条`,
+  };
+}
+
+function decorateChatHistory(items = [], activeSessionId = "") {
+  return (Array.isArray(items) ? items : []).map((item) => decorateChatHistoryItem(item, activeSessionId));
+}
+
 Page({
   data: {
     activeTab: "chat",
@@ -248,6 +278,10 @@ Page({
     chatMessages: [],
     chatInput: "",
     isChatSubmitting: false,
+    chatHistoryOpen: false,
+    chatHistory: [],
+    isChatHistoryLoading: false,
+    chatHistoryError: "",
     diary: null,
     isDiaryLoading: false,
     isDreaming: false,
@@ -272,6 +306,7 @@ Page({
     this.currentStartedAt = Date.now();
     this.prepareSessionRestore();
     this.autoLocateOnce();
+    this.loadXiaowangChatHistory({ silent: true });
   },
 
   onUnload() {
@@ -1052,8 +1087,70 @@ Page({
       next.stageSubtitle = "今天的吃饭记录和待确认记忆";
     }
     this.setData(next, () => {
+      if (tab === "chat" && !this.data.chatHistory.length) this.loadXiaowangChatHistory({ silent: true });
       if (tab === "diary" && !this.data.diary) this.loadXiaowangDiary();
     });
+  },
+
+  toggleChatHistory() {
+    const nextOpen = !this.data.chatHistoryOpen;
+    this.setData({ chatHistoryOpen: nextOpen });
+    if (nextOpen) this.loadXiaowangChatHistory({ silent: true });
+  },
+
+  startNewXiaowangChat() {
+    this.activeChatJobId = "";
+    this.setData({
+      chatSessionId: "",
+      chatMessages: [],
+      chatInput: "",
+      isChatSubmitting: false,
+      chatHistoryOpen: false
+    }, () => this.loadXiaowangChatHistory({ silent: true }));
+  },
+
+  async loadXiaowangChatHistory(options = {}) {
+    if (this.data.isChatHistoryLoading) return;
+    this.setData({
+      isChatHistoryLoading: !options.silent,
+      chatHistoryError: ""
+    });
+    try {
+      const payload = await xiaowangApi.listChatSessions({ user_id: DEFAULT_USER_ID, limit: 24 });
+      this.setData({
+        chatHistory: decorateChatHistory(payload.sessions || [], this.data.chatSessionId),
+        isChatHistoryLoading: false
+      });
+    } catch (error) {
+      this.setData({
+        chatHistoryError: error.message || "历史会话加载失败",
+        isChatHistoryLoading: false
+      });
+    }
+  },
+
+  async openXiaowangHistorySession(event) {
+    const sessionId = event.currentTarget.dataset.sessionId;
+    if (!sessionId) return;
+    this.setData({ isChatHistoryLoading: true, chatHistoryError: "" });
+    try {
+      const payload = await xiaowangApi.getChatSession(sessionId, { user_id: DEFAULT_USER_ID });
+      const messages = decorateChatMessages(payload.messages || []);
+      this.activeChatJobId = "";
+      this.setData({
+        chatSessionId: payload.session && payload.session.session_id ? payload.session.session_id : sessionId,
+        chatMessages: messages,
+        chatHistoryOpen: false,
+        isChatSubmitting: false,
+        isChatHistoryLoading: false,
+        chatHistory: decorateChatHistory(this.data.chatHistory, sessionId)
+      });
+    } catch (error) {
+      this.setData({
+        chatHistoryError: error.message || "会话打开失败",
+        isChatHistoryLoading: false
+      });
+    }
   },
 
   onChatInput(event) {
@@ -1141,6 +1238,7 @@ Page({
             diary: null,
             isChatSubmitting: false
           }, () => {
+            this.loadXiaowangChatHistory({ silent: true });
             this.handleCompletedChatActions(nextMessages);
           });
           return;

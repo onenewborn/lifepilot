@@ -464,10 +464,39 @@
   </view>
 
   <view wx:elif="{{activeTab === 'chat'}}" class="chat-panel">
-    <view class="chat-location-bar">
+    <view class="chat-toolbar">
+      <button class="chat-history-toggle {{chatHistoryOpen ? 'chat-history-toggle-active' : ''}}" bindtap="toggleChatHistory" aria-label="历史会话">
+        <text class="history-toggle-icon"></text>
+      </button>
       <button class="location-chip chat-location-chip" bindtap="getLocation">{{locationText}}</button>
     </view>
-    <scroll-view class="chat-list" scroll-y enhanced show-scrollbar="{{false}}">
+    <view wx:if="{{chatHistoryOpen}}" class="chat-history-panel">
+      <view class="chat-history-actions">
+        <button class="chat-history-action" bindtap="startNewXiaowangChat">新对话</button>
+        <button class="chat-history-action subtle" loading="{{isChatHistoryLoading}}" bindtap="loadXiaowangChatHistory">刷新</button>
+      </view>
+      <view wx:if="{{chatHistoryError}}" class="chat-history-error">{{chatHistoryError}}</view>
+      <view wx:elif="{{chatHistory && chatHistory.length}}" class="chat-history-list">
+        <view
+          wx:for="{{chatHistory}}"
+          wx:key="session_id"
+          class="chat-history-item {{item.isActive ? 'chat-history-item-active' : ''}}"
+          data-session-id="{{item.session_id}}"
+          bindtap="openXiaowangHistorySession"
+        >
+          <view class="chat-history-main">
+            <view class="chat-history-title">{{item.displayTitle}}</view>
+            <view class="chat-history-preview">{{item.displayPreview}}</view>
+          </view>
+          <view class="chat-history-meta">
+            <text>{{item.displayTime}}</text>
+            <text>{{item.messageCountText}}</text>
+          </view>
+        </view>
+      </view>
+      <view wx:else class="chat-history-empty">还没有历史会话。和小汪聊一次以后，会收在这里。</view>
+    </view>
+    <scroll-view class="chat-list {{chatHistoryOpen ? 'chat-list-with-history' : ''}}" scroll-y enhanced show-scrollbar="{{false}}">
       <view class="chat-time">今天</view>
       <view class="chat-message-row assistant-row">
         <image class="chat-message-avatar" src="{{xiaowangHeadUrl}}" mode="aspectFit" />
@@ -601,25 +630,14 @@
     <view wx:if="{{diaryError}}" class="error">{{diaryError}}</view>
 
     <view wx:if="{{diary && diary.daily_summary}}" class="diary-summary-card">
-      <view class="diary-summary-label">小汪今天看到</view>
+      <view class="diary-summary-label">今日小结</view>
       <view class="diary-summary-text">{{diary.daily_summary.text}}</view>
       <view wx:if="{{diary.daily_summary.next_prompt}}" class="diary-summary-next">{{diary.daily_summary.next_prompt}}</view>
     </view>
 
-    <view class="diary-section">
-      <view class="mini-title">今日观察</view>
-      <view wx:if="{{diary && diary.observations && diary.observations.length}}">
-        <view wx:for="{{diary.observations}}" wx:key="observation_id" class="diary-item observation-item">
-          <view class="diary-item-meta">
-            <text>{{item.display_date}}</text>
-            <text>{{item.display_time}}</text>
-            <text>{{item.review_status === 'reviewed' ? '已审查' : item.review_status === 'weak_hypothesis' ? '弱假设' : '观察中'}}</text>
-          </view>
-          <view class="diary-item-title">{{item.diary_title}}</view>
-          <view class="diary-item-text">{{item.diary_text}}</view>
-        </view>
-      </view>
-      <view wx:else class="diary-empty">小汪还没攒到足够观察。你和我聊聊今天怎么吃，我会先放进短期观察里。</view>
+    <view wx:if="{{diary && diary.weekly_summary}}" class="diary-summary-card weekly-summary-card">
+      <view class="diary-summary-label">本周小结</view>
+      <view class="diary-summary-text">{{diary.weekly_summary.text}}</view>
     </view>
 
     <view wx:if="{{diary && diary.food_insight_profile}}" class="diary-section">
@@ -651,22 +669,6 @@
           <view class="profile-chip">清爽咸鲜 {{diary.food_insight_profile.reward_profile.low_fat_savory.score}}</view>
         </view>
       </view>
-    </view>
-
-    <view class="diary-section">
-      <view class="mini-title">今天吃饭记录</view>
-      <view wx:if="{{diary && diary.meal_sessions && diary.meal_sessions.length}}">
-        <view wx:for="{{diary.meal_sessions}}" wx:key="session_id" class="diary-item">
-          <view class="diary-item-meta">
-            <text>{{item.display_date}}</text>
-            <text>{{item.display_time}}</text>
-            <text>{{item.diary_status}}</text>
-          </view>
-          <view class="diary-item-title">{{item.diary_title}}</view>
-          <view class="diary-item-text">{{item.diary_text}}</view>
-        </view>
-      </view>
-      <view wx:else class="diary-empty">今天小汪还没陪主人认真挑过饭。等你开始一轮，我就把过程记下来。</view>
     </view>
 
     <view class="diary-section">
