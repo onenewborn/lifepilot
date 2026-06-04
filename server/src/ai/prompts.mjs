@@ -340,7 +340,7 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     "- 只能引用当前商家卡 matched_directions 里的方向；不要引用用户保留过但这张卡没有命中的方向。",
     "- 可以称呼用户为主人，但不要每条都重复称呼。",
     "- 不要编造真实美团、大众点评、订单、支付、营业、实时排队或真实路线。",
-    "- 不要说“实时情况”“走过去就能到”这类暗示已经查过真实路线或实时数据的话；可以说“距离不远”“出发前再确认一下”。",
+    "- 不要说“实时情况”“走过去就能到”“走路就能到”“步行可达”这类暗示已经查过真实路线或实时数据的话；可以说“距离不远”“离得近”“出发前再确认一下”。",
     "- 距离使用 facts.distance_text，例如 0.9km，不要写 subway_walk_min。",
     "- 如果存在记忆上下文，本地 confirmed preferences 是强依据；Evermind 外部记忆只能作为弱上下文，pending candidates 不是已确认偏好，不能当作推荐依据。",
     "- 只有当 confirmed_preferences 和当前商家卡事实高度相关时，才自然带一句“我记得主人喜欢……”；不要为了展示记忆而强行提。",
