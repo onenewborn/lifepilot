@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node server/src/index.mjs",
     "start": "node server/src/index.mjs",
-    "check": "node --check server/src/index.mjs && node --check tests/smoke-session.mjs && node --check tests/smoke-memory-manager.mjs && node --check tests/smoke-memory-intelligence.mjs && node --check tests/smoke-deal-search.mjs && node --check tests/smoke-admin.mjs && node --check tests/smoke-merchant-media.mjs && node --check tests/smoke-offer-ranking.mjs && node --check apps/lifepilot-miniprogram/utils/card-normalizer.js && node --check apps/lifepilot-miniprogram/pages/meal/meal.js",
+    "check": "node --check server/src/index.mjs && node --check tests/smoke-session.mjs && node --check tests/smoke-memory-manager.mjs && node --check tests/smoke-memory-intelligence.mjs && node --check tests/smoke-deal-search.mjs && node --check tests/smoke-admin.mjs && node --check tests/smoke-merchant-media.mjs && node --check tests/smoke-offer-ranking.mjs && node --check tests/smoke-offer-explanation-prompt.mjs && node --check apps/lifepilot-miniprogram/utils/card-normalizer.js && node --check apps/lifepilot-miniprogram/pages/meal/meal.js",
     "smoke:session": "node tests/smoke-session.mjs",
     "smoke:memory": "node tests/smoke-memory-manager.mjs",
     "smoke:memory-intelligence": "node tests/smoke-memory-intelligence.mjs",
@@ -14,6 +14,7 @@
     "smoke:admin": "node tests/smoke-admin.mjs",
     "smoke:merchant-media": "node tests/smoke-merchant-media.mjs",
     "smoke:offer-ranking": "node tests/smoke-offer-ranking.mjs",
+    "smoke:offer-prompt": "node tests/smoke-offer-explanation-prompt.mjs",
     "eval:xiaowang-openclaw": "node tests/eval-xiaowang-openclaw-prompt.mjs"
   }
 }

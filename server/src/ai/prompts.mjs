@@ -121,6 +121,57 @@ function compactMemoryContext(memoryContext = {}) {
   };
 }
 
+function compactScoringFeature(feature = {}) {
+  return {
+    source: feature.source || "",
+    key: feature.key || "",
+    score: Number(feature.score || 0),
+    reason: feature.reason || "",
+  };
+}
+
+function rankTier(index, total) {
+  if (index === 0) return "top_pick";
+  if (index <= 3) return "strong_pick";
+  return total <= 4 ? "strong_pick" : "viable_pick";
+}
+
+function compactRankedOfferCard(card = {}, index = 0, cards = []) {
+  const score = Number(card.score || 0);
+  const topScore = Number(cards[0]?.score || score || 0);
+  const previousScore = Number(cards[index - 1]?.score ?? score);
+  const features = Array.isArray(card.scoring_features || card.scoringFeatures)
+    ? (card.scoring_features || card.scoringFeatures)
+    : [];
+  const positiveFeatures = features
+    .filter((feature) => Number(feature.score || 0) > 0)
+    .sort((left, right) => Number(right.score || 0) - Number(left.score || 0))
+    .slice(0, 3)
+    .map(compactScoringFeature);
+  const negativeFeatures = features
+    .filter((feature) => Number(feature.score || 0) < 0)
+    .sort((left, right) => Number(left.score || 0) - Number(right.score || 0))
+    .slice(0, 2)
+    .map(compactScoringFeature);
+  return {
+    offer_id: card.offer_id,
+    merchant_id: card.merchant_id,
+    merchant_name: card.merchant_name,
+    recommended_item: card.title,
+    rank_position: index + 1,
+    rank_tier: rankTier(index, cards.length),
+    score,
+    score_gap_from_top: Math.max(0, topScore - score),
+    score_gap_from_previous: Math.max(0, previousScore - score),
+    top_positive_features: positiveFeatures,
+    top_negative_features: negativeFeatures,
+    alternative_offers: card.alternative_offers || [],
+    matched_directions: card.matched_directions || [],
+    tags: card.tags,
+    facts: card.facts,
+  };
+}
+
 export function buildDirectionSummaryPrompt({goal, events = [], entryContext = null, memoryContext = null}) {
   const kept = events.filter((event) => event.action === "keep");
   const disliked = events.filter((event) => event.action === "dislike");
@@ -189,11 +240,17 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     "",
     "要求：",
     "- 每张输入卡都要返回一项。",
+    "- 商家卡事实里有后端排序上下文：rank_position 越小越靠前，score 越高代表后端越推荐，score_gap_from_top 表示和第一名的差距。",
+    "- matched[0] 是前端最醒目的主推荐理由，必须体现这张卡的 rank_tier 和最关键加分点，不能写成所有店都能套用的“我推荐你吃这个”。",
+    "- rank_tier=top_pick 时，matched[0] 要写成“为什么它是这一轮最值得优先看”的强理由。",
+    "- rank_tier=strong_pick 时，matched[0] 要写成“它也很稳，但强项侧重点是什么”，语气不要超过第一名。",
+    "- rank_tier=viable_pick 时，matched[0] 要写成“它适合作为某个具体需求下的可选项”，不要写得像最高推荐。",
+    "- matched[0] 必须引用 top_positive_features 里的具体理由，或引用 score_gap_from_top/score_gap_from_previous 带来的排序强弱。",
     "- matched 写 1-3 条，说明为什么选这家店：优先连接“主人第一阶段保留的方向”，再结合入口需求，最后突出这家店自己的特点。",
     "- matched 要亲近、具体、像小汪在帮主人做决定；可以写“小汪觉得这家……”“主人不用太担心……”“这家刚好……”。",
     "- 不要写成生硬规则，例如不要只写“命中方向”“符合预算”“适合一个人吃”。",
     "- 预算、距离、排队这类事实要转成自然口语，例如“主人不用太担心钱包”“离得不远”“不用把时间耗在排队上”。",
-    "- watchouts 写 0-2 条，说明到店前需要注意什么；语气轻一点，不要像风险报告。",
+    "- watchouts 写 0-2 条，优先来自 top_negative_features 或 facts 里的明确风险；没有明确负面依据时不要硬编。",
     "- conflicts 只在事实明确冲突时填写。",
     "- 如果用户最初需求里有疲惫、下班、想省心、想犒劳、想下饭、预算、距离、人数、聊天等信息，要自然体现在 matched 或 watchouts 里。",
     "- 要突出这家店相对其他店的具体特点，例如近、热乎、下饭、独食友好、适合聊天、排队少、价格稳、招牌菜明确。",
@@ -227,15 +284,6 @@ export function buildOfferExplanationPrompt({goal, directionSummary = {}, unders
     }, null, 2)}`,
     `方向小结：${JSON.stringify(directionSummary || {}, null, 2)}`,
     `记忆上下文：${JSON.stringify(compactMemoryContext(memoryContext || {}), null, 2)}`,
-    `商家卡事实：${JSON.stringify(cards.map((card) => ({
-      offer_id: card.offer_id,
-      merchant_id: card.merchant_id,
-      merchant_name: card.merchant_name,
-      recommended_item: card.title,
-      alternative_offers: card.alternative_offers || [],
-      matched_directions: card.matched_directions || [],
-      tags: card.tags,
-      facts: card.facts,
-    })), null, 2)}`,
+    `商家卡事实：${JSON.stringify(cards.map((card, index) => compactRankedOfferCard(card, index, cards)), null, 2)}`,
   ].join("\n");
 }
