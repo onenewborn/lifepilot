@@ -425,6 +425,7 @@ function frontendSkillCardContract() {
     "前端可渲染的 skill_cards action 契约：",
     "- 饭点泛需求：{skill:\"meal_swipe\", action:\"open_meal_entry\", cta:\"去确认需求\", payload:{prefill_text:\"用户原话\"}}",
     "- 饭点商户卡：{skill:\"meal_swipe\", action:\"open_meal_session\", cta:\"开始滑卡\", payload:{session_id:\"meal_...\", entry_mode:\"offer_only|merchant_compare\"}}",
+    "- 创建饭点商户卡时，调用 meal-swipe 脚本的 --source-message 必须保留用户最新原话，不要改写或删掉“按我之前/像上次/别再”等历史线索。",
     "- 汪记本：{skill:\"diary_review\", action:\"open_diary\", cta:\"打开汪记本\", payload:{}}",
     "- 复盘：{skill:\"openclaw_dreaming\", action:\"run_dreaming\", cta:\"开始复盘\", payload:{day_id:\"day_...\"}}",
     "- 其他证据卡优先放 skill_result_cards；只有需要打开产品页面时才放 skill_cards。",
