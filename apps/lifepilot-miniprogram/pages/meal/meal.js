@@ -30,6 +30,19 @@ function sourceLabelForAssistant(message) {
   return mode || "";
 }
 
+function skillDisplayName(skill) {
+  return {
+    meal_swipe: "饭点滑卡",
+    memory_capture: "记忆候选",
+    memory_manage: "记忆管理",
+    diary_review: "汪记本",
+    openclaw_dreaming: "复盘",
+    merchant_intel: "商家理解",
+    merchant_compare: "商家对比",
+    deal_search: "优惠查询",
+  }[skill] || skill || "工具";
+}
+
 function buildChatDebugTrace(message) {
   if (!message || message.role === "user" || message.isThinking) return null;
   const sourceLabel = sourceLabelForAssistant(message);
@@ -46,15 +59,15 @@ function buildChatDebugTrace(message) {
   }
   if (message.openclaw && Array.isArray(message.openclaw.progress)) {
     message.openclaw.progress.forEach((item) => {
-      if (item) lines.push(`进度：${item}`);
+      if (item) lines.push(`Agent：${item}`);
     });
   }
   if (message.openclaw && Array.isArray(message.openclaw.skill_trace) && message.openclaw.skill_trace.length) {
     message.openclaw.skill_trace.forEach((trace) => {
-      const skill = trace.skill || "skill";
+      const skill = skillDisplayName(trace.skill || trace.tool);
       const state = trace.ok ? "完成" : (trace.error || "异常");
       const ids = Array.isArray(trace.merchant_ids) && trace.merchant_ids.length ? ` · ${trace.merchant_ids.join(",")}` : "";
-      lines.push(`工具：${skill} ${state}${ids}`);
+      lines.push(`Agent工具：${skill} ${state}${ids}`);
     });
   }
   if (message.ai && message.ai.provider) {
@@ -69,9 +82,9 @@ function buildChatDebugTrace(message) {
   const skillCalls = Array.isArray(message.agent_skill_calls) ? message.agent_skill_calls : [];
   const skillCards = Array.isArray(message.skill_cards) ? message.skill_cards : [];
   const skillNames = skillCalls.length
-    ? skillCalls.map((item) => item.skill).filter(Boolean)
-    : skillCards.map((item) => item.skill || item.title).filter(Boolean);
-  if (skillNames.length) lines.push(`Skill：${skillNames.join("、")}`);
+    ? skillCalls.map((item) => skillDisplayName(item.skill)).filter(Boolean)
+    : skillCards.map((item) => skillDisplayName(item.skill) || item.title).filter(Boolean);
+  if (skillNames.length) lines.push(`Agent选择：${skillNames.join("、")}`);
   if (message.memory_candidate_created_count) {
     lines.push(`记忆候选：${message.memory_candidate_created_count} 条`);
   }

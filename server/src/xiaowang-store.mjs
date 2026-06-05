@@ -1439,9 +1439,8 @@ function createPendingAssistant({jobId, message}) {
       status: "running",
       parse_mode: "pending",
       progress: [
-        "收到消息",
-        "准备调用 OpenClaw Gateway client",
-        "等待 OpenClaw 判断是否需要 skill",
+        "小汪正在理解这句话",
+        "小汪正在判断要不要调用产品 skill",
       ],
     },
     created_at: nowIso(),
@@ -1473,17 +1472,76 @@ function appendUniqueProgress(lines = [], nextLine = "") {
   return result.slice(-8);
 }
 
+function skillDisplayName(skill = "") {
+  return ({
+    meal_swipe: "饭点滑卡",
+    memory_capture: "记忆候选",
+    memory_manage: "记忆管理",
+    diary_review: "汪记本",
+    openclaw_dreaming: "复盘",
+    merchant_intel: "商家理解",
+    merchant_compare: "商家对比",
+    deal_search: "优惠查询",
+  })[skill] || skill || "工具";
+}
+
+function skillListLabel(skillCalls = []) {
+  const names = normalizeProgressSkillCalls(skillCalls)
+    .map((item) => skillDisplayName(item.skill))
+    .filter(Boolean);
+  return [...new Set(names)].join("、");
+}
+
+function agentFacingProgressLabel(patch = {}) {
+  const skillNames = skillListLabel(patch.skillCalls || []);
+  const traceNames = normalizeProgressSkillTrace(patch.skillTrace || [])
+    .map((item) => skillDisplayName(item.skill || item.tool))
+    .filter(Boolean);
+  const traceLabel = [...new Set(traceNames)].join("、");
+  switch (patch.step) {
+    case "context_ready":
+      return "小汪拿到了今日记忆和最近对话";
+    case "openclaw":
+      return "小汪正在理解问题并选择下一步";
+    case "openclaw_done":
+      return skillNames ? `小汪决定使用 ${skillNames}` : "小汪决定直接回答";
+    case "skill_running":
+      return skillNames ? `小汪正在使用 ${skillNames}` : "小汪正在使用工具查证据";
+    case "skill_done":
+      return traceLabel ? `小汪拿到了 ${traceLabel} 的结果` : "小汪拿到了工具结果";
+    case "memory_manage":
+      return "小汪正在处理记忆确认或修改";
+    case "memory_capture":
+      return "小汪正在整理可确认的记忆";
+    case "openclaw_error":
+      return "小汪这次调用不顺，正在切换兜底理解";
+    case "ark_fallback":
+      return "小汪正在用 Ark 兜底理解";
+    case "ark_done":
+      return skillNames ? `小汪兜底决定使用 ${skillNames}` : "小汪兜底后决定直接回答";
+    case "local_fallback":
+      return "小汪正在用本地兜底生成可用回复";
+    case "finalizing":
+      return "小汪正在整理回复和可点击卡片";
+    case "done":
+      return "小汪回复完成";
+    default:
+      return patch.label || "";
+  }
+}
+
 function updateChatJobProgress(jobId, patch = {}) {
   const job = chatJobs.get(jobId);
   if (!job || job.status !== "running") return;
   const pendingAssistant = job.pending_assistant || createPendingAssistant({jobId, message: ""});
   const currentOpenClaw = pendingAssistant.openclaw || {};
-  const progress = appendUniqueProgress(currentOpenClaw.progress || [], patch.label);
+  const displayLabel = agentFacingProgressLabel(patch);
+  const progress = appendUniqueProgress(currentOpenClaw.progress || [], displayLabel);
   const skillCalls = patch.skillCalls ? normalizeProgressSkillCalls(patch.skillCalls) : (pendingAssistant.agent_skill_calls || []);
   const skillTrace = patch.skillTrace ? normalizeProgressSkillTrace(patch.skillTrace) : (currentOpenClaw.skill_trace || []);
   const nextAssistant = {
     ...pendingAssistant,
-    content: patch.label || pendingAssistant.content,
+    content: displayLabel || pendingAssistant.content,
     agent_skill_calls: skillCalls,
     openclaw: {
       ...currentOpenClaw,
