@@ -188,7 +188,10 @@ def signal_from_memory_text(text, result_id):
 
 
 def merge_soft_preferences(understanding, preferences):
-    existing = list(understanding.get("soft_preferences") or [])
+    existing = [
+        item for item in list(understanding.get("soft_preferences") or [])
+        if isinstance(item, dict)
+    ]
     seen = {f"{item.get('facet')}::{item.get('value')}" for item in existing if isinstance(item, dict)}
     for item in preferences:
         key = f"{item.get('facet')}::{item.get('value')}"
