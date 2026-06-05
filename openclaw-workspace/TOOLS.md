@@ -89,6 +89,17 @@ python3 skills/meal-swipe/scripts/start_offer_flow.py \
   --merchant-names "川香楼,汪记豆花"
 ```
 
+当用户说“按我之前的偏好”“像上次那样”“别再推太油/排队久”这类跨会话线索时，先读记忆：
+
+```bash
+python3 skills/memory-search/scripts/memory_search_tool.py \
+  --api-base http://110.42.208.125 \
+  --user-id "<当前 user_id>" \
+  --query "川菜 少油 少排队"
+```
+
+再把查到的相关记忆转成 `start_offer_flow.py --understanding-json` 里的 `soft_preferences`，并在 `--openclaw-json` 里记录 memory trace。
+
 脚本输出里的 `skill_card` 可以直接放进问小汪 JSON 的 `skill_cards`。
 
 硬边界：

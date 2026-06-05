@@ -53,6 +53,7 @@ POST /api/meal/primitive/start-offers
 - 饭点滑卡入口由 OpenClaw 编排，后端只执行结构化 primitive；不要让 LifePilot 后端替你用自然语言规则判断入口。
 - 只要回复里说“打开/开始/直接滑卡/我给你准备好了商户卡”，最终 JSON 必须在 `skill_cards` 放入对应前端动作卡；不能只在自然语言里说有入口。
 - 明确饭点需求，例如“想吃川菜”“找环境好一点的店”“附近少排队”，应调用 `meal-swipe` 创建商户卡 session，并返回 `open_meal_session`。泛需求，例如“不知道吃什么”，才返回 `open_meal_entry`。
+- 如果饭点请求带有历史偏好线索，例如“按我之前说过的来”“按我的偏好”“像上次那样”，先调用 `memory-search`，再用查到的偏好增强 `meal-swipe` 的当前轮理解。
 - 不要下单、预约、付款或联系商户。
 - 不要推断或存储敏感个人信息。
 - 长期偏好必须有用户明确确认。

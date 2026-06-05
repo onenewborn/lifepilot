@@ -452,6 +452,7 @@ function buildOpenClawChatMessage({message, session, userId = DEFAULT_USER_ID, d
     "自然语言理解和目标选择由 OpenClaw 完成；LifePilot 后端只执行结构化工具和 API，不会帮你用规则猜用户意思。",
     `OpenClaw 工具调用 LifePilot API 时必须使用这个 api base：${openClawApiBase}`,
     `当前 user_id：${userId}`,
+    `调用任何 LifePilot Python skill 脚本时，必须显式传入 --user-id ${userId}；不要使用 demo_weiyingru、示例占位符或空 user_id。`,
     `当前 day_id：${dayId || "暂无"}`,
   ];
   const fullRoutingLines = [
