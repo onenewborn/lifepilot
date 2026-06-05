@@ -117,6 +117,8 @@ try {
   assert.equal(dailyReview.job.engine_run.ok, false);
   assert.equal(dailyReview.job.engine_run.engine, "openclaw_agent");
   assert.equal(dailyReview.job.food_insight_profile_updated, true);
+  assert.match(dailyReview.job.summary, /排队|轻食|观察|记录/);
+  assert.doesNotMatch(dailyReview.job.summary, /^小汪整理了 \d+ 条近期观察/);
 
   const observations = await listMemoryObservations({userId, dayId});
   assert.ok(observations.count >= 2);

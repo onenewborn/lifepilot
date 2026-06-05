@@ -54,6 +54,10 @@ function compactText(value, max = 260) {
   return text.length > max ? `${text.slice(0, max)}...` : text;
 }
 
+function uniqueStrings(items = []) {
+  return [...new Set(items.map((item) => String(item || "").trim()).filter(Boolean))];
+}
+
 function normalizeMode(mode = "manual_daily_review") {
   const raw = String(mode || "manual_daily_review");
   const normalized = MODE_ALIASES[raw] || raw;
@@ -612,6 +616,60 @@ function localFoodInsightProfile({userId, observations = [], preferences = []} =
   return profile;
 }
 
+function extractMemoryReviewSignals({observations = [], preferences = []} = {}) {
+  const texts = observations
+    .map((item) => compactText(item.summary || item.text || "", 160))
+    .filter(Boolean);
+  const joined = [
+    ...texts,
+    ...preferences.map((item) => `${item.statement || ""} ${item.confirmation_text || ""}`),
+  ].join(" ");
+  const signals = [];
+  if (/川菜|麻婆|冒菜|酸菜鱼|烤鱼|腰花|辣|麻辣|下饭/.test(joined)) {
+    signals.push("今天的选择明显偏向川菜、麻辣和下饭型餐食");
+  }
+  if (/面条|热汤面|汤面|粉面|云吞|米线/.test(joined)) {
+    signals.push("主人对面条、粉面或热汤类也有明确兴趣");
+  }
+  if (/附近|近|景田|福田|地铁站|少走|距离/.test(joined)) {
+    signals.push("位置上更看重附近、少走路和地铁站周边");
+  }
+  if (/排队|等位|等待/.test(joined)) {
+    signals.push("排队和等待风险需要被小汪重点避开");
+  }
+  if (/一个人|独食|solo|单人/.test(joined)) {
+    signals.push("今天更像一个人吃，独食友好是重要条件");
+  }
+  if (/便宜|划算|预算|人均|团购|优惠|性价比|低价/.test(joined)) {
+    signals.push("价格和性价比会影响主人的最终选择");
+  }
+  if (/重油|太油|油腻|少油|清爽|轻负担/.test(joined)) {
+    signals.push("油腻程度已经成为需要留意的口味信号");
+  }
+  return uniqueStrings(signals).slice(0, 4);
+}
+
+function buildLocalReviewSummary({mode, observations = [], preferences = []} = {}) {
+  if (!observations.length) {
+    return mode === "manual_weekly_review" ? "这周暂时没有足够记录，小汪还需要多攒几次吃饭选择。" : "今天暂时没有足够观察。";
+  }
+  const signals = extractMemoryReviewSignals({observations, preferences});
+  const concreteItems = observations
+    .map((item) => compactText(item.summary || item.text || "", 90))
+    .filter(Boolean)
+    .filter((text) => !/小汪整理了 \d+ 条近期观察/.test(text))
+    .slice(0, 3);
+  const opening = mode === "manual_weekly_review" ? "小汪看了这周的记录" : "小汪看了今天的记录";
+  const signalText = signals.length
+    ? `，发现：${signals.join("；")}。`
+    : `，目前最明确的是 ${concreteItems.join("；")}。`;
+  const evidenceText = concreteItems.length
+    ? ` 代表记录包括：${concreteItems.join("；")}。`
+    : "";
+  const nextText = "这些会先作为汪记本里的小结和待确认偏好线索，不会直接替主人做最终决定。";
+  return compactText(`${opening}${signalText}${evidenceText} ${nextText}`, 420);
+}
+
 function buildLocalIntelligenceResult(input = {}) {
   const mode = normalizeMode(input.mode || "manual_daily_review");
   const observation = input.observation || null;
@@ -655,9 +713,7 @@ function buildLocalIntelligenceResult(input = {}) {
   const repeated = observations
     .map((item) => item.text || item.summary || "")
     .join(" ");
-  result.summary = observations.length
-    ? `小汪整理了 ${observations.length} 条近期观察，适合在汪记本里展示今日模式。`
-    : "今天暂时没有足够观察。";
+  result.summary = buildLocalReviewSummary({mode, observations, preferences});
   if (/排队|等位/.test(repeated)) {
     result.memory_candidates.push({
       type: "food_preference",
