@@ -1437,11 +1437,7 @@ function createPendingAssistant({jobId, message}) {
   return {
     id: `pending_${jobId}`,
     role: "assistant",
-    content: wantsMerchantCompareSkill(message)
-      ? "小汪开始对比商家证据了：先识别店名，再调口碑工具。"
-      : wantsMerchantIntelSkill(message)
-        ? "小汪开始看这家店的特色和口碑证据了。"
-        : "小汪开始思考了：先理解你的问题，再判断要不要调用工具。",
+    content: "小汪思考中…",
     mode: "openclaw_pending",
     skill_cards: [],
     skill_result_cards: [],
@@ -1449,10 +1445,7 @@ function createPendingAssistant({jobId, message}) {
     openclaw: {
       status: "running",
       parse_mode: "pending",
-      progress: [
-        "小汪正在理解这句话",
-        "小汪正在判断要不要调用产品 skill",
-      ],
+      progress: [],
     },
     created_at: nowIso(),
   };
@@ -1475,90 +1468,15 @@ function normalizeProgressSkillTrace(skillTrace = []) {
   })).filter((trace) => trace.skill || trace.tool || trace.error);
 }
 
-function appendUniqueProgress(lines = [], nextLine = "") {
-  const line = String(nextLine || "").trim();
-  if (!line) return lines;
-  const result = [...(Array.isArray(lines) ? lines : [])];
-  if (!result.includes(line)) result.push(line);
-  return result.slice(-8);
-}
-
-function skillDisplayName(skill = "") {
-  return ({
-    meal_swipe: "饭点滑卡",
-    memory_capture: "记忆候选",
-    memory_manage: "记忆管理",
-    diary_review: "汪记本",
-    openclaw_dreaming: "复盘",
-    merchant_intel: "商家理解",
-    merchant_compare: "商家对比",
-    deal_search: "优惠查询",
-  })[skill] || skill || "工具";
-}
-
-function skillListLabel(skillCalls = []) {
-  const names = normalizeProgressSkillCalls(skillCalls)
-    .map((item) => skillDisplayName(item.skill))
-    .filter(Boolean);
-  return [...new Set(names)].join("、");
-}
-
-function agentFacingProgressLabel(patch = {}) {
-  const skillNames = skillListLabel(patch.skillCalls || []);
-  const traceNames = normalizeProgressSkillTrace(patch.skillTrace || [])
-    .map((item) => skillDisplayName(item.skill || item.tool))
-    .filter(Boolean);
-  const traceLabel = [...new Set(traceNames)].join("、");
-  switch (patch.step) {
-    case "context":
-      return "小汪正在翻看今天的记忆线索";
-    case "context_ready":
-      return "小汪拿到了今日记忆和最近对话";
-    case "openclaw":
-      return "小汪正在理解问题并选择下一步";
-    case "openclaw_done":
-      return skillNames ? `小汪决定使用 ${skillNames}` : "小汪决定直接回答";
-    case "skill_running":
-      return skillNames ? `小汪正在使用 ${skillNames}` : "小汪正在使用工具查证据";
-    case "skill_done":
-      return traceLabel ? `小汪拿到了 ${traceLabel} 的结果` : "小汪拿到了工具结果";
-    case "memory_manage":
-      return "小汪正在处理记忆确认或修改";
-    case "memory_capture":
-      return "小汪正在整理可确认的记忆";
-    case "openclaw_error":
-      return "小汪这次调用不顺，正在切换兜底理解";
-    case "ark_fallback":
-      return "小汪正在用 Ark 兜底理解";
-    case "ark_done":
-      return skillNames ? `小汪兜底决定使用 ${skillNames}` : "小汪兜底后决定直接回答";
-    case "local_fallback":
-      return "小汪正在用本地兜底生成可用回复";
-    case "empty_message":
-      return "小汪没有收到有效文字，正在准备提示";
-    case "saving":
-      return "小汪正在保存这次对话";
-    case "finalizing":
-      return "小汪正在整理回复和可点击卡片";
-    case "done":
-      return "小汪回复完成";
-    default:
-      return patch.label || "";
-  }
-}
-
 function updateChatJobProgress(jobId, patch = {}) {
   const job = chatJobs.get(jobId);
   if (!job || job.status !== "running") return;
   const pendingAssistant = job.pending_assistant || createPendingAssistant({jobId, message: ""});
   const currentOpenClaw = pendingAssistant.openclaw || {};
-  const displayLabel = agentFacingProgressLabel(patch);
-  const progress = appendUniqueProgress(currentOpenClaw.progress || [], displayLabel);
   const skillCalls = patch.skillCalls ? normalizeProgressSkillCalls(patch.skillCalls) : (pendingAssistant.agent_skill_calls || []);
   const skillTrace = patch.skillTrace ? normalizeProgressSkillTrace(patch.skillTrace) : (currentOpenClaw.skill_trace || []);
   const nextAssistant = {
     ...pendingAssistant,
-    content: displayLabel || pendingAssistant.content,
     agent_skill_calls: skillCalls,
     openclaw: {
       ...currentOpenClaw,
@@ -1566,7 +1484,6 @@ function updateChatJobProgress(jobId, patch = {}) {
       parse_mode: patch.parseMode || currentOpenClaw.parse_mode || "pending",
       run_id: patch.runId || currentOpenClaw.run_id || "",
       current_step: patch.step || currentOpenClaw.current_step || "",
-      progress,
       skill_trace: skillTrace,
       error: patch.error || currentOpenClaw.error || "",
     },
@@ -1575,7 +1492,6 @@ function updateChatJobProgress(jobId, patch = {}) {
     ...job,
     updated_at: nowIso(),
     current_step: patch.step || job.current_step || "",
-    progress,
     tool_trace: skillTrace,
     pending_assistant: nextAssistant,
   });
@@ -1593,7 +1509,7 @@ export function startXiaowangChatJob({body = {}} = {}) {
     updated_at: createdAt,
     pending_assistant: pendingAssistant,
     current_step: "queued",
-    progress: pendingAssistant.openclaw.progress || [],
+    progress: [],
     tool_trace: [],
     result: null,
     error: null,

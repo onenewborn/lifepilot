@@ -537,7 +537,7 @@
           <view wx:if="{{item.debug_trace}}" class="agent-trace">
             <view class="agent-trace-head">
               <text class="agent-trace-dot"></text>
-              <text>小汪步骤</text>
+              <text>Agent 调用</text>
             </view>
             <view class="agent-trace-lines">
               <text wx:for="{{item.debug_trace.lines}}" wx:key="*this" class="agent-trace-line">{{item}}</text>

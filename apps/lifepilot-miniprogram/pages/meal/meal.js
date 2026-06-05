@@ -14,22 +14,6 @@ const LOCATION_LANDMARKS = [
   { label: "福田区 · 车公庙附近", latitude: 22.536, longitude: 114.028 },
 ];
 
-function shortRunId(value) {
-  const text = String(value || "").trim();
-  if (!text) return "";
-  return text.length > 18 ? text.slice(-18) : text;
-}
-
-function sourceLabelForAssistant(message) {
-  const mode = String(message.mode || "").trim();
-  if (mode === "openclaw_gateway_client") return "AI · OpenClaw";
-  if (mode === "ark_fallback_after_openclaw_error") return "AI · Ark 兜底";
-  if (mode === "local_fallback_after_openclaw_error") return "后端兜底";
-  if (mode === "local_empty_message") return "本地空消息";
-  if (mode === "local_skill_router") return "后端规则";
-  return mode || "";
-}
-
 function skillDisplayName(skill) {
   return {
     meal_swipe: "饭点滑卡",
@@ -45,46 +29,32 @@ function skillDisplayName(skill) {
 
 function buildChatDebugTrace(message) {
   if (!message || message.role === "user" || message.isThinking) return null;
-  const sourceLabel = sourceLabelForAssistant(message);
   const lines = [];
-  if (sourceLabel) lines.push(`来源：${sourceLabel}`);
-  if (message.openclaw && message.openclaw.parse_mode) {
-    lines.push(`解析：${message.openclaw.parse_mode}`);
-  }
-  if (message.openclaw && message.openclaw.run_id) {
-    lines.push(`Run：${shortRunId(message.openclaw.run_id)}`);
-  }
   if (message.openclaw && message.openclaw.error) {
     lines.push(`OpenClaw 异常：${message.openclaw.error}`);
-  }
-  if (message.openclaw && Array.isArray(message.openclaw.progress)) {
-    message.openclaw.progress.forEach((item) => {
-      if (item) lines.push(`Agent：${item}`);
-    });
   }
   if (message.openclaw && Array.isArray(message.openclaw.skill_trace) && message.openclaw.skill_trace.length) {
     message.openclaw.skill_trace.forEach((trace) => {
       const skill = skillDisplayName(trace.skill || trace.tool);
       const state = trace.ok ? "完成" : (trace.error || "异常");
       const ids = Array.isArray(trace.merchant_ids) && trace.merchant_ids.length ? ` · ${trace.merchant_ids.join(",")}` : "";
-      lines.push(`Agent工具：${skill} ${state}${ids}`);
+      lines.push(`工具结果：${skill} ${state}${ids}`);
     });
-  }
-  if (message.ai && message.ai.provider) {
-    lines.push(`AI：${message.ai.provider}`);
-  }
-  if (message.ai && message.ai.parse_mode) {
-    lines.push(`AI解析：${message.ai.parse_mode}`);
   }
   if (message.ai && message.ai.error) {
     lines.push(`AI异常：${message.ai.error}`);
   }
   const skillCalls = Array.isArray(message.agent_skill_calls) ? message.agent_skill_calls : [];
   const skillCards = Array.isArray(message.skill_cards) ? message.skill_cards : [];
+  const skillResultCards = Array.isArray(message.skill_result_cards) ? message.skill_result_cards : [];
   const skillNames = skillCalls.length
     ? skillCalls.map((item) => skillDisplayName(item.skill)).filter(Boolean)
     : skillCards.map((item) => skillDisplayName(item.skill) || item.title).filter(Boolean);
-  if (skillNames.length) lines.push(`Agent选择：${skillNames.join("、")}`);
+  if (skillNames.length) lines.push(`调用：${skillNames.join("、")}`);
+  const resultNames = skillResultCards
+    .map((item) => skillDisplayName(item.skill || item.type))
+    .filter(Boolean);
+  if (resultNames.length) lines.push(`返回结果：${[...new Set(resultNames)].join("、")}`);
   if (message.memory_candidate_created_count) {
     lines.push(`记忆候选：${message.memory_candidate_created_count} 条`);
   }
