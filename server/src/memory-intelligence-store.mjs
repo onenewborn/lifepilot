@@ -658,13 +658,15 @@ function buildLocalReviewSummary({mode, observations = [], preferences = []} = {
     .map((item) => compactText(item.summary || item.text || "", 90))
     .filter(Boolean)
     .filter((text) => !/小汪整理了 \d+ 条近期观察/.test(text))
-    .slice(0, 3);
+    .map((text) => text.replace(/[。！？.!?]+$/u, ""))
+    .filter(Boolean);
+  const representativeItems = uniqueStrings(concreteItems).slice(0, 3);
   const opening = mode === "manual_weekly_review" ? "小汪看了这周的记录" : "小汪看了今天的记录";
   const signalText = signals.length
     ? `，发现：${signals.join("；")}。`
-    : `，目前最明确的是 ${concreteItems.join("；")}。`;
-  const evidenceText = concreteItems.length
-    ? ` 代表记录包括：${concreteItems.join("；")}。`
+    : `，目前最明确的是 ${representativeItems.join("；")}。`;
+  const evidenceText = representativeItems.length
+    ? ` 代表记录包括：${representativeItems.join("；")}。`
     : "";
   const nextText = "这些会先作为汪记本里的小结和待确认偏好线索，不会直接替主人做最终决定。";
   return compactText(`${opening}${signalText}${evidenceText} ${nextText}`, 420);
