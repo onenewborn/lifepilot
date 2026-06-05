@@ -10,6 +10,7 @@ import {
   listConfirmedPreferences,
   listMemoryCandidates,
 } from "./memory-store.mjs";
+import { runMemoryIntelligenceExternalEngine } from "./memory-intelligence-engines.mjs";
 
 const OBSERVATIONS_SCHEMA = "lifepilot.memory_observations.v1";
 const OBSERVATION_SCHEMA = "lifepilot.memory_observation.v1";
@@ -704,7 +705,7 @@ export async function storeMemoryIntelligenceResult({
   inputMetrics = null,
   timing = null,
   result = {},
-  source = "local_policy",
+  source = "",
 } = {}) {
   const resolvedMode = normalizeMode(mode);
   const resolvedEngine = normalizeEngine(engine);
@@ -832,12 +833,12 @@ export async function runMemoryIntelligence({
   dayId = "",
   observationId: targetObservationId = "",
   lookbackDays = 7,
+  timeoutSeconds = 180,
+  sessionId = "",
   source = "local_policy",
 } = {}) {
   const startedAt = Date.now();
   const requestedEngine = normalizeEngine(engine);
-  const resolvedEngine = requestedEngine === "local_policy" ? "local_policy" : "local_policy";
-  const fallbackReason = requestedEngine === resolvedEngine ? "" : `${requestedEngine}_engine_not_connected_yet`;
   const resolvedMode = normalizeMode(mode);
   const inputStartedAt = Date.now();
   const inputPayload = await buildMemoryIntelligenceInput({
@@ -849,9 +850,33 @@ export async function runMemoryIntelligence({
   });
   if (!inputPayload.ok) return inputPayload;
   const inputBuildMs = Date.now() - inputStartedAt;
-  const policyStartedAt = Date.now();
-  const result = buildLocalIntelligenceResult(inputPayload.input);
-  const policyMs = Date.now() - policyStartedAt;
+  const engineStartedAt = Date.now();
+  let resolvedEngine = requestedEngine;
+  let fallbackReason = "";
+  let result = null;
+  let engineMs = 0;
+  let engineResult = null;
+  if (requestedEngine === "local_policy") {
+    result = buildLocalIntelligenceResult(inputPayload.input);
+    engineMs = Date.now() - engineStartedAt;
+  } else {
+    engineResult = await runMemoryIntelligenceExternalEngine({
+      engine: requestedEngine,
+      input: inputPayload.input,
+      userId,
+      dayId: inputPayload.input.day_id,
+      timeoutSeconds,
+      sessionId,
+    });
+    engineMs = Number(engineResult?.timing?.agent_ms || (Date.now() - engineStartedAt));
+    if (engineResult.ok && engineResult.result) {
+      result = engineResult.result;
+    } else {
+      resolvedEngine = "local_policy";
+      fallbackReason = engineResult?.error_message || engineResult?.error || `${requestedEngine}_engine_not_connected_yet`;
+      result = buildLocalIntelligenceResult(inputPayload.input);
+    }
+  }
   const storeStartedAt = Date.now();
   const stored = await storeMemoryIntelligenceResult({
     mode: resolvedMode,
@@ -867,7 +892,7 @@ export async function runMemoryIntelligence({
     source: source || resolvedEngine,
     timing: {
       input_build_ms: inputBuildMs,
-      agent_ms: policyMs,
+      agent_ms: engineMs,
       store_ms: 0,
       total_ms: 0,
     },
@@ -879,6 +904,15 @@ export async function runMemoryIntelligence({
       ...(stored.job.timing || {}),
       store_ms: storeMs,
       total_ms: totalMs,
+    };
+    await writeJsonAtomic(jobPath(stored.job.job_id), stored.job);
+  }
+  if (stored?.job && engineResult) {
+    stored.job.engine_run = {
+      ok: Boolean(engineResult.ok),
+      engine: requestedEngine,
+      session_id: engineResult.session_id || "",
+      error: engineResult.ok ? "" : (engineResult.error || ""),
     };
     await writeJsonAtomic(jobPath(stored.job.job_id), stored.job);
   }

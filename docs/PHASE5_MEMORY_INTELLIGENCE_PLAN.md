@@ -320,6 +320,72 @@ systemd timer
 Phase 5A: 文档和验收边界
 Phase 5B: 输入压缩 + prompt 长度/耗时可观测
 Phase 5C: 接口收拢 + run-dream adapter
+Phase 5D: 外部 engine 接入层 + OpenClaw Gateway 尝试执行
 ```
 
 每完成一个阶段，只验证该阶段，不提前做下一阶段。
+
+## Phase 5D: 外部 Engine 接入层
+
+### 目标
+
+让 `POST /api/memory/intelligence/run` 的 `engine` 字段开始具有真实执行含义：
+
+```text
+engine=local_policy      后端规则直接生成结果
+engine=openclaw_agent    尝试通过 OpenClaw Gateway client 运行 lifepilot-memory-intelligence
+engine=ark               暂不接入，明确 fallback
+```
+
+### 设计原则
+
+- `memory_intelligence` 仍是工程主名。
+- OpenClaw 只是一个可选执行引擎，不恢复成独立 Dreaming 主系统。
+- 外部 engine 必须输出统一 JSON result，再由后端 policy gate 和 store 负责落库。
+- 外部 engine 超时、连接失败、JSON parse 失败时，不让汪记本失败；后端 fallback 到 `local_policy`，并写入：
+
+```text
+requested_engine
+engine
+fallback_reason
+engine_run
+timing.agent_ms
+```
+
+### OpenClaw Prompt 边界
+
+OpenClaw 收到的是 compact 后的 `memory_intelligence_input`，而不是旧 `dream_input`。
+
+Prompt 只包含：
+
+```text
+lifepilot-memory-intelligence skill 调用意图
+输出 JSON schema
+权威边界：不能写 confirmed preference，不能改 meal session，不能读写 runtime 文件
+memory_intelligence_input
+```
+
+### 验证
+
+本地稳定验证：
+
+```bash
+LIFEPILOT_MEMORY_INTELLIGENCE_DISABLE_OPENCLAW=1 node tests/smoke-memory-intelligence.mjs
+```
+
+云端真实验证：
+
+```bash
+curl -s -X POST http://110.42.208.125/api/memory/intelligence/run \
+  -H 'content-type: application/json' \
+  -d '{"user_id":"demo_weiyingru","day_id":"day_20260605_demo_weiyingru","mode":"manual_daily_review","engine":"openclaw_agent","timeout_seconds":180}'
+```
+
+验收标准：
+
+```text
+OpenClaw Gateway 可用时：engine=openclaw_agent，job 有 engine_run.ok=true
+OpenClaw Gateway 不可用时：engine=local_policy，requested_engine=openclaw_agent，fallback_reason 非空
+无论 engine 成败，汪记本手动复盘不返回 failed
+job 文件能看出 input_metrics、timing、engine_run
+```

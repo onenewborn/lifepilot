@@ -1195,7 +1195,9 @@ async function handleMemoryIntelligenceRun(req, res) {
     dayId: body.day_id || body.dayId || "",
     observationId: body.observation_id || body.observationId || "",
     lookbackDays: body.lookback_days || body.lookbackDays || 7,
-    source: body.source || "local_policy",
+    timeoutSeconds: body.timeout_seconds || body.timeoutSeconds || 180,
+    sessionId: body.openclaw_session_id || body.openclawSessionId || body.session_id || body.sessionId || "",
+    source: body.source || "",
   });
   ok(res, payload);
 }
@@ -1412,6 +1414,8 @@ async function handleOpenClawRunDream(req, res) {
     dayId: body.day_id || body.dayId || "",
     observationId: body.observation_id || body.observationId || "",
     lookbackDays: body.lookback_days || body.lookbackDays || 7,
+    timeoutSeconds: body.timeout_seconds || body.timeoutSeconds || 180,
+    sessionId: body.openclaw_session_id || body.openclawSessionId || body.session_id || body.sessionId || "",
     source: "openclaw_run_dream_adapter",
   });
   if (!payload.ok) {

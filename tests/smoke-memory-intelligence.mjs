@@ -6,6 +6,7 @@ import path from "node:path";
 const memoryRoot = await mkdtemp(path.join(tmpdir(), "lifepilot-memory-intelligence-"));
 process.env.LIFEPILOT_MEMORY_ROOT = memoryRoot;
 process.env.LIFEPILOT_RUNTIME_ROOT = memoryRoot;
+process.env.LIFEPILOT_MEMORY_INTELLIGENCE_DISABLE_OPENCLAW = "1";
 
 const {
   buildMemoryIntelligenceInput,
@@ -112,7 +113,9 @@ try {
   assert.equal(legacyDay.job.mode, "manual_daily_review");
   assert.equal(legacyDay.job.engine, "local_policy");
   assert.equal(legacyDay.job.requested_engine, "openclaw_agent");
-  assert.equal(legacyDay.job.fallback_reason, "openclaw_agent_engine_not_connected_yet");
+  assert.equal(legacyDay.job.fallback_reason, "openclaw_agent_engine_disabled");
+  assert.equal(legacyDay.job.engine_run.ok, false);
+  assert.equal(legacyDay.job.engine_run.engine, "openclaw_agent");
   assert.equal(legacyDay.job.food_insight_profile_updated, true);
 
   const observations = await listMemoryObservations({userId, dayId});
