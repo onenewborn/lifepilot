@@ -622,7 +622,8 @@
         <view class="diary-subtitle">主人今天怎么挑饭、哪里犹豫、哪些偏好值得记住，小汪都会慢慢攒起来。</view>
       </view>
       <view class="diary-head-actions">
-        <button class="diary-refresh" loading="{{isMemoryReviewRunning}}" bindtap="runMemoryIntelligenceReview">复盘</button>
+        <button class="diary-refresh" data-mode="manual_daily_review" loading="{{isMemoryReviewRunning}}" bindtap="runMemoryIntelligenceReview">今日复盘</button>
+        <button class="diary-refresh diary-weekly-review" data-mode="manual_weekly_review" loading="{{isMemoryReviewRunning}}" bindtap="runMemoryIntelligenceReview">本周复盘</button>
         <button class="diary-refresh" loading="{{isDiaryLoading}}" bindtap="loadXiaowangDiary">刷新</button>
       </view>
     </view>

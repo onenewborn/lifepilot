@@ -1323,7 +1323,10 @@ Page({
       return;
     }
     if (action === "run_memory_review") {
-      this.runMemoryIntelligenceReview();
+      const reviewMode = payload.mode || payload.review_mode || payload.reviewMode || "";
+      this.runMemoryIntelligenceReview({
+        currentTarget: { dataset: { mode: reviewMode } }
+      });
     }
   },
 
@@ -1462,23 +1465,27 @@ Page({
     this.setData({ memoryEditText: event.detail.value || "" });
   },
 
-  async runMemoryIntelligenceReview() {
+  async runMemoryIntelligenceReview(event = {}) {
     if (this.data.isMemoryReviewRunning) return;
+    const mode = event.currentTarget?.dataset?.mode === "manual_weekly_review" ? "manual_weekly_review" : "manual_daily_review";
+    const isWeekly = mode === "manual_weekly_review";
     const dayId = this.data.diary && this.data.diary.day_id ? this.data.diary.day_id : todayDayId(DEFAULT_USER_ID);
     this.setData({
       isMemoryReviewRunning: true,
-      memoryReviewStatusText: "小汪正在深度复盘",
-      memoryReviewStatusDetail: "正在交给 Memory Intelligence 整理今天的吃饭记录，可能需要一小会儿。"
+      memoryReviewStatusText: isWeekly ? "小汪正在复盘本周" : "小汪正在复盘今天",
+      memoryReviewStatusDetail: isWeekly
+        ? "正在整理最近一周的饭点记录和偏好线索，输入会先压缩成周级摘要。"
+        : "正在交给 Memory Intelligence 整理今天的吃饭记录，可能需要一小会儿。"
     });
-    wx.showToast({ title: "小汪开始复盘", icon: "none" });
+    wx.showToast({ title: isWeekly ? "开始本周复盘" : "开始今日复盘", icon: "none" });
     try {
       const payload = await xiaowangApi.runMemoryReview({
         user_id: DEFAULT_USER_ID,
         day_id: dayId,
-        mode: "manual_daily_review",
+        mode,
         engine: "openclaw_agent",
         timeout_seconds: 120,
-        source: "miniapp_diary_manual_review"
+        source: isWeekly ? "miniapp_diary_manual_weekly_review" : "miniapp_diary_manual_review"
       });
       const job = payload.job || {};
       const fallbackReason = job.fallback_reason || "";
@@ -1486,8 +1493,8 @@ Page({
       this.setData({
         memoryReviewStatusText: completedByOpenClaw ? "深度复盘完成" : "已先生成快速复盘",
         memoryReviewStatusDetail: completedByOpenClaw
-          ? "小汪已经用 OpenClaw 整理了今日小结和待确认记忆。"
-          : "OpenClaw 复盘较慢，后端已先用快速策略生成今日小结。"
+          ? (isWeekly ? "小汪已经用 OpenClaw 整理了本周小结和重复偏好线索。" : "小汪已经用 OpenClaw 整理了今日小结和待确认记忆。")
+          : (isWeekly ? "OpenClaw 周复盘较慢，后端已先用快速策略生成本周小结。" : "OpenClaw 复盘较慢，后端已先用快速策略生成今日小结。")
       });
       wx.showToast({ title: completedByOpenClaw ? "复盘完成" : "已快速复盘", icon: "none" });
       await this.loadXiaowangDiary();

@@ -86,13 +86,14 @@ function buildInputMetrics(input = {}) {
     observation: jsonCharCount(input.observation),
     observations: jsonCharCount(input.observations),
     day_context: jsonCharCount(input.day_context),
+    weekly_context: jsonCharCount(input.weekly_context),
     meal_sessions: jsonCharCount(input.meal_sessions),
     pending_memory_candidates: jsonCharCount(input.pending_memory_candidates),
     confirmed_preferences: jsonCharCount(input.confirmed_preferences),
     food_insight_profile: jsonCharCount(input.food_insight_profile),
   };
   const charCount = jsonCharCount(input);
-  const thresholdChars = isWeeklyMode(input.mode) ? 80000 : (input.mode === "profile_update" ? 50000 : 60000);
+  const thresholdChars = isWeeklyMode(input.mode) ? 24000 : (input.mode === "profile_update" ? 50000 : 60000);
   return {
     char_count: charCount,
     estimated_tokens: estimateTokensFromChars(charCount),
@@ -413,6 +414,43 @@ function compactDayContextForInput(dayContext = {}) {
   };
 }
 
+function dateFromDayId(dayId = "") {
+  const match = String(dayId || "").match(/^day_(\d{4})(\d{2})(\d{2})_/);
+  if (!match) return new Date();
+  return new Date(`${match[1]}-${match[2]}-${match[3]}T12:00:00+08:00`);
+}
+
+function weeklyDayIds({userId = DEFAULT_USER_ID, dayId = "", lookbackDays = 7} = {}) {
+  const days = Math.max(1, Math.min(Number(lookbackDays || 7), 14));
+  const endDate = dateFromDayId(dayId || createDayId(userId, new Date()));
+  return Array.from({length: days}, (_, index) => {
+    const date = new Date(endDate.getTime() - (days - index - 1) * 24 * 60 * 60 * 1000);
+    return createDayId(userId, date);
+  });
+}
+
+async function buildWeeklyContextForInput({userId = DEFAULT_USER_ID, dayId = "", lookbackDays = 7} = {}) {
+  const ids = weeklyDayIds({userId, dayId, lookbackDays});
+  const rawContexts = (await Promise.all(ids.map((id) => getDayContext(id)))).filter(Boolean);
+  const compactDays = rawContexts.map(compactDayContextForInput);
+  const allSessions = [];
+  for (const dayContext of rawContexts) {
+    const sessions = await sessionsForDay(dayContext);
+    allSessions.push(...sessions);
+  }
+  allSessions.sort((left, right) => String(right.updated_at || right.created_at || "").localeCompare(String(left.updated_at || left.created_at || "")));
+  return {
+    start_day_id: ids[0] || "",
+    end_day_id: ids[ids.length - 1] || "",
+    lookback_days: ids.length,
+    available_day_count: compactDays.length,
+    meal_session_count: compactDays.reduce((sum, item) => sum + Number(item.meal_session_count || 0), 0),
+    xiaowang_chat_count: compactDays.reduce((sum, item) => sum + Number(item.xiaowang_chat_count || 0), 0),
+    days: compactDays,
+    recent_meal_sessions: allSessions.slice(0, 12),
+  };
+}
+
 async function sessionsForDay(dayContext = {}) {
   const sessions = [];
   for (const item of dayContext.meal_sessions || []) {
@@ -483,12 +521,16 @@ export async function buildMemoryIntelligenceInput({
     listMemoryObservations({userId, dayId: isWeeklyMode(resolvedMode) ? "" : resolvedDayId, limit: 80}),
   ]);
   const observations = observationsResult.observations || [];
-  const compactObservations = compactObservationsForInput(observations, isWeeklyMode(resolvedMode) ? 80 : 40);
+  const weekly = isWeeklyMode(resolvedMode);
+  const compactObservations = compactObservationsForInput(observations, weekly ? 36 : 40);
   const observation = targetObservationId
     ? observations.find((item) => item.observation_id === targetObservationId) || null
     : compactObservations[0] || null;
   const dayContext = await getDayContext(resolvedDayId);
   const mealSessions = dayContext ? await sessionsForDay(dayContext) : [];
+  const weeklyContext = weekly
+    ? await buildWeeklyContextForInput({userId, dayId: resolvedDayId, lookbackDays})
+    : null;
   const input = {
     schema_version: "lifepilot.memory_intelligence_input.v1",
     mode: resolvedMode,
@@ -506,7 +548,8 @@ export async function buildMemoryIntelligenceInput({
     observation,
     observations: compactObservations,
     day_context: dayContext ? compactDayContextForInput(dayContext) : null,
-    meal_sessions: mealSessions,
+    weekly_context: weeklyContext,
+    meal_sessions: weekly ? (weeklyContext?.recent_meal_sessions || []) : mealSessions,
     pending_memory_candidates: compactCandidatesForInput(pending.candidates || []),
     confirmed_preferences: compactPreferencesForInput(preferences.preferences || []),
   };
