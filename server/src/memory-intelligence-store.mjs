@@ -284,10 +284,69 @@ function compactSessionForInput(session = {}) {
     source_message: session.source_message || "",
     direction_event_count: session.direction_events?.length || 0,
     offer_event_count: session.offer_events?.length || 0,
-    final_decision: session.result || null,
+    final_decision: compactFinalDecisionForInput(session.result || null),
     created_at: session.created_at,
     updated_at: session.updated_at,
     finalized_at: session.finalized_at || null,
+  };
+}
+
+function compactOfferForInput(offer = {}) {
+  if (!offer || typeof offer !== "object") return null;
+  return {
+    offer_id: offer.offer_id || "",
+    card_id: offer.card_id || "",
+    merchant_id: offer.merchant_id || "",
+    merchant_name: offer.merchant_name || "",
+    title: offer.title || offer.display_title || "",
+    price_per_person: offer.facts?.price_per_person ?? offer.price_per_person ?? null,
+    score: offer.score ?? null,
+    tags: Array.isArray(offer.tags) ? offer.tags.slice(0, 8) : [],
+    cuisine_tags: Array.isArray(offer.facts?.cuisine_tags) ? offer.facts.cuisine_tags.slice(0, 8) : [],
+    decision_tags: Array.isArray(offer.facts?.decision_tags) ? offer.facts.decision_tags.slice(0, 8) : [],
+    queue_risk: offer.facts?.queue_risk || "",
+    spice_level: offer.facts?.spice_level || "",
+    oil_level: offer.facts?.oil_level || "",
+    solo_friendly: offer.facts?.solo_friendly ?? null,
+    matched_reasons: Array.isArray(offer.explanation?.matched)
+      ? offer.explanation.matched.slice(0, 3).map((item) => compactText(item, 180))
+      : [],
+    watchouts: Array.isArray(offer.explanation?.watchouts)
+      ? offer.explanation.watchouts.slice(0, 2).map((item) => compactText(item, 160))
+      : [],
+    top_scoring_features: Array.isArray(offer.scoring_features)
+      ? offer.scoring_features
+        .filter((item) => Number(item.score || 0) !== 0)
+        .sort((left, right) => Math.abs(Number(right.score || 0)) - Math.abs(Number(left.score || 0)))
+        .slice(0, 5)
+        .map((item) => ({
+          source: item.source || "",
+          key: item.key || "",
+          score: item.score ?? 0,
+          reason: compactText(item.reason || "", 140),
+        }))
+      : [],
+  };
+}
+
+function compactFinalDecisionForInput(result = null) {
+  if (!result || typeof result !== "object") return null;
+  const selected = Array.isArray(result.selected_merchants) ? result.selected_merchants : [];
+  const alternatives = Array.isArray(result.alternatives) ? result.alternatives : [];
+  return {
+    has_selection: Boolean(result.hasSelection || result.has_selection),
+    primary: compactOfferForInput(result.primary || null),
+    selected_merchants: selected.slice(0, 3).map((item) => ({
+      merchant_id: item.merchant_id || "",
+      merchant_name: item.merchant_name || item.name || "",
+      offer_id: item.offer_id || "",
+      title: item.title || "",
+    })),
+    alternatives: alternatives.slice(0, 3).map(compactOfferForInput).filter(Boolean),
+    summary_text: compactText(result.summary_text || result.summary || "", 260),
+    ranking_basis: Array.isArray(result.ranking_basis)
+      ? result.ranking_basis.slice(0, 5).map((item) => compactText(item, 160))
+      : [],
   };
 }
 
