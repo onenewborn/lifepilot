@@ -1499,6 +1499,8 @@ function agentFacingProgressLabel(patch = {}) {
     .filter(Boolean);
   const traceLabel = [...new Set(traceNames)].join("、");
   switch (patch.step) {
+    case "context":
+      return "小汪正在翻看今天的记忆线索";
     case "context_ready":
       return "小汪拿到了今日记忆和最近对话";
     case "openclaw":
@@ -1521,6 +1523,10 @@ function agentFacingProgressLabel(patch = {}) {
       return skillNames ? `小汪兜底决定使用 ${skillNames}` : "小汪兜底后决定直接回答";
     case "local_fallback":
       return "小汪正在用本地兜底生成可用回复";
+    case "empty_message":
+      return "小汪没有收到有效文字，正在准备提示";
+    case "saving":
+      return "小汪正在保存这次对话";
     case "finalizing":
       return "小汪正在整理回复和可点击卡片";
     case "done":
