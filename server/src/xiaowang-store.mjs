@@ -713,7 +713,19 @@ function uniqueItems(items = []) {
   return [...new Set(items.filter(Boolean))];
 }
 
-function buildDiarySummary({mealSessions = [], memoryCandidates = [], confirmedPreferences = [], latestDreamJob = null} = {}) {
+function buildDiarySummary({mealSessions = [], memoryCandidates = [], confirmedPreferences = [], latestMemoryJob = null, latestDreamJob = null} = {}) {
+  if (latestMemoryJob?.summary) {
+    return {
+      source: "memory_intelligence",
+      text: `小汪复盘过啦：${latestMemoryJob.summary}`,
+      next_prompt: (latestMemoryJob.xiaowang_next_interaction_ideas || [])[0]?.text || "要不要让小汪根据今天的记录，继续帮主人挑一轮？",
+      job_id: latestMemoryJob.job_id || "",
+      engine: latestMemoryJob.engine || "",
+      requested_engine: latestMemoryJob.requested_engine || "",
+      fallback_reason: latestMemoryJob.fallback_reason || "",
+      updated_at: latestMemoryJob.stored_at || "",
+    };
+  }
   if (latestDreamJob?.summary) {
     return {
       source: "openclaw_dreaming",
@@ -1577,10 +1589,13 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date, include
     if (profileJob?.profile) foodInsightProfile = profileJob.profile;
   }
   const latestDreamJob = await getLatestOpenClawJobForDay({userId, dayId});
+  const latestDailyMemoryJob = (intelligenceJobs.jobs || [])
+    .find((job) => job.mode === "manual_daily_review") || null;
   const dailySummary = buildDiarySummary({
     mealSessions,
     memoryCandidates,
     confirmedPreferences,
+    latestMemoryJob: latestDailyMemoryJob,
     latestDreamJob,
   });
   const weeklySummary = buildWeeklySummary({latestWeekJob: (weekJobs.jobs || [])[0] || null});

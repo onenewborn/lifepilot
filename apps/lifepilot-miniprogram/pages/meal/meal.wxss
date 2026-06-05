@@ -2192,6 +2192,41 @@ button::after {
   color: #fff8ec;
 }
 
+.diary-review-status {
+  margin-bottom: 18rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 16rpx;
+  background: rgba(255, 99, 52, 0.12);
+  border: 1rpx solid rgba(255, 99, 52, 0.22);
+}
+
+.diary-review-status-active {
+  background: rgba(45, 33, 24, 0.9);
+  border-color: rgba(45, 33, 24, 0.2);
+}
+
+.diary-review-status-title {
+  color: #ff6334;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.diary-review-status-active .diary-review-status-title {
+  color: #fff8ec;
+}
+
+.diary-review-status-detail {
+  margin-top: 6rpx;
+  color: rgba(45, 33, 24, 0.68);
+  font-size: 21rpx;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.diary-review-status-active .diary-review-status-detail {
+  color: rgba(255, 248, 236, 0.72);
+}
+
 .diary-section {
   margin-top: 22rpx;
 }

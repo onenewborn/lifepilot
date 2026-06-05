@@ -271,6 +271,8 @@ Page({
     diary: null,
     isDiaryLoading: false,
     isDreaming: false,
+    dreamStatusText: "",
+    dreamStatusDetail: "",
     editingMemoryCandidateId: "",
     memoryEditText: "",
     diaryError: "",
@@ -1463,20 +1465,37 @@ Page({
   async runXiaowangDreaming() {
     if (this.data.isDreaming) return;
     const dayId = this.data.diary && this.data.diary.day_id ? this.data.diary.day_id : todayDayId(DEFAULT_USER_ID);
-    this.setData({ isDreaming: true });
+    this.setData({
+      isDreaming: true,
+      dreamStatusText: "小汪正在深度复盘",
+      dreamStatusDetail: "正在交给 Memory Intelligence 整理今天的吃饭记录，可能需要一小会儿。"
+    });
     wx.showToast({ title: "小汪开始复盘", icon: "none" });
     try {
       const payload = await xiaowangApi.runDreaming({
         user_id: DEFAULT_USER_ID,
         day_id: dayId,
-        api_base: getApiBaseUrl(),
-        transport: "gateway_client",
-        local: false,
-        timeout_seconds: 240
+        mode: "manual_daily_review",
+        engine: "openclaw_agent",
+        timeout_seconds: 120,
+        source: "miniapp_diary_manual_review"
       });
-      wx.showToast({ title: payload.run && payload.run.ok ? "复盘完成" : "复盘已返回", icon: "none" });
+      const job = payload.job || {};
+      const fallbackReason = job.fallback_reason || "";
+      const completedByOpenClaw = job.engine === "openclaw_agent" && !fallbackReason;
+      this.setData({
+        dreamStatusText: completedByOpenClaw ? "深度复盘完成" : "已先生成快速复盘",
+        dreamStatusDetail: completedByOpenClaw
+          ? "小汪已经用 OpenClaw 整理了今日小结和待确认记忆。"
+          : "OpenClaw 复盘较慢，后端已先用快速策略生成今日小结。"
+      });
+      wx.showToast({ title: completedByOpenClaw ? "复盘完成" : "已快速复盘", icon: "none" });
       await this.loadXiaowangDiary();
     } catch (error) {
+      this.setData({
+        dreamStatusText: "复盘暂时没完成",
+        dreamStatusDetail: error.message || "可以稍后再试，已有记录不会丢。"
+      });
       wx.showToast({ title: error.message || "复盘失败", icon: "none" });
     } finally {
       this.setData({ isDreaming: false });

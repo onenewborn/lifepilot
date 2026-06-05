@@ -38,7 +38,7 @@ function getDiary(params = {}) {
 }
 
 function runDreaming(data = {}) {
-  return request("/api/openclaw/run-dream", { data, timeout: 320000 });
+  return request("/api/memory/intelligence/run", { data, timeout: 220000 });
 }
 
 module.exports = {

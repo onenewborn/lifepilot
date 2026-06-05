@@ -628,6 +628,10 @@
     </view>
 
     <view wx:if="{{diaryError}}" class="error">{{diaryError}}</view>
+    <view wx:if="{{dreamStatusText}}" class="diary-review-status {{isDreaming ? 'diary-review-status-active' : ''}}">
+      <view class="diary-review-status-title">{{dreamStatusText}}</view>
+      <view class="diary-review-status-detail">{{dreamStatusDetail}}</view>
+    </view>
 
     <view wx:if="{{diary && diary.daily_summary}}" class="diary-summary-card">
       <view class="diary-summary-label">今日小结</view>
