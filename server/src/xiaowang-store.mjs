@@ -514,7 +514,8 @@ function buildOpenClawChatMessage({message, session, userId = DEFAULT_USER_ID, d
 async function getOpenClawChatReply({message, session, userId, dayId, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}) {
   const result = await requestOpenClawAgent({
     sessionId: `lifepilot-chat-${session.session_id}`,
-    timeoutSeconds: process.env.LIFEPILOT_XIAOWANG_OPENCLAW_TIMEOUT_SECONDS || 90,
+    timeoutSeconds: process.env.LIFEPILOT_XIAOWANG_OPENCLAW_TIMEOUT_SECONDS || 45,
+    thinking: process.env.LIFEPILOT_XIAOWANG_OPENCLAW_THINKING || "low",
     idempotencyKey: `lifepilot-chat-${session.session_id}-${Date.now()}-${randomUUID().slice(0, 6)}`,
     message: buildOpenClawChatMessage({message, session, userId, dayId, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode, target: "openclaw"}),
   });
