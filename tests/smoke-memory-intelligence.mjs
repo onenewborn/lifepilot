@@ -102,6 +102,19 @@ try {
   assert.ok(storedProfile.food_choice_motives.convenience.score > 0);
   assert.ok(Array.isArray(storedProfile.top_motives));
 
+  const legacyDay = await runMemoryIntelligence({
+    mode: "day_dreaming",
+    engine: "openclaw_agent",
+    userId,
+    dayId,
+  });
+  assert.equal(legacyDay.ok, true);
+  assert.equal(legacyDay.job.mode, "manual_daily_review");
+  assert.equal(legacyDay.job.engine, "local_policy");
+  assert.equal(legacyDay.job.requested_engine, "openclaw_agent");
+  assert.equal(legacyDay.job.fallback_reason, "openclaw_agent_engine_not_connected_yet");
+  assert.equal(legacyDay.job.food_insight_profile_updated, true);
+
   const observations = await listMemoryObservations({userId, dayId});
   assert.ok(observations.count >= 2);
 

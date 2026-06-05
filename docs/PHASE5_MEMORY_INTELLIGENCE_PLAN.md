@@ -203,12 +203,22 @@ profile_update
 signal_refresh
 ```
 
-- `/api/openclaw/run-dream` 内部映射：
+- `/api/openclaw/run-dream` 内部映射为兼容 adapter：
 
 ```text
 /api/openclaw/run-dream
--> runMemoryIntelligence({ mode: "manual_daily_review", engine: "openclaw_agent" })
+-> runMemoryIntelligence({ mode: "manual_daily_review", engine })
 ```
+
+`engine` 是统一入口的执行引擎字段，不等于旧接口名称：
+
+```text
+local_policy      当前已接入，后端规则复盘
+openclaw_agent    可请求，但本阶段只记录 requested_engine，并明确 fallback 到 local_policy
+ark               可请求，但本阶段只记录 requested_engine，并明确 fallback 到 local_policy
+```
+
+也就是说，Phase 5C 只完成接口收拢和可观测 fallback，不假装 OpenClaw/Ark 复盘引擎已经接入。
 
 - 保留旧 response 字段，避免前端马上大改：
 
@@ -233,6 +243,7 @@ timing
 
 - 不删除旧接口。
 - 不删除旧 skill。
+- 不接入真正的 OpenClaw/Ark 复盘执行器。
 - 不做 cron 自动触发。
 - 不把 confirmed preference 交给 agent 直接写。
 
@@ -248,6 +259,14 @@ curl -s -X POST http://110.42.208.125/api/openclaw/run-dream \
 curl -s -X POST http://110.42.208.125/api/memory/intelligence/run \
   -H 'content-type: application/json' \
   -d '{"user_id":"demo_weiyingru","mode":"manual_daily_review","day_id":"day_YYYYMMDD_demo_weiyingru","engine":"openclaw_agent"}'
+```
+
+`engine=openclaw_agent` 的预期结果：
+
+```text
+requested_engine=openclaw_agent
+engine=local_policy
+fallback_reason=openclaw_agent_engine_not_connected_yet
 ```
 
 至少跑：

@@ -16,7 +16,14 @@ const OBSERVATION_SCHEMA = "lifepilot.memory_observation.v1";
 const PROFILE_SCHEMA = "lifepilot.food_insight_profile.v1";
 const JOB_SCHEMA = "lifepilot.memory_intelligence_job.v1";
 const DEFAULT_USER_ID = "demo_weiyingru";
-const VALID_MODES = new Set(["instant_review", "day_dreaming", "week_dreaming", "profile_update"]);
+const MODE_ALIASES = {
+  day_dreaming: "manual_daily_review",
+  week_dreaming: "manual_weekly_review",
+  manual_day_review: "manual_daily_review",
+  manual_week_review: "manual_weekly_review",
+};
+const VALID_MODES = new Set(["instant_review", "manual_daily_review", "manual_weekly_review", "session_reflection", "profile_update", "signal_refresh"]);
+const VALID_ENGINES = new Set(["local_policy", "openclaw_agent", "ark"]);
 const SENSITIVE_PATTERNS = [
   /\b\d{17}[\dXx]\b/,
   /\b1[3-9]\d{9}\b/,
@@ -48,6 +55,21 @@ function compactText(value, max = 260) {
   return text.length > max ? `${text.slice(0, max)}...` : text;
 }
 
+function normalizeMode(mode = "manual_daily_review") {
+  const raw = String(mode || "manual_daily_review");
+  const normalized = MODE_ALIASES[raw] || raw;
+  return VALID_MODES.has(normalized) ? normalized : "manual_daily_review";
+}
+
+function normalizeEngine(engine = "local_policy") {
+  const raw = String(engine || "local_policy");
+  return VALID_ENGINES.has(raw) ? raw : "local_policy";
+}
+
+function isWeeklyMode(mode = "") {
+  return normalizeMode(mode) === "manual_weekly_review";
+}
+
 function jsonCharCount(value) {
   return JSON.stringify(value || {}).length;
 }
@@ -67,12 +89,13 @@ function buildInputMetrics(input = {}) {
     food_insight_profile: jsonCharCount(input.food_insight_profile),
   };
   const charCount = jsonCharCount(input);
+  const thresholdChars = isWeeklyMode(input.mode) ? 80000 : (input.mode === "profile_update" ? 50000 : 60000);
   return {
     char_count: charCount,
     estimated_tokens: estimateTokensFromChars(charCount),
     section_counts: sections,
-    threshold_chars: input.mode === "week_dreaming" ? 80000 : (input.mode === "profile_update" ? 50000 : 60000),
-    over_threshold: charCount > (input.mode === "week_dreaming" ? 80000 : (input.mode === "profile_update" ? 50000 : 60000)),
+    threshold_chars: thresholdChars,
+    over_threshold: charCount > thresholdChars,
   };
 }
 
@@ -443,21 +466,21 @@ function compactCandidatesForInput(candidates = [], limit = 20) {
 }
 
 export async function buildMemoryIntelligenceInput({
-  mode = "day_dreaming",
+  mode = "manual_daily_review",
   userId = DEFAULT_USER_ID,
   dayId = "",
   lookbackDays = 7,
   observationId: targetObservationId = "",
 } = {}) {
-  const resolvedMode = VALID_MODES.has(mode) ? mode : "day_dreaming";
+  const resolvedMode = normalizeMode(mode);
   const resolvedDayId = dayId || createDayId(userId, new Date());
   const [pending, preferences, observationsResult] = await Promise.all([
     listMemoryCandidates({userId, status: "pending"}),
     listConfirmedPreferences({userId, status: "active"}),
-    listMemoryObservations({userId, dayId: resolvedMode === "week_dreaming" ? "" : resolvedDayId, limit: 80}),
+    listMemoryObservations({userId, dayId: isWeeklyMode(resolvedMode) ? "" : resolvedDayId, limit: 80}),
   ]);
   const observations = observationsResult.observations || [];
-  const compactObservations = compactObservationsForInput(observations, resolvedMode === "week_dreaming" ? 80 : 40);
+  const compactObservations = compactObservationsForInput(observations, isWeeklyMode(resolvedMode) ? 80 : 40);
   const observation = targetObservationId
     ? observations.find((item) => item.observation_id === targetObservationId) || null
     : compactObservations[0] || null;
@@ -591,11 +614,12 @@ function localFoodInsightProfile({userId, observations = [], preferences = []} =
 }
 
 function buildLocalIntelligenceResult(input = {}) {
+  const mode = normalizeMode(input.mode || "manual_daily_review");
   const observation = input.observation || null;
   const observations = input.observations || [];
   const preferences = input.confirmed_preferences || [];
   const result = {
-    mode: input.mode || "day_dreaming",
+    mode,
     user_id: input.user_id || DEFAULT_USER_ID,
     day_id: input.day_id || "",
     summary: "",
@@ -606,7 +630,7 @@ function buildLocalIntelligenceResult(input = {}) {
     food_insight_profile: null,
     xiaowang_next_interaction_ideas: [],
   };
-  if (input.mode === "instant_review" && observation) {
+  if (mode === "instant_review" && observation) {
     const candidate = inferCandidateFromObservation(observation);
     result.summary = candidate
       ? "这条观察包含明确或强烈的长期偏好信号，适合展示为待确认记忆。"
@@ -620,7 +644,7 @@ function buildLocalIntelligenceResult(input = {}) {
     if (candidate) result.memory_candidates = [candidate];
     return result;
   }
-  if (input.mode === "profile_update") {
+  if (mode === "profile_update") {
     result.summary = "已根据近期饭点和小汪观察更新食物选择画像。";
     result.food_insight_profile = localFoodInsightProfile({
       userId: input.user_id,
@@ -658,7 +682,7 @@ function buildLocalIntelligenceResult(input = {}) {
     timing_hint: "open_diary",
     text: "主人，要不要看看小汪根据今天记录整理出来的偏好？",
   }] : [];
-  if (input.mode === "day_dreaming") {
+  if (mode === "manual_daily_review") {
     result.food_insight_profile = localFoodInsightProfile({
       userId: input.user_id,
       observations,
@@ -669,7 +693,10 @@ function buildLocalIntelligenceResult(input = {}) {
 }
 
 export async function storeMemoryIntelligenceResult({
-  mode = "day_dreaming",
+  mode = "manual_daily_review",
+  engine = "local_policy",
+  requestedEngine = "",
+  fallbackReason = "",
   userId = DEFAULT_USER_ID,
   dayId = "",
   observationId: sourceObservationId = "",
@@ -679,9 +706,11 @@ export async function storeMemoryIntelligenceResult({
   result = {},
   source = "local_policy",
 } = {}) {
-  const resolvedMode = VALID_MODES.has(mode) ? mode : "day_dreaming";
+  const resolvedMode = normalizeMode(mode);
+  const resolvedEngine = normalizeEngine(engine);
+  const resolvedRequestedEngine = requestedEngine ? normalizeEngine(requestedEngine) : resolvedEngine;
   const normalized = {
-    mode: result.mode || resolvedMode,
+    mode: normalizeMode(result.mode || resolvedMode),
     user_id: result.user_id || userId,
     day_id: result.day_id || dayId,
     summary: compactText(result.summary || ""),
@@ -746,6 +775,9 @@ export async function storeMemoryIntelligenceResult({
   }
   const review = {
     mode: normalized.mode,
+    engine: resolvedEngine,
+    requested_engine: resolvedRequestedEngine,
+    fallback_reason: fallbackReason || "",
     source,
     summary: normalized.summary,
     candidate_count: candidateResult.created_count || 0,
@@ -761,6 +793,9 @@ export async function storeMemoryIntelligenceResult({
     schema_version: JOB_SCHEMA,
     job_id: jobId(),
     mode: normalized.mode,
+    engine: resolvedEngine,
+    requested_engine: resolvedRequestedEngine,
+    fallback_reason: fallbackReason || "",
     user_id: normalized.user_id,
     day_id: normalized.day_id,
     source,
@@ -791,7 +826,8 @@ export async function storeMemoryIntelligenceResult({
 }
 
 export async function runMemoryIntelligence({
-  mode = "day_dreaming",
+  mode = "manual_daily_review",
+  engine = "local_policy",
   userId = DEFAULT_USER_ID,
   dayId = "",
   observationId: targetObservationId = "",
@@ -799,9 +835,13 @@ export async function runMemoryIntelligence({
   source = "local_policy",
 } = {}) {
   const startedAt = Date.now();
+  const requestedEngine = normalizeEngine(engine);
+  const resolvedEngine = requestedEngine === "local_policy" ? "local_policy" : "local_policy";
+  const fallbackReason = requestedEngine === resolvedEngine ? "" : `${requestedEngine}_engine_not_connected_yet`;
+  const resolvedMode = normalizeMode(mode);
   const inputStartedAt = Date.now();
   const inputPayload = await buildMemoryIntelligenceInput({
-    mode,
+    mode: resolvedMode,
     userId,
     dayId,
     observationId: targetObservationId,
@@ -814,14 +854,17 @@ export async function runMemoryIntelligence({
   const policyMs = Date.now() - policyStartedAt;
   const storeStartedAt = Date.now();
   const stored = await storeMemoryIntelligenceResult({
-    mode,
+    mode: resolvedMode,
+    engine: resolvedEngine,
+    requestedEngine,
+    fallbackReason,
     userId,
     dayId: inputPayload.input.day_id,
     observationId: targetObservationId,
     input: inputPayload.input,
     inputMetrics: inputPayload.input_metrics,
     result,
-    source,
+    source: source || resolvedEngine,
     timing: {
       input_build_ms: inputBuildMs,
       agent_ms: policyMs,
@@ -843,6 +886,7 @@ export async function runMemoryIntelligence({
 }
 
 export async function listMemoryIntelligenceJobs({userId = "", dayId = "", mode = "", limit = 20} = {}) {
+  const normalizedMode = mode ? normalizeMode(mode) : "";
   let entries = [];
   try {
     entries = await readdir(jobsRoot());
@@ -857,7 +901,7 @@ export async function listMemoryIntelligenceJobs({userId = "", dayId = "", mode 
     if (!job || job.schema_version !== JOB_SCHEMA) continue;
     if (userId && job.user_id !== userId) continue;
     if (dayId && job.day_id !== dayId) continue;
-    if (mode && job.mode !== mode) continue;
+    if (normalizedMode && normalizeMode(job.mode) !== normalizedMode) continue;
     jobs.push(job);
   }
   return {

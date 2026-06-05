@@ -29,7 +29,6 @@ import { executeMemoryManageOperation } from "./memory-manager.mjs";
 import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
 import { buildDealSearchContext, buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantsFromText, searchMerchantCandidates } from "./merchant-tools.mjs";
 import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
-import { runOpenClawDreamAgent } from "./openclaw-runner.mjs";
 import { getXiaowangChatJob, getXiaowangChatSession, handleXiaowangChat, listXiaowangChatSessions, listXiaowangSkills, readXiaowangDiary, startXiaowangChatJob } from "./xiaowang-store.mjs";
 import {
   buildMemoryIntelligenceInput,
@@ -1178,7 +1177,7 @@ async function handleMemoryPostMealFeedback(req, res) {
 
 async function handleMemoryIntelligenceInput(res, url) {
   const payload = await buildMemoryIntelligenceInput({
-    mode: url.searchParams.get("mode") || "day_dreaming",
+    mode: url.searchParams.get("mode") || "manual_daily_review",
     userId: userIdFromUrl(url),
     dayId: url.searchParams.get("day_id") || url.searchParams.get("dayId") || "",
     observationId: url.searchParams.get("observation_id") || url.searchParams.get("observationId") || "",
@@ -1190,7 +1189,8 @@ async function handleMemoryIntelligenceInput(res, url) {
 async function handleMemoryIntelligenceRun(req, res) {
   const body = await readBody(req);
   const payload = await runMemoryIntelligence({
-    mode: body.mode || "day_dreaming",
+    mode: body.mode || "manual_daily_review",
+    engine: body.engine || "local_policy",
     userId: body.user_id || body.userId || "demo_weiyingru",
     dayId: body.day_id || body.dayId || "",
     observationId: body.observation_id || body.observationId || "",
@@ -1203,7 +1203,10 @@ async function handleMemoryIntelligenceRun(req, res) {
 async function handleMemoryIntelligenceResult(req, res) {
   const body = await readBody(req);
   const payload = await storeMemoryIntelligenceResult({
-    mode: body.mode || body.result?.mode || "day_dreaming",
+    mode: body.mode || body.result?.mode || "manual_daily_review",
+    engine: body.engine || body.result?.engine || "local_policy",
+    requestedEngine: body.requested_engine || body.requestedEngine || body.result?.requested_engine || "",
+    fallbackReason: body.fallback_reason || body.fallbackReason || body.result?.fallback_reason || "",
     userId: body.user_id || body.userId || body.result?.user_id || "demo_weiyingru",
     dayId: body.day_id || body.dayId || body.result?.day_id || "",
     observationId: body.observation_id || body.observationId || "",
@@ -1402,21 +1405,36 @@ async function handleOpenClawJobByDreamView(res, dreamId) {
 
 async function handleOpenClawRunDream(req, res) {
   const body = await readBody(req);
-  const payload = await runOpenClawDreamAgent({
+  const payload = await runMemoryIntelligence({
+    mode: body.mode || "manual_daily_review",
+    engine: body.engine || "local_policy",
     userId: body.user_id || body.userId || "demo_weiyingru",
-    dayId: body.day_id || body.dayId,
-    apiBase: body.api_base || body.apiBase,
-    timeoutSeconds: body.timeout_seconds || body.timeoutSeconds,
-    sessionId: body.openclaw_session_id || body.openclawSessionId,
-    local: body.local,
-    transport: body.transport || body.openclaw_transport || body.openclawTransport,
+    dayId: body.day_id || body.dayId || "",
+    observationId: body.observation_id || body.observationId || "",
+    lookbackDays: body.lookback_days || body.lookbackDays || 7,
+    source: "openclaw_run_dream_adapter",
   });
   if (!payload.ok) {
-    fail(res, 502, payload.error || "openclaw_agent_failed", payload.error || "OpenClaw agent failed.", payload);
+    fail(res, 502, payload.error || "memory_intelligence_failed", payload.error || "Memory Intelligence failed.", payload);
     return;
   }
   ok(res, {
-    run: payload,
+    run: {
+      ok: true,
+      adapter: "openclaw_run_dream",
+      status: payload.job?.status || "completed",
+      job_id: payload.job?.job_id || "",
+      mode: payload.job?.mode || "",
+      engine: payload.job?.engine || "",
+      requested_engine: payload.job?.requested_engine || "",
+      fallback_reason: payload.job?.fallback_reason || "",
+      timing: payload.job?.timing || null,
+      input_metrics: payload.job?.input_metrics || null,
+      summary: payload.job?.summary || "",
+      candidate_count: payload.job?.accepted_memory_candidates?.length || 0,
+      memory_intelligence_job: payload.job || null,
+    },
+    memory_intelligence: payload,
   });
 }
 

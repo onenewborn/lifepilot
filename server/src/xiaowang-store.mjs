@@ -1559,7 +1559,7 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date, include
   const preferences = await listConfirmedPreferences({userId});
   const observations = await listMemoryObservations({userId, dayId, limit: 12});
   const intelligenceJobs = await listMemoryIntelligenceJobs({userId, dayId, limit: 6});
-  const weekJobs = await listMemoryIntelligenceJobs({userId, mode: "week_dreaming", limit: 1});
+  const weekJobs = await listMemoryIntelligenceJobs({userId, mode: "manual_weekly_review", limit: 1});
   let foodInsightProfile = await readFoodInsightProfile({userId});
   const mealSessions = (dayContext?.meal_sessions || [])
     .map(xiaowangMealDiaryItem)
