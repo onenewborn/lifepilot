@@ -48,6 +48,34 @@ function compactText(value, max = 260) {
   return text.length > max ? `${text.slice(0, max)}...` : text;
 }
 
+function jsonCharCount(value) {
+  return JSON.stringify(value || {}).length;
+}
+
+function estimateTokensFromChars(charCount = 0) {
+  return Math.ceil(Number(charCount || 0) / 2);
+}
+
+function buildInputMetrics(input = {}) {
+  const sections = {
+    observation: jsonCharCount(input.observation),
+    observations: jsonCharCount(input.observations),
+    day_context: jsonCharCount(input.day_context),
+    meal_sessions: jsonCharCount(input.meal_sessions),
+    pending_memory_candidates: jsonCharCount(input.pending_memory_candidates),
+    confirmed_preferences: jsonCharCount(input.confirmed_preferences),
+    food_insight_profile: jsonCharCount(input.food_insight_profile),
+  };
+  const charCount = jsonCharCount(input);
+  return {
+    char_count: charCount,
+    estimated_tokens: estimateTokensFromChars(charCount),
+    section_counts: sections,
+    threshold_chars: input.mode === "week_dreaming" ? 80000 : (input.mode === "profile_update" ? 50000 : 60000),
+    over_threshold: charCount > (input.mode === "week_dreaming" ? 80000 : (input.mode === "profile_update" ? 50000 : 60000)),
+  };
+}
+
 function hasSensitiveText(text) {
   return SENSITIVE_PATTERNS.some((pattern) => pattern.test(String(text || "")));
 }
@@ -263,6 +291,43 @@ function compactSessionForInput(session = {}) {
   };
 }
 
+function compactDayContextForInput(dayContext = {}) {
+  const mealSessions = Array.isArray(dayContext.meal_sessions) ? dayContext.meal_sessions : [];
+  const xiaowangChats = Array.isArray(dayContext.xiaowang_chat_sessions) ? dayContext.xiaowang_chat_sessions : [];
+  const memoryEvents = Array.isArray(dayContext.memory_events) ? dayContext.memory_events : [];
+  return {
+    day_id: dayContext.day_id || dayContext.id || "",
+    user_id: dayContext.user_id || "",
+    date: dayContext.date || "",
+    timezone: dayContext.timezone || "Asia/Shanghai",
+    meal_session_count: mealSessions.length,
+    meal_sessions: mealSessions.slice(-8).map((item) => ({
+      session_id: item.session_id || "",
+      stage: item.stage || "",
+      status: item.status || "",
+      goal: compactText(item.goal || item.entry_summary || item.summary || "", 160),
+      summary: compactText(item.summary || item.diary_text || "", 180),
+      created_at: item.created_at || "",
+      updated_at: item.updated_at || "",
+    })),
+    xiaowang_chat_count: xiaowangChats.length,
+    xiaowang_chat_sessions: xiaowangChats.slice(-8).map((item) => ({
+      session_id: item.session_id || "",
+      title: compactText(item.title || "", 80),
+      summary: compactText(item.summary || item.latest_message || "", 180),
+      message_count: item.message_count || 0,
+      created_at: item.created_at || "",
+      updated_at: item.updated_at || "",
+    })),
+    memory_event_count: memoryEvents.length,
+    memory_events: memoryEvents.slice(-12).map((item) => ({
+      type: item.type || "",
+      summary: compactText(item.summary || item.text || item.statement || "", 180),
+      created_at: item.created_at || "",
+    })),
+  };
+}
+
 async function sessionsForDay(dayContext = {}) {
   const sessions = [];
   for (const item of dayContext.meal_sessions || []) {
@@ -270,6 +335,52 @@ async function sessionsForDay(dayContext = {}) {
     if (session) sessions.push(compactSessionForInput(session));
   }
   return sessions;
+}
+
+function compactObservationsForInput(observations = [], limit = 40) {
+  return (Array.isArray(observations) ? observations : []).slice(0, limit).map((item) => ({
+    observation_id: item.observation_id || "",
+    day_id: item.day_id || "",
+    source: item.source || "",
+    type: item.type || "",
+    review_status: item.review_status || "",
+    confidence: item.confidence ?? 0.5,
+    text: compactText(item.text || item.summary || "", 220),
+    summary: compactText(item.summary || item.text || "", 180),
+    tags: Array.isArray(item.tags) ? item.tags.slice(0, 8) : [],
+    evidence: Array.isArray(item.evidence) ? item.evidence.slice(0, 3).map((evidence) => ({
+      source: evidence.source || "",
+      session_id: evidence.session_id || "",
+      reason: compactText(evidence.reason || evidence.text || evidence.summary || "", 160),
+    })) : [],
+    created_at: item.created_at || "",
+  }));
+}
+
+function compactPreferencesForInput(preferences = [], limit = 24) {
+  return (Array.isArray(preferences) ? preferences : []).slice(0, limit).map((item) => ({
+    preference_id: item.preference_id || "",
+    category: item.category || "",
+    scope: item.scope || "",
+    polarity: item.polarity || "",
+    strength: item.strength ?? 0,
+    confidence: item.confidence ?? 0,
+    status: item.status || "",
+    statement: compactText(item.statement || item.confirmation_text || "", 220),
+  }));
+}
+
+function compactCandidatesForInput(candidates = [], limit = 20) {
+  return (Array.isArray(candidates) ? candidates : []).slice(0, limit).map((item) => ({
+    candidate_id: item.candidate_id || "",
+    type: item.type || "",
+    category: item.category || "",
+    polarity: item.polarity || "",
+    confidence: item.confidence ?? 0,
+    status: item.status || "",
+    statement: compactText(item.statement || "", 220),
+    confirmation_text: compactText(item.confirmation_text || "", 160),
+  }));
 }
 
 export async function buildMemoryIntelligenceInput({
@@ -287,34 +398,37 @@ export async function buildMemoryIntelligenceInput({
     listMemoryObservations({userId, dayId: resolvedMode === "week_dreaming" ? "" : resolvedDayId, limit: 80}),
   ]);
   const observations = observationsResult.observations || [];
+  const compactObservations = compactObservationsForInput(observations, resolvedMode === "week_dreaming" ? 80 : 40);
   const observation = targetObservationId
     ? observations.find((item) => item.observation_id === targetObservationId) || null
-    : observations[0] || null;
+    : compactObservations[0] || null;
   const dayContext = await getDayContext(resolvedDayId);
   const mealSessions = dayContext ? await sessionsForDay(dayContext) : [];
+  const input = {
+    schema_version: "lifepilot.memory_intelligence_input.v1",
+    mode: resolvedMode,
+    user_id: userId,
+    day_id: resolvedDayId,
+    lookback_days: Number(lookbackDays || 7),
+    generated_at: nowIso(),
+    policy: {
+      memory_authority: "lifepilot_backend",
+      may_create_confirmed_preferences: false,
+      may_modify_meal_session: false,
+      fcq_for_diary_only: true,
+      demo_pending_candidates_can_be_visible: true,
+    },
+    observation,
+    observations: compactObservations,
+    day_context: dayContext ? compactDayContextForInput(dayContext) : null,
+    meal_sessions: mealSessions,
+    pending_memory_candidates: compactCandidatesForInput(pending.candidates || []),
+    confirmed_preferences: compactPreferencesForInput(preferences.preferences || []),
+  };
   return {
     ok: true,
-    input: {
-      schema_version: "lifepilot.memory_intelligence_input.v1",
-      mode: resolvedMode,
-      user_id: userId,
-      day_id: resolvedDayId,
-      lookback_days: Number(lookbackDays || 7),
-      generated_at: nowIso(),
-      policy: {
-        memory_authority: "lifepilot_backend",
-        may_create_confirmed_preferences: false,
-        may_modify_meal_session: false,
-        fcq_for_diary_only: true,
-        demo_pending_candidates_can_be_visible: true,
-      },
-      observation,
-      observations,
-      day_context: dayContext || null,
-      meal_sessions: mealSessions,
-      pending_memory_candidates: pending.candidates || [],
-      confirmed_preferences: preferences.preferences || [],
-    },
+    input,
+    input_metrics: buildInputMetrics(input),
   };
 }
 
@@ -501,6 +615,8 @@ export async function storeMemoryIntelligenceResult({
   dayId = "",
   observationId: sourceObservationId = "",
   input = null,
+  inputMetrics = null,
+  timing = null,
   result = {},
   source = "local_policy",
 } = {}) {
@@ -598,6 +714,8 @@ export async function storeMemoryIntelligenceResult({
     preference_update_suggestions: normalized.preference_update_suggestions,
     food_insight_profile_updated: Boolean(profileResult?.ok),
     xiaowang_next_interaction_ideas: normalized.xiaowang_next_interaction_ideas,
+    input_metrics: inputMetrics || (input ? buildInputMetrics(input) : null),
+    timing: timing || null,
     input_snapshot: input || null,
     raw_result: result,
     stored_at: nowIso(),
@@ -621,6 +739,8 @@ export async function runMemoryIntelligence({
   lookbackDays = 7,
   source = "local_policy",
 } = {}) {
+  const startedAt = Date.now();
+  const inputStartedAt = Date.now();
   const inputPayload = await buildMemoryIntelligenceInput({
     mode,
     userId,
@@ -629,16 +749,38 @@ export async function runMemoryIntelligence({
     lookbackDays,
   });
   if (!inputPayload.ok) return inputPayload;
+  const inputBuildMs = Date.now() - inputStartedAt;
+  const policyStartedAt = Date.now();
   const result = buildLocalIntelligenceResult(inputPayload.input);
-  return storeMemoryIntelligenceResult({
+  const policyMs = Date.now() - policyStartedAt;
+  const storeStartedAt = Date.now();
+  const stored = await storeMemoryIntelligenceResult({
     mode,
     userId,
     dayId: inputPayload.input.day_id,
     observationId: targetObservationId,
     input: inputPayload.input,
+    inputMetrics: inputPayload.input_metrics,
     result,
     source,
+    timing: {
+      input_build_ms: inputBuildMs,
+      agent_ms: policyMs,
+      store_ms: 0,
+      total_ms: 0,
+    },
   });
+  const storeMs = Date.now() - storeStartedAt;
+  const totalMs = Date.now() - startedAt;
+  if (stored?.job) {
+    stored.job.timing = {
+      ...(stored.job.timing || {}),
+      store_ms: storeMs,
+      total_ms: totalMs,
+    };
+    await writeJsonAtomic(jobPath(stored.job.job_id), stored.job);
+  }
+  return stored;
 }
 
 export async function listMemoryIntelligenceJobs({userId = "", dayId = "", mode = "", limit = 20} = {}) {

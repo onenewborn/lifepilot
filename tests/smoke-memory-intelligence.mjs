@@ -48,6 +48,9 @@ try {
   assert.equal(inputResult.ok, true);
   assert.equal(inputResult.input.mode, "instant_review");
   assert.equal(inputResult.input.observation.observation_id, observationResult.observation.observation_id);
+  assert.ok(inputResult.input_metrics.char_count > 0);
+  assert.ok(inputResult.input_metrics.estimated_tokens > 0);
+  assert.ok(inputResult.input_metrics.section_counts.observations > 0);
 
   const instant = await runMemoryIntelligence({
     mode: "instant_review",
@@ -58,6 +61,9 @@ try {
   assert.equal(instant.ok, true);
   assert.equal(instant.job.mode, "instant_review");
   assert.equal(instant.job.accepted_memory_candidates.length, 1);
+  assert.ok(instant.job.input_metrics.char_count > 0);
+  assert.equal(instant.job.input_metrics.over_threshold, false);
+  assert.ok(instant.job.timing.total_ms >= instant.job.timing.input_build_ms);
 
   const pending = await listMemoryCandidates({userId, status: "pending"});
   assert.equal(pending.candidates.length, 1);
@@ -90,6 +96,8 @@ try {
   });
   assert.equal(profile.ok, true);
   assert.equal(profile.job.food_insight_profile_updated, true);
+  assert.ok(profile.job.input_metrics.char_count > 0);
+  assert.ok(profile.job.timing.total_ms >= 0);
   const storedProfile = await readFoodInsightProfile({userId});
   assert.ok(storedProfile.food_choice_motives.convenience.score > 0);
   assert.ok(Array.isArray(storedProfile.top_motives));
