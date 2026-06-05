@@ -128,27 +128,55 @@ profile_update   FCQ / 新奇接受度 / reward profile 汪记本画像
 后端兼容 API：
 
 ```text
+GET  /api/memory/search
+GET  /api/session/memory
+POST /api/memory/candidates
 GET  /api/memory/intelligence/input
 POST /api/memory/intelligence/result
 POST /api/memory/intelligence/run
 GET  /api/memory/intelligence/jobs
 GET  /api/memory/observations
+POST /api/memory/observations
+POST /api/memory/manage
 ```
 
-OpenClaw 只提交结构化分析结果，不直接创建 confirmed preference。
+OpenClaw 可以读取 compact 记忆对象、读取 compact session memory、创建 pending candidate、提交 observation、执行用户明确授权的 memory_manage。不能绕过用户确认直接把推断写成 confirmed preference。
 
 结构化记忆辅助脚本：
 
 ```bash
-LIFEPILOT_MEMORY_ROOT=/memory/users \
-python3 /agent/scripts/update_user_memory.py --user-id demo_weiyingru view
+python3 skills/memory-search/scripts/memory_search_tool.py \
+  --api-base http://110.42.208.125 \
+  --query "川菜 少排队"
+
+python3 skills/session-memory/scripts/session_memory_tool.py \
+  --api-base http://110.42.208.125 \
+  --day-id day_20260605_demo_weiyingru \
+  --query "川菜"
+
+python3 skills/memory-capture/scripts/create_candidate.py \
+  --api-base http://110.42.208.125 \
+  --confirmation-text "以后川菜优先少油少排队" \
+  --category cuisine_context \
+  --polarity positive
+
+python3 skills/memory-manager/scripts/manage_memory.py \
+  --api-base http://110.42.208.125 \
+  --operation confirm_latest_pending
+
+python3 skills/diary-review/scripts/diary_context_tool.py \
+  --api-base http://110.42.208.125 \
+  --include-day-context
 ```
 
-本地调试：
+对应 skills：
 
-```bash
-python3 scripts/update_user_memory.py --user-id demo_weiyingru view
-python3 scripts/eval_memory.py
+```text
+memory-search
+session-memory
+memory-capture
+memory-manager
+diary-review
 ```
 
 问小汪即时聊天中的长期偏好，例如“以后少推荐排队久的店”，必须输出结构化待确认候选：

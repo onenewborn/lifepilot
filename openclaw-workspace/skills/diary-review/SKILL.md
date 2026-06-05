@@ -30,16 +30,39 @@ OpenClaw 负责亲切总结，以及判断应该优先展示什么。
 
 ## LifePilot 工具契约
 
-未来原生工具：
+优先运行脚本读取汪记本上下文：
+
+```bash
+python3 skills/diary-review/scripts/diary_context_tool.py \
+  --api-base "$LIFEPILOT_API_BASE" \
+  --user-id demo_weiyingru \
+  --include-day-context
+```
+
+当前后端兼容 id：
 
 ```text
 diary_context
 ```
 
-当前后端兼容 id：
+问小汪 JSON 兼容 id：
 
 ```text
 diary_review
 ```
 
 不要编造记忆。如果汪记本为空，要说明小汪还没记录到足够内容，并可以主动提出帮用户开始一轮饭点滑卡。
+
+## 测试提示
+
+显式：
+
+```text
+请用 diary-review 看一下今天小汪记了什么。
+```
+
+隐式：
+
+```text
+今天小汪都记了我什么？
+```

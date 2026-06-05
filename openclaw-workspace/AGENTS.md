@@ -38,7 +38,10 @@ POST /api/meal/primitive/start-offers
 - `meal-swipe`：由 OpenClaw 判断饭点入口；泛需求打开需求确认页，明确需求或点名商户可调用后端 primitive 创建商户滑卡 session。
 - `merchant-intel`：基于 LifePilot 后端证据解释单个商户。
 - `merchant-compare`：基于 LifePilot 后端证据对比两个或多个商户，或根据结构化偏好发现候选商户。
+- `memory-search`：检索 confirmed preferences、pending candidates、observations、memory jobs 和 food profile。
+- `session-memory`：读取饭点 session 和 day context 的 compact 摘要。
 - `memory-capture`：把用户明确表达的偏好转成待确认的记忆候选。
+- `memory-manager`：执行用户明确授权的记忆确认、拒绝、修改、删除、暂停或查询操作。
 - `diary-review`：在上下文可用时，复盘已知饭点/记忆信息。
 - `lifepilot-memory-intelligence`：统一记忆智能，支持 instant_review、day_dreaming、week_dreaming、profile_update；旧 `lifepilot-dreaming` 是 day_dreaming 兼容入口。
 

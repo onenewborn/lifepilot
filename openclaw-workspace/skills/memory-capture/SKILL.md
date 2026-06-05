@@ -70,13 +70,19 @@ OpenClaw 负责：
 
 ## LifePilot 工具契约
 
-未来原生工具：
+优先在同一次 agent loop 内运行脚本，直接创建 pending candidate：
 
-```text
-memory_candidate_create
+```bash
+python3 skills/memory-capture/scripts/create_candidate.py \
+  --api-base "$LIFEPILOT_API_BASE" \
+  --user-id demo_weiyingru \
+  --confirmation-text "以后少推荐排队久的店" \
+  --category queue \
+  --polarity negative \
+  --evidence "用户说：以后少推荐排队久的店"
 ```
 
-当前后端兼容 id：
+当前问小汪 JSON 兼容 id 仍然是：
 
 ```text
 memory_capture
@@ -96,3 +102,17 @@ memory_capture
 ```
 
 候选记忆必须具体、可编辑、可撤回。
+
+## 测试提示
+
+显式：
+
+```text
+请用 memory-capture 把“以后川菜优先少油少排队”整理成待确认记忆。
+```
+
+隐式：
+
+```text
+以后我吃川菜的时候，尽量别给我推太油、排队久的。
+```

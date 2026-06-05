@@ -34,7 +34,16 @@ LifePilot 后端负责：
 
 ## 结构化操作
 
-在问小汪 JSON 的 `skill_calls` 里使用：
+优先在同一次 agent loop 内运行脚本，让 LifePilot 后端真实执行记忆操作：
+
+```bash
+python3 skills/memory-manager/scripts/manage_memory.py \
+  --api-base "$LIFEPILOT_API_BASE" \
+  --user-id demo_weiyingru \
+  --operation confirm_latest_pending
+```
+
+在问小汪 JSON 的 `skill_calls` 里也可以使用兼容结构：
 
 ```json
 {
@@ -96,3 +105,17 @@ pause_preference
 - 推断、弱上下文、单次滑卡行为不能直接写 confirmed preference。
 - 用户没有明确授权时，只能用 memory-capture 生成待确认候选。
 - 如果目标不清楚，先用小汪口吻追问，不要编 candidate_id 或 preference_id。
+
+## 测试提示
+
+显式：
+
+```text
+请用 memory-manager 确认最近一条待确认记忆。
+```
+
+隐式：
+
+```text
+刚刚那条可以确认下来。
+```

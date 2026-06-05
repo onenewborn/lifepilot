@@ -420,7 +420,7 @@ function normalizeOpenClawPromptMode(value = "") {
   return mode === "full" ? "full" : "workspace_minimal";
 }
 
-function buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = [], currentContext = null, promptMode = "workspace_minimal"}) {
+function buildOpenClawChatMessage({message, session, userId = DEFAULT_USER_ID, dayId = "", pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = [], currentContext = null, promptMode = "workspace_minimal"}) {
   const context = recentChatContext(session.messages || []);
   const openClawApiBase = (process.env.LIFEPILOT_OPENCLAW_API_BASE || process.env.LIFEPILOT_PUBLIC_API_BASE || `http://${config.host}:${config.port}`).replace(/\/$/, "");
   const mode = normalizeOpenClawPromptMode(promptMode);
@@ -451,6 +451,8 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
     "不要暴露 gateway、runner、transport、schema、OpenClaw 等内部实现。",
     "自然语言理解和目标选择由 OpenClaw 完成；LifePilot 后端只执行结构化工具和 API，不会帮你用规则猜用户意思。",
     `OpenClaw 工具调用 LifePilot API 时必须使用这个 api base：${openClawApiBase}`,
+    `当前 user_id：${userId}`,
+    `当前 day_id：${dayId || "暂无"}`,
   ];
   const fullRoutingLines = [
     "不要再通过二级 router skill 处理。",
@@ -497,12 +499,12 @@ function buildOpenClawChatMessage({message, session, pendingCount, preferenceCou
   ].join("\n");
 }
 
-async function getOpenClawChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}) {
+async function getOpenClawChatReply({message, session, userId, dayId, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}) {
   const result = await requestOpenClawAgent({
     sessionId: `lifepilot-chat-${session.session_id}`,
     timeoutSeconds: process.env.LIFEPILOT_XIAOWANG_OPENCLAW_TIMEOUT_SECONDS || 90,
     idempotencyKey: `lifepilot-chat-${session.session_id}-${Date.now()}-${randomUUID().slice(0, 6)}`,
-    message: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}),
+    message: buildOpenClawChatMessage({message, session, userId, dayId, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}),
   });
   const text = parseOpenClawText(result);
   if (result?.status !== "ok" || !text) {
@@ -528,7 +530,7 @@ function isOpenClawTimeout(error) {
   return /timeout/i.test(error instanceof Error ? error.message : String(error));
 }
 
-async function getArkChatReply({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}) {
+async function getArkChatReply({message, session, userId, dayId, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}) {
   const ai = await callArkChat({
     timeoutMs: Number(process.env.LIFEPILOT_XIAOWANG_ARK_TIMEOUT_MS || 12000),
     maxTokens: 700,
@@ -541,7 +543,7 @@ async function getArkChatReply({message, session, pendingCount, preferenceCount,
       },
       {
         role: "user",
-        content: buildOpenClawChatMessage({message, session, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}),
+        content: buildOpenClawChatMessage({message, session, userId, dayId, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}),
       },
     ],
   });
@@ -1188,6 +1190,8 @@ export async function handleXiaowangChat({body = {}, onProgress = null} = {}) {
       const openclawReply = await getOpenClawChatReply({
         message,
         session,
+        userId,
+        dayId,
         pendingCount: pending.count || 0,
         preferenceCount: preferences.count || 0,
         diarySummary,
@@ -1265,6 +1269,8 @@ export async function handleXiaowangChat({body = {}, onProgress = null} = {}) {
         const arkReply = await getArkChatReply({
           message,
           session,
+          userId,
+          dayId,
           pendingCount: pending.count || 0,
           preferenceCount: preferences.count || 0,
           diarySummary,
