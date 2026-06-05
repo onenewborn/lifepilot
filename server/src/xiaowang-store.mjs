@@ -1153,6 +1153,11 @@ function contentAfterMemoryOperation(content, memoryOperation = {}) {
   return content;
 }
 
+function isSimpleGreeting(message = "") {
+  const normalized = String(message || "").trim().toLowerCase().replace(/[~～!！。,.，\s]/g, "");
+  return /^(hi|hello|hey|哈喽|你好|嗨|在吗|小汪在吗)$/.test(normalized);
+}
+
 export async function handleXiaowangChat({body = {}, onProgress = null} = {}) {
   const reportProgress = typeof onProgress === "function" ? onProgress : () => {};
   const userId = body.user_id || body.userId || DEFAULT_USER_ID;
@@ -1198,7 +1203,10 @@ export async function handleXiaowangChat({body = {}, onProgress = null} = {}) {
   let openclawMeta = null;
   let aiMeta = null;
   if (message) {
-    try {
+    if (isSimpleGreeting(message)) {
+      mode = "local_greeting";
+      content = "主人好呀，小汪在。今天想吃什么，或者想让我帮你看看哪家店？";
+    } else try {
       reportProgress({step: "openclaw", label: "正在调用 OpenClaw 判断是否需要产品 skill"});
       const openclawReply = await getOpenClawChatReply({
         message,
