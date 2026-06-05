@@ -791,6 +791,20 @@ meal-swipe
 
 ### Phase 5：统一 Memory Intelligence
 
+详细执行拆分见：
+
+```text
+docs/PHASE5_MEMORY_INTELLIGENCE_PLAN.md
+```
+
+Phase 5 拆成：
+
+```text
+Phase 5A：定义统一边界和可观测性
+Phase 5B：输入压缩和 prompt 可观测性
+Phase 5C：接口收拢和兼容入口变薄
+```
+
 把：
 
 ```text
