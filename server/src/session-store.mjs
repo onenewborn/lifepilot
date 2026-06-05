@@ -6,6 +6,7 @@ import { config } from "./config.mjs";
 const sessions = new Map();
 const SESSION_SCHEMA_VERSION = "lifepilot.meal_session.v1";
 const DAY_CONTEXT_SCHEMA_VERSION = "lifepilot.day_context.v1";
+const BUSINESS_TIMEZONE_OFFSET_MS = 8 * 60 * 60 * 1000;
 
 function sessionsRoot() {
   return path.join(config.storage.runtimeRoot, "meal_sessions");
@@ -33,11 +34,16 @@ function dayContextPath(dayId) {
 
 function dateKey(value = new Date()) {
   const date = value instanceof Date ? value : new Date(value);
-  return date.toISOString().slice(0, 10).replace(/-/g, "");
+  const businessDate = new Date(date.getTime() + BUSINESS_TIMEZONE_OFFSET_MS);
+  const year = businessDate.getUTCFullYear();
+  const month = String(businessDate.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(businessDate.getUTCDate()).padStart(2, "0");
+  return `${year}${month}${day}`;
 }
 
 function inferMealSlot(date = new Date()) {
-  const hour = date.getHours();
+  const businessDate = new Date(date.getTime() + BUSINESS_TIMEZONE_OFFSET_MS);
+  const hour = businessDate.getUTCHours();
   if (hour >= 5 && hour < 11) return "breakfast";
   if (hour >= 11 && hour < 15) return "lunch";
   if (hour >= 15 && hour < 17) return "afternoon";
@@ -45,8 +51,8 @@ function inferMealSlot(date = new Date()) {
   return "late_night";
 }
 
-export function createSessionId() {
-  return `meal_${dateKey()}_${Date.now()}_${randomUUID().slice(0, 8)}`;
+export function createSessionId(value = new Date()) {
+  return `meal_${dateKey(value)}_${Date.now()}_${randomUUID().slice(0, 8)}`;
 }
 
 export function createDayId(userId, value = new Date()) {
