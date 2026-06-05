@@ -45,7 +45,7 @@ POST /api/meal/primitive/start-offers
 - `diary-review`：在上下文可用时，复盘已知饭点/记忆信息。
 - `lifepilot-memory-intelligence`：统一记忆智能，支持 instant_review、manual_daily_review、manual_weekly_review、profile_update。
 
-内容/视频 skills 可能存在于独立媒体工作流中，但它们不是商户证据来源。
+内容/视频生产线不属于当前运行时 workspace。不要把短视频解析、视频 prompt 或视频生成当成饭点推荐、商户证据或记忆复盘能力。
 
 ## 产品行为边界
 

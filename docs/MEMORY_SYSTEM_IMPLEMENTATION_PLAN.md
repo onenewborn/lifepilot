@@ -690,7 +690,7 @@ docs/MEMORY_SYSTEM_IMPLEMENTATION_PLAN.md
 ```text
 docs/contracts/memory.md
 docs/contracts/memory.md
-docs/PROJECT_STATE.md
+docs/archive/PROJECT_STATE.md
 openclaw-workspace/TOOLS.md
 openclaw-workspace/BOOT.md
 ```
@@ -708,7 +708,7 @@ TOOLS.md 和 BOOT.md 是 OpenClaw 实际操作约束
 ```text
 docs/contracts/memory.md：更新权威账本和 API 合同
 docs/contracts/memory.md：改为 Memory Intelligence manual_daily_review 兼容入口说明
-docs/PROJECT_STATE.md：同步项目状态
+docs/archive/PROJECT_STATE.md：历史项目状态归档
 openclaw-workspace/TOOLS.md：只写已经存在且可调用的工具
 openclaw-workspace/BOOT.md：只写已经确定的运行边界
 ```

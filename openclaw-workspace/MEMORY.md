@@ -92,7 +92,7 @@ LifePilot memory v1 使用六层：
 5. `food_insight_profile`：FCQ / 新奇接受度 / reward profile，只用于汪记本展示。
 6. `recommendation_context`：推荐时可读取的偏好、禁忌、解释依据和冲突提示。
 
-旧脚本 `scripts/update_user_memory.py` 仍是当前最小可用实现；后续应逐步拆到 memory v1 结构，而不是无限扩成一个大脚本。
+当前最小可用实现是 LifePilot 后端 memory service 和配套 skills。不要再使用旧 `scripts/update_user_memory.py` 指令；它不属于当前 workspace 主线。
 
 ## 写入原则
 
@@ -168,34 +168,21 @@ LIFEPILOT_MEMORY_ROOT=/memory/users
 
 ## 当前最小命令
 
-回答“你对我了解什么/你记得我什么/我的画像是什么”之前，必须先读取运行时结构化记忆：
+回答“你对我了解什么/你记得我什么/我的画像是什么”之前，必须通过 LifePilot 后端读取结构化记忆：
 
 ```bash
-LIFEPILOT_MEMORY_ROOT=/memory/users python3 /agent/scripts/update_user_memory.py --user-id demo_weiyingru view
+python3 skills/memory-search/scripts/memory_search_tool.py \
+  --api-base http://110.42.208.125 \
+  --user-id demo_weiyingru \
+  --query "偏好 画像 记忆" \
+  --type all
 ```
 
-本机调试：
+明确记忆写入、确认、修改、暂停或删除请求，必须转成后端可审计的 `memory_manage` 操作：
 
 ```bash
-python3 scripts/update_user_memory.py --user-id demo_weiyingru view
-```
-
-明确记忆请求可以先作为事件写入：
-
-```bash
-python3 scripts/update_user_memory.py --user-id demo_weiyingru append-event --text '<用户原话>' --type memory_request --source openclaw_cli --pending
-python3 scripts/update_user_memory.py --user-id demo_weiyingru process-pending --synthesize
-```
-
-具体菜系、口味、排队容忍度等偏好，优先用 patch 写入，保留审计动作：
-
-```bash
-python3 scripts/update_user_memory.py --user-id demo_weiyingru apply-patch --patch-json '<JSON patch>' --synthesize
-```
-
-删除或清空画像时不要直接删文件，使用脚本保留审计痕迹：
-
-```bash
-python3 scripts/update_user_memory.py --user-id demo_weiyingru forget-preference --preference-id pref_xxx --reason '<原因>' --synthesize
-python3 scripts/update_user_memory.py --user-id demo_weiyingru clear-preferences --reason '<原因>' --synthesize
+python3 skills/memory-manager/scripts/manage_memory.py \
+  --api-base http://110.42.208.125 \
+  --user-id demo_weiyingru \
+  --operation list_memory
 ```

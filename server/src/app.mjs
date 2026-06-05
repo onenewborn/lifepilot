@@ -39,8 +39,6 @@ import {
   storeMemoryIntelligenceResult,
 } from "./memory-intelligence-store.mjs";
 
-let latestLocationProbe = null;
-
 function publicSession(session) {
   return session;
 }
@@ -703,22 +701,6 @@ async function handleMapRoute(req, res) {
     ...body,
     origin: body.origin || body.location || body.user_location || body.userLocation || session?.location,
   }));
-}
-
-async function handleLocationProbe(req, res) {
-  const body = await readBody(req);
-  latestLocationProbe = {
-    received_at: new Date().toISOString(),
-    payload: body,
-  };
-  ok(res, latestLocationProbe);
-}
-
-async function handleLatestLocationProbe(res) {
-  ok(res, {
-    received: Boolean(latestLocationProbe),
-    latest: latestLocationProbe,
-  });
 }
 
 function userIdFromUrl(url, fallback = "demo_weiyingru") {
@@ -1596,14 +1578,6 @@ async function route(req, res) {
     }
     if (req.method === "POST" && url.pathname === "/api/map/route") {
       await handleMapRoute(req, res);
-      return;
-    }
-    if (req.method === "POST" && url.pathname === "/api/location/probe") {
-      await handleLocationProbe(req, res);
-      return;
-    }
-    if (req.method === "GET" && url.pathname === "/api/location/probe/latest") {
-      await handleLatestLocationProbe(res);
       return;
     }
     if ((req.method === "GET" || req.method === "POST") && url.pathname === "/api/weather/forecast") {

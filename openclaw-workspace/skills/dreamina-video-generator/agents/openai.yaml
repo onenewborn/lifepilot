@@ -1,6 +1,0 @@
-interface:
-  display_name: "即梦视频生成"
-  short_description: "用 Dreamina CLI 提交、查询和下载 AI 视频。"
-  default_prompt: "Use $dreamina-video-generator to submit this prompt and references to Dreamina as a 9:16 video."
-policy:
-  allow_implicit_invocation: true

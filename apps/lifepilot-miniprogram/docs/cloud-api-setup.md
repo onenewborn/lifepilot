@@ -59,7 +59,7 @@ curl https://api.lifepilot-xiaowang.cn/api/xiaowang/skills
 
 ## 微信开发者工具设置
 
-当前 `project.config.json` 里 `urlCheck` 是 `false`，便于比赛调试阶段排障。
+当前 `apps/lifepilot-miniprogram/project.config.json` 里 `urlCheck` 是 `false`，便于比赛调试阶段排障。
 
 如果真机预览仍然报连接失败，在微信开发者工具里确认已开启：
 
