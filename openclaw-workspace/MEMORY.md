@@ -28,14 +28,16 @@
 
 OpenClaw workspace 里的 `MEMORY.md` 只定义 agent 记忆规则，不存放权威产品记忆。
 
-涉及 `meal_session`、`day_context`、`memory_candidates`、`confirmed_preferences`、商户反馈或 dreaming 时，OpenClaw 必须通过 LifePilot 后端 API 读写：
+涉及 `meal_session`、`day_context`、`memory_candidates`、`confirmed_preferences`、商户反馈或记忆复盘时，OpenClaw 必须通过 LifePilot 后端 API 读写：
 
 ```text
-GET  /api/openclaw/dream-input
-POST /api/openclaw/dream-result
 GET  /api/memory/ledger
 GET  /api/memory/candidates
 GET  /api/memory/preferences
+GET  /api/memory/intelligence/input
+POST /api/memory/intelligence/result
+POST /api/memory/intelligence/run
+GET  /api/memory/intelligence/jobs
 ```
 
 OpenClaw 不应直接读取或修改：
@@ -46,9 +48,9 @@ OpenClaw 不应直接读取或修改：
 
 除非用户明确要求做底层文件调试。
 
-## OpenClaw Dreaming 记忆边界
+## Memory Intelligence 记忆边界
 
-`skills/lifepilot-dreaming/` 是旧兼容入口；新的统一机制是 `skills/lifepilot-memory-intelligence/`，其中 `day_dreaming` 模式等价于旧 dreaming。它可以根据 day_context 做后台复盘，但只能提交候选和建议。
+统一机制是 `skills/lifepilot-memory-intelligence/`。它可以根据 day_context、meal sessions、observations、pending candidates 和 confirmed preferences 做记忆复盘，但只能提交候选和建议。
 
 可以提交：
 
@@ -64,16 +66,16 @@ OpenClaw 不应直接读取或修改：
 - 已确认用户画像
 - meal session 状态变更
 
-所有 OpenClaw dreaming 产生的记忆都必须先进入后端 pending candidates，由产品后端和用户确认后才可能成为 confirmed preference。
+所有 Memory Intelligence 产生的记忆都必须先进入后端 pending candidates，由产品后端和用户确认后才可能成为 confirmed preference。
 
 ## 统一记忆智能
 
-Reviewer 和 dreaming 合并为同一套 `lifepilot-memory-intelligence` 机制，只是 mode 不同：
+统一记忆智能使用同一套 `lifepilot-memory-intelligence` 机制，只是 mode 不同：
 
 ```text
 instant_review   单条 observation 的即时审查
-day_dreaming     日级 observations 和 meal sessions 复盘
-week_dreaming    跨天重复模式分析
+manual_daily_review   日级 observations 和 meal sessions 复盘
+manual_weekly_review  跨天重复模式分析
 profile_update   FCQ / novelty / reward profile 更新
 ```
 

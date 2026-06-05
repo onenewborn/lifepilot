@@ -20,7 +20,7 @@ function skillDisplayName(skill) {
     memory_capture: "记忆候选",
     memory_manage: "记忆管理",
     diary_review: "汪记本",
-    openclaw_dreaming: "复盘",
+    memory_intelligence_review: "复盘",
     merchant_intel: "商家理解",
     merchant_compare: "商家对比",
     deal_search: "优惠查询",
@@ -270,9 +270,9 @@ Page({
     chatHistoryError: "",
     diary: null,
     isDiaryLoading: false,
-    isDreaming: false,
-    dreamStatusText: "",
-    dreamStatusDetail: "",
+    isMemoryReviewRunning: false,
+    memoryReviewStatusText: "",
+    memoryReviewStatusDetail: "",
     editingMemoryCandidateId: "",
     memoryEditText: "",
     diaryError: "",
@@ -1322,8 +1322,8 @@ Page({
       this.switchMainTab({ currentTarget: { dataset: { tab: "diary" } } });
       return;
     }
-    if (action === "run_dreaming") {
-      this.runXiaowangDreaming();
+    if (action === "run_memory_review") {
+      this.runMemoryIntelligenceReview();
     }
   },
 
@@ -1462,17 +1462,17 @@ Page({
     this.setData({ memoryEditText: event.detail.value || "" });
   },
 
-  async runXiaowangDreaming() {
-    if (this.data.isDreaming) return;
+  async runMemoryIntelligenceReview() {
+    if (this.data.isMemoryReviewRunning) return;
     const dayId = this.data.diary && this.data.diary.day_id ? this.data.diary.day_id : todayDayId(DEFAULT_USER_ID);
     this.setData({
-      isDreaming: true,
-      dreamStatusText: "小汪正在深度复盘",
-      dreamStatusDetail: "正在交给 Memory Intelligence 整理今天的吃饭记录，可能需要一小会儿。"
+      isMemoryReviewRunning: true,
+      memoryReviewStatusText: "小汪正在深度复盘",
+      memoryReviewStatusDetail: "正在交给 Memory Intelligence 整理今天的吃饭记录，可能需要一小会儿。"
     });
     wx.showToast({ title: "小汪开始复盘", icon: "none" });
     try {
-      const payload = await xiaowangApi.runDreaming({
+      const payload = await xiaowangApi.runMemoryReview({
         user_id: DEFAULT_USER_ID,
         day_id: dayId,
         mode: "manual_daily_review",
@@ -1484,8 +1484,8 @@ Page({
       const fallbackReason = job.fallback_reason || "";
       const completedByOpenClaw = job.engine === "openclaw_agent" && !fallbackReason;
       this.setData({
-        dreamStatusText: completedByOpenClaw ? "深度复盘完成" : "已先生成快速复盘",
-        dreamStatusDetail: completedByOpenClaw
+        memoryReviewStatusText: completedByOpenClaw ? "深度复盘完成" : "已先生成快速复盘",
+        memoryReviewStatusDetail: completedByOpenClaw
           ? "小汪已经用 OpenClaw 整理了今日小结和待确认记忆。"
           : "OpenClaw 复盘较慢，后端已先用快速策略生成今日小结。"
       });
@@ -1493,12 +1493,12 @@ Page({
       await this.loadXiaowangDiary();
     } catch (error) {
       this.setData({
-        dreamStatusText: "复盘暂时没完成",
-        dreamStatusDetail: error.message || "可以稍后再试，已有记录不会丢。"
+        memoryReviewStatusText: "复盘暂时没完成",
+        memoryReviewStatusDetail: error.message || "可以稍后再试，已有记录不会丢。"
       });
       wx.showToast({ title: error.message || "复盘失败", icon: "none" });
     } finally {
-      this.setData({ isDreaming: false });
+      this.setData({ isMemoryReviewRunning: false });
     }
   },
 

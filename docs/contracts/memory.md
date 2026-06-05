@@ -46,17 +46,17 @@ data/runtime/memory_intelligence_jobs/<job_id>.json
 
 ## 统一 Memory Intelligence
 
-Reviewer 和 dreaming 统一为 LifePilot Memory Intelligence，只是触发窗口不同：
+LifePilot Memory Intelligence 是统一记忆加工系统，只是触发窗口不同：
 
 ```text
 instant_review   小汪聊天、餐后反馈、session finalize 后的即时 observation 审查
-day_dreaming     日级复盘，兼容旧 openclaw dreaming
-week_dreaming    跨天重复模式分析
+manual_daily_review   日级复盘
+manual_weekly_review  跨天重复模式分析
 profile_update   FCQ / food neophobia / reward profile 汪记本画像
 signal_refresh   把长期记忆和画像转成推荐可执行 signals
 ```
 
-当前阶段 day/week dreaming 只做手动触发，不注册 cron、systemd timer 或 OpenClaw heartbeat。
+当前阶段 daily/weekly review 只做手动触发，不注册 cron、systemd timer 或 OpenClaw heartbeat。
 
 ## 候选记忆
 

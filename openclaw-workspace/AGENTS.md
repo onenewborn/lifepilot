@@ -43,7 +43,7 @@ POST /api/meal/primitive/start-offers
 - `memory-capture`：把用户明确表达的偏好转成待确认的记忆候选。
 - `memory-manager`：执行用户明确授权的记忆确认、拒绝、修改、删除、暂停或查询操作。
 - `diary-review`：在上下文可用时，复盘已知饭点/记忆信息。
-- `lifepilot-memory-intelligence`：统一记忆智能，支持 instant_review、day_dreaming、week_dreaming、profile_update；旧 `lifepilot-dreaming` 是 day_dreaming 兼容入口。
+- `lifepilot-memory-intelligence`：统一记忆智能，支持 instant_review、manual_daily_review、manual_weekly_review、profile_update。
 
 内容/视频 skills 可能存在于独立媒体工作流中，但它们不是商户证据来源。
 

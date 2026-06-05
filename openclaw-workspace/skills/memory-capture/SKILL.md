@@ -11,7 +11,7 @@ summary: 待确认长期记忆候选生成。
 
 - 用户说“记住”“以后”“下次”“别再推荐”“多推荐”“少推荐”。
 - 用户明确表达长期饮食偏好或踩雷反馈。
-- OpenClaw reviewing diary/dreaming evidence finds a candidate preference that should be confirmed by the user.
+- OpenClaw reviewing diary or Memory Intelligence evidence finds a candidate preference that should be confirmed by the user.
 
 ## 记忆边界
 

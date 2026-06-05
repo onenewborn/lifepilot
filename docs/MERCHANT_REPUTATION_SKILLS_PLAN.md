@@ -453,7 +453,7 @@ server/src/merchant-skill-runs.mjs
 ```text
 server/src/app.mjs
 server/src/xiaowang-store.mjs
-server/src/openclaw-runner.mjs
+server/src/openclaw-gateway-client.mjs
 ```
 
 ### merchant-reputation-store.mjs
@@ -507,7 +507,7 @@ POST /api/tools/deal-search-context
 ```text
 存 OpenClaw skill 结果
 给前端读取历史结果
-给汪记本 / dreaming 复盘引用
+给汪记本 / Memory Intelligence 复盘引用
 ```
 
 ## OpenClaw 设计
@@ -558,7 +558,7 @@ deal-search
 3. 拿到证据后，由 OpenClaw 做最终判断。
 4. 判断必须引用量化证据。
 5. 输出结构化 skill result cards。
-6. 慢任务和资料整理进入 dreaming，不阻塞实时聊天。
+6. 慢任务和资料整理进入 Memory Intelligence，不阻塞实时聊天。
 ```
 
 ## 前端展示设计
@@ -682,7 +682,7 @@ confirmed preferences
 pending memory candidates
 ```
 
-### 第二阶段：OpenClaw dreaming 整理
+### 第二阶段：Memory Intelligence 整理
 
 让 OpenClaw 定期整理：
 
@@ -853,7 +853,7 @@ OpenClaw 负责：
 不会伪造实时团购信息。
 ```
 
-### Step 6：OpenClaw merchant reputation dreaming
+### Step 6：OpenClaw merchant reputation review
 
 目标：
 
@@ -864,7 +864,7 @@ OpenClaw 后台整理商家口碑和区域榜单，更新 merchant_reputation �
 要做：
 
 ```text
-扩展 lifepilot-dreaming 输出
+扩展 lifepilot-memory-intelligence 输出
 新增 merchant_reputation_update_suggestions
 后端审核后写入 merchant_reputation
 汪记本展示小汪复盘出的商家洞察
@@ -873,7 +873,7 @@ OpenClaw 后台整理商家口碑和区域榜单，更新 merchant_reputation �
 验收：
 
 ```text
-跑 dreaming 后，能生成商家口碑更新建议。
+跑 Memory Intelligence 后，能生成商家口碑更新建议。
 更新必须可追溯 evidence。
 不会直接覆盖人工 seed，除非通过审核策略。
 ```
@@ -887,7 +887,7 @@ OpenClaw 后台整理商家口碑和区域榜单，更新 merchant_reputation �
 ```text
 OpenClaw-first，但保留 Ark/local fallback。
 前端开发轨迹明确显示 OpenClaw / Ark / 后端兜底。
-重 skill 走后台 dreaming。
+重 skill 走后台 Memory Intelligence。
 实时 tool API 必须快。
 ```
 
@@ -983,7 +983,7 @@ LifePilot 的商家判断不是“后端算分”，也不是“AI 随口推荐�
 后端提供证据。
 OpenClaw 小汪做判断。
 用户反馈校准口碑。
-汪记本和 dreaming 让判断越来越懂主人。
+汪记本和 Memory Intelligence 让判断越来越懂主人。
 ```
 
 这就是小汪食探 skills 的核心。

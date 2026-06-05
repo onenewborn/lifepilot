@@ -6,14 +6,15 @@ import path from "node:path";
 const memoryRoot = await mkdtemp(path.join(tmpdir(), "lifepilot-memory-manager-"));
 process.env.LIFEPILOT_MEMORY_ROOT = memoryRoot;
 
-const { createMemoryCandidatesFromOpenClaw, listConfirmedPreferences, listMemoryCandidates } = await import("../server/src/memory-store.mjs");
+const { createMemoryCandidatesFromIntelligence, listConfirmedPreferences, listMemoryCandidates } = await import("../server/src/memory-store.mjs");
 const { executeMemoryManageOperation, executeMemoryManageOperations } = await import("../server/src/memory-manager.mjs");
 
 const userId = "smoke_memory_manager";
 
 try {
-  const candidateResult = await createMemoryCandidatesFromOpenClaw({
+  const candidateResult = await createMemoryCandidatesFromIntelligence({
     userId,
+    jobId: "mi_smoke_memory_manager",
     dayId: "day_smoke_memory_manager",
     candidates: [{
       statement: "主人不想工作日中午排队太久。",

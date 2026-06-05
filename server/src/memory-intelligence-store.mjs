@@ -5,7 +5,7 @@ import path from "node:path";
 import { config } from "./config.mjs";
 import { getDayContext, getSession, createDayId } from "./session-store.mjs";
 import {
-  createMemoryCandidatesFromOpenClaw,
+  createMemoryCandidatesFromIntelligence,
   ensureMemoryUser,
   listConfirmedPreferences,
   listMemoryCandidates,
@@ -18,8 +18,6 @@ const PROFILE_SCHEMA = "lifepilot.food_insight_profile.v1";
 const JOB_SCHEMA = "lifepilot.memory_intelligence_job.v1";
 const DEFAULT_USER_ID = "demo_weiyingru";
 const MODE_ALIASES = {
-  day_dreaming: "manual_daily_review",
-  week_dreaming: "manual_weekly_review",
   manual_day_review: "manual_daily_review",
   manual_week_review: "manual_weekly_review",
 };
@@ -730,6 +728,7 @@ export async function storeMemoryIntelligenceResult({
       ? (result.xiaowang_next_interaction_ideas || result.xiaowangNextInteractionIdeas)
       : [],
   };
+  const resolvedJobId = jobId();
   const createdObservations = [];
   for (const item of normalized.observations) {
     const created = await createMemoryObservation({
@@ -760,9 +759,9 @@ export async function storeMemoryIntelligenceResult({
     if (created.ok) createdObservations.push(created.observation);
   }
   const candidateResult = normalized.memory_candidates.length
-    ? await createMemoryCandidatesFromOpenClaw({
+    ? await createMemoryCandidatesFromIntelligence({
       userId: normalized.user_id,
-      dreamId: "",
+      jobId: resolvedJobId,
       dayId: normalized.day_id,
       candidates: normalized.memory_candidates,
     })
@@ -792,7 +791,7 @@ export async function storeMemoryIntelligenceResult({
   });
   const job = {
     schema_version: JOB_SCHEMA,
-    job_id: jobId(),
+    job_id: resolvedJobId,
     mode: normalized.mode,
     engine: resolvedEngine,
     requested_engine: resolvedRequestedEngine,

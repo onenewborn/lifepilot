@@ -60,7 +60,7 @@ API_MODE 开关已实现，当前可切 local / tunnel / custom
 汪记本最小版展示今日饭点记录、待确认长期记忆、已确认偏好，并支持“记住 / 先不记”
 ```
 
-阶段表也已同步：`docs/MIGRATION_PHASES.json` 里的 P6 是 `in_progress`，不是空白待办。OpenClaw memory bridge 和 dreaming skill 设计已经有最小实现，后续主要补原生消息渠道、trace 展示和问小汪入口。
+阶段表也已同步：`docs/MIGRATION_PHASES.json` 里的 P6 是 `in_progress`，不是空白待办。OpenClaw memory bridge 和 Memory Intelligence skill 设计已经有最小实现，后续主要补原生消息渠道、trace 展示和问小汪入口。
 
 最新关键提交：
 
@@ -83,7 +83,7 @@ f88c3df chore: add miniprogram api mode switch
 4. 新前端不要直接复制旧 pages/index，要拆成模块。
 5. 旧版视觉和小汪狗头很重要，新版不能太工程化、太丑。
 6. 方向卡第一阶段选的是方向；第二阶段选的是商家，不要再叫 offer。
-7. 实时滑卡链路可以走 Doubao/Ark API；OpenClaw 用在后台、问小汪、skills、dreaming。
+7. 实时滑卡链路可以走 Doubao/Ark API；OpenClaw 用在后台、问小汪、skills、Memory Intelligence。
 8. 记忆权威在产品后端，OpenClaw 可以辅助理解和生成候选。
 ```
 

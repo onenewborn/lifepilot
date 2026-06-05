@@ -28,7 +28,6 @@ import {
 import { executeMemoryManageOperation } from "./memory-manager.mjs";
 import { recordMerchantFeedback } from "./merchant-feedback-store.mjs";
 import { buildDealSearchContext, buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantsFromText, searchMerchantCandidates } from "./merchant-tools.mjs";
-import { buildOpenClawDreamInput, getOpenClawJob, getOpenClawJobByDreamId, storeOpenClawDreamResult } from "./openclaw-store.mjs";
 import { getXiaowangChatJob, getXiaowangChatSession, handleXiaowangChat, listXiaowangChatSessions, listXiaowangSkills, readXiaowangDiary, startXiaowangChatJob } from "./xiaowang-store.mjs";
 import {
   buildMemoryIntelligenceInput,
@@ -102,7 +101,7 @@ function compactCandidateForSearch(item = {}) {
     title: item.confirmation_text || item.statement || "",
     text: item.statement || item.confirmation_text || "",
     confidence: item.confidence ?? null,
-    source_id: item.source_event?.session_id || item.source_event?.dream_id || "",
+    source_id: item.source_event?.session_id || item.source_event?.job_id || "",
     occurred_at: memoryTimestamp(item),
   };
 }
@@ -846,7 +845,7 @@ function buildMemoryPipeline({observations = [], jobs = [], candidates = [], pre
         source_candidate_id: "",
         preference_id: preference?.preference_id || "",
         source_observation_id: candidate.source_event?.observation_id || "",
-        source_dream_id: candidate.source_event?.dream_id || "",
+        source_job_id: candidate.source_event?.job_id || "",
       },
       raw: candidate,
     }));
@@ -1362,86 +1361,6 @@ async function handleMemoryManage(req, res) {
   ok(res, payload);
 }
 
-async function handleOpenClawDreamInput(res, url) {
-  const payload = await buildOpenClawDreamInput({
-    userId: userIdFromUrl(url),
-    dayId: url.searchParams.get("day_id") || url.searchParams.get("dayId") || "",
-    date: url.searchParams.get("date") || "",
-  });
-  if (!payload.ok) {
-    fail(res, 404, payload.error || "dream_input_not_found", payload.error || "Dream input not found.", {
-      day_id: payload.day_id,
-    });
-    return;
-  }
-  ok(res, payload);
-}
-
-async function handleOpenClawDreamResult(req, res) {
-  const body = await readBody(req);
-  const payload = await storeOpenClawDreamResult({body});
-  if (!payload.ok) {
-    fail(res, 422, payload.error || "invalid_dream_result", payload.error || "Invalid dream result.");
-    return;
-  }
-  ok(res, payload);
-}
-
-async function handleOpenClawJobView(res, jobId) {
-  const job = await getOpenClawJob(jobId);
-  if (!job) {
-    fail(res, 404, "openclaw_job_not_found", "OpenClaw job not found.");
-    return;
-  }
-  ok(res, {job});
-}
-
-async function handleOpenClawJobByDreamView(res, dreamId) {
-  const job = await getOpenClawJobByDreamId(dreamId);
-  if (!job) {
-    fail(res, 404, "openclaw_job_not_found", "OpenClaw job not found.");
-    return;
-  }
-  ok(res, {job});
-}
-
-async function handleOpenClawRunDream(req, res) {
-  const body = await readBody(req);
-  const payload = await runMemoryIntelligence({
-    mode: body.mode || "manual_daily_review",
-    engine: body.engine || "local_policy",
-    userId: body.user_id || body.userId || "demo_weiyingru",
-    dayId: body.day_id || body.dayId || "",
-    observationId: body.observation_id || body.observationId || "",
-    lookbackDays: body.lookback_days || body.lookbackDays || 7,
-    timeoutSeconds: body.timeout_seconds || body.timeoutSeconds || 180,
-    sessionId: body.openclaw_session_id || body.openclawSessionId || body.session_id || body.sessionId || "",
-    source: "openclaw_run_dream_adapter",
-  });
-  if (!payload.ok) {
-    fail(res, 502, payload.error || "memory_intelligence_failed", payload.error || "Memory Intelligence failed.", payload);
-    return;
-  }
-  ok(res, {
-    run: {
-      ok: true,
-      adapter: "openclaw_run_dream",
-      status: payload.job?.status || "completed",
-      job_id: payload.job?.job_id || "",
-      mode: payload.job?.mode || "",
-      engine: payload.job?.engine || "",
-      requested_engine: payload.job?.requested_engine || "",
-      fallback_reason: payload.job?.fallback_reason || "",
-      timing: payload.job?.timing || null,
-      input_metrics: payload.job?.input_metrics || null,
-      summary: payload.job?.summary || "",
-      candidate_count: payload.job?.accepted_memory_candidates?.length || 0,
-      memory_intelligence_job: payload.job || null,
-    },
-    memory_intelligence: payload,
-  });
-}
-
 async function handleXiaowangChatRoute(req, res) {
   const body = await readBody(req);
   const payload = await handleXiaowangChat({body});
@@ -1719,18 +1638,6 @@ async function route(req, res) {
       await handleDayContextView(res, decodeURIComponent(url.pathname.slice("/api/day-context/".length)));
       return;
     }
-    if (req.method === "GET" && url.pathname === "/api/openclaw/dream-input") {
-      await handleOpenClawDreamInput(res, url);
-      return;
-    }
-    if (req.method === "POST" && url.pathname === "/api/openclaw/dream-result") {
-      await handleOpenClawDreamResult(req, res);
-      return;
-    }
-    if (req.method === "POST" && url.pathname === "/api/openclaw/run-dream") {
-      await handleOpenClawRunDream(req, res);
-      return;
-    }
     if (req.method === "GET" && url.pathname === "/api/memory/intelligence/input") {
       await handleMemoryIntelligenceInput(res, url);
       return;
@@ -1785,14 +1692,6 @@ async function route(req, res) {
     }
     if (req.method === "GET" && url.pathname === "/api/xiaowang/skills") {
       await handleXiaowangSkillsRoute(res);
-      return;
-    }
-    if (req.method === "GET" && url.pathname.startsWith("/api/openclaw/jobs/by-dream/")) {
-      await handleOpenClawJobByDreamView(res, decodeURIComponent(url.pathname.slice("/api/openclaw/jobs/by-dream/".length)));
-      return;
-    }
-    if (req.method === "GET" && url.pathname.startsWith("/api/openclaw/jobs/")) {
-      await handleOpenClawJobView(res, decodeURIComponent(url.pathname.slice("/api/openclaw/jobs/".length)));
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/memory/post-meal-feedback") {

@@ -380,7 +380,7 @@ export async function createPostMealMemoryCandidates({workspaceRoot = config.sto
   };
 }
 
-export async function createMemoryCandidatesFromOpenClaw({workspaceRoot = config.storage.runtimeRoot, userId, dreamId, dayId, candidates = []} = {}) {
+export async function createMemoryCandidatesFromIntelligence({workspaceRoot = config.storage.runtimeRoot, userId, jobId = "", dayId = "", candidates = []} = {}) {
   const user = await ensureMemoryUser({workspaceRoot, userId});
   const cleanCandidates = Array.isArray(candidates) ? candidates : [];
   if (!cleanCandidates.length) {
@@ -419,10 +419,10 @@ export async function createMemoryCandidatesFromOpenClaw({workspaceRoot = config
       candidate_id: candidateId(),
       schema_version: "lifepilot.memory_candidate.v1",
       user_id: user.userId,
-      source: "openclaw_dream",
+      source: "memory_intelligence",
       source_event: {
-        type: "openclaw_dream",
-        dream_id: dreamId || "",
+        type: "memory_intelligence",
+        job_id: jobId || "",
         day_id: dayId || "",
       },
       type: item.type || "food_preference",

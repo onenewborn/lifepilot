@@ -622,15 +622,15 @@
         <view class="diary-subtitle">主人今天怎么挑饭、哪里犹豫、哪些偏好值得记住，小汪都会慢慢攒起来。</view>
       </view>
       <view class="diary-head-actions">
-        <button class="diary-refresh" loading="{{isDreaming}}" bindtap="runXiaowangDreaming">复盘</button>
+        <button class="diary-refresh" loading="{{isMemoryReviewRunning}}" bindtap="runMemoryIntelligenceReview">复盘</button>
         <button class="diary-refresh" loading="{{isDiaryLoading}}" bindtap="loadXiaowangDiary">刷新</button>
       </view>
     </view>
 
     <view wx:if="{{diaryError}}" class="error">{{diaryError}}</view>
-    <view wx:if="{{dreamStatusText}}" class="diary-review-status {{isDreaming ? 'diary-review-status-active' : ''}}">
-      <view class="diary-review-status-title">{{dreamStatusText}}</view>
-      <view class="diary-review-status-detail">{{dreamStatusDetail}}</view>
+    <view wx:if="{{memoryReviewStatusText}}" class="diary-review-status {{isMemoryReviewRunning ? 'diary-review-status-active' : ''}}">
+      <view class="diary-review-status-title">{{memoryReviewStatusText}}</view>
+      <view class="diary-review-status-detail">{{memoryReviewStatusDetail}}</view>
     </view>
 
     <view wx:if="{{diary && diary.daily_summary}}" class="diary-summary-card">

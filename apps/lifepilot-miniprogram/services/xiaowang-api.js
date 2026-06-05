@@ -37,7 +37,7 @@ function getDiary(params = {}) {
   return request(`/api/xiaowang/diary${query ? `?${query}` : ""}`, { method: "GET", timeout: 30000 });
 }
 
-function runDreaming(data = {}) {
+function runMemoryReview(data = {}) {
   return request("/api/memory/intelligence/run", { data, timeout: 220000 });
 }
 
@@ -48,5 +48,5 @@ module.exports = {
   getChatSession,
   getDiary,
   listChatSessions,
-  runDreaming
+  runMemoryReview
 };

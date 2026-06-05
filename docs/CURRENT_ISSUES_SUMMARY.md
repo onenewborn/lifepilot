@@ -21,7 +21,7 @@ LifePilot 现在已经从“微信小程序连本地后端”推进到“小程�
   → 小汪可调起饭点滑卡
   → 挑饭流程承接方向卡、商家卡、最终确认
   → 汪记本沉淀吃饭行为、待确认记忆、长期偏好
-  → OpenClaw skills 承接商户理解、商户对比、dreaming、记忆候选
+  → OpenClaw skills 承接商户理解、商户对比、Memory Intelligence、记忆候选
 ```
 
 后端默认端口：
@@ -221,7 +221,7 @@ API_MODE 支持 local / tunnel / custom
 meal session 持久化
 day context
 memory candidates / confirmed preferences
-OpenClaw dreaming 基础桥
+Memory Intelligence 基础桥
 merchant reputation seed
 merchant-intel / merchant-compare 证据工具
 merchant-resolve 店名解析工具

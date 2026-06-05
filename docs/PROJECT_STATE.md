@@ -4,7 +4,7 @@
 
 ## 一句话
 
-LifePilot 已经从 `~/.openclaw/workspace` 中拆出，形成独立产品仓库 `/Users/mona/Documents/lifepilot`。当前主线是：用低延迟 API 承接饭点滑卡实时链路，用 OpenClaw 承接后台 dreaming、skills、小汪互动和更重的 agent 工作。
+LifePilot 已经从 `~/.openclaw/workspace` 中拆出，形成独立产品仓库 `/Users/mona/Documents/lifepilot`。当前主线是：用低延迟 API 承接饭点滑卡实时链路，用 Memory Intelligence 承接复盘和记忆加工，用 OpenClaw 承接 skills、小汪互动和更重的 agent 工作。
 
 ## 当前架构边界
 
@@ -14,7 +14,7 @@ LifePilot 已经从 `~/.openclaw/workspace` 中拆出，形成独立产品仓库
   权威 memory CRUD、饭后反馈、低延迟 Ark/Doubao 调用、COS 资产解析。
 
 OpenClaw Runtime
-  负责 AGENTS/SOUL/skills、dreaming、后台任务、小汪互动内容、
+  负责 AGENTS/SOUL/skills、后台任务、小汪互动内容、
   候选记忆复盘、需要工具调用和更长思考的 agent 能力。
 
 LifePilot Memory
@@ -92,7 +92,7 @@ GET/POST /api/queue/status
 POST /api/map/route
 POST /api/memory/post-meal-feedback
 memory candidates / confirmed preferences CRUD
-OpenClaw memory bridge / dreaming skill 测试链路
+OpenClaw memory bridge / Memory Intelligence 测试链路
 本地 memory observations / food insight profile / recommendation signals
 ```
 
@@ -112,7 +112,7 @@ OpenClaw memory bridge / dreaming skill 测试链路
 OpenClaw 用在后台 agent 能力：
 
 ```text
-memory dreaming
+memory intelligence review
 候选记忆整理
 未来小汪互动 skills
 ```
@@ -208,7 +208,7 @@ dislike  左滑放弃
 一次饭点决策 = 一个 meal session
 ```
 
-OpenClaw dreaming 更适合以 day context 为输入：
+Memory Intelligence 复盘更适合以 day context 为输入：
 
 ```text
 一天内的 meal session / 小汪聊天 / 推送互动 / 反馈
@@ -247,7 +247,7 @@ OpenClaw trace / 长连接 / 流式过程展示后续可以用 web 控制台或�
 3. merchant-intel / merchant-compare 的脚本和后端证据工具已经具备雏形，但 OpenClaw sandbox 当前访问不到本地 4331 后端。
 4. 本地端口、手机真机、开发者工具、OpenClaw sandbox 对 127.0.0.1 的理解不同，临时 tunnel 也不稳定；固定 HTTPS API 的优先级升高。
 5. 商户卡解释仍依赖 Ark/Doubao 单卡预取，首张卡可能有等待。
-6. Memory Intelligence / Dreaming 仍需要统一入口和压缩输入；当前 day/week dreaming 先保持手动触发，不做 cron。
+6. Memory Intelligence 已是统一复盘入口；当前手动日/周复盘先保持手动触发，不做 cron。
 7. 根目录有一个未跟踪的临时 project.config.json，暂时不要提交。
 ```
 
@@ -305,5 +305,5 @@ server/src/app.mjs
 server/src/session-store.mjs
 server/src/offer-cards.mjs
 server/src/memory-store.mjs
-server/src/openclaw-store.mjs
+server/src/memory-intelligence-store.mjs
 ```

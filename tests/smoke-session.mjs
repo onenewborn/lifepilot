@@ -585,33 +585,32 @@ try {
   assert.equal(ledger.payload.preferences.length, 1);
   assert.equal(ledger.payload.pending_candidates.length, feedback.payload.created_count - 1);
 
-  const dreamInput = await request(`/api/openclaw/dream-input?user_id=smoke_user&day_id=${encodeURIComponent(dayId)}`);
-  assert.equal(dreamInput.status, 200);
-  assert.equal(dreamInput.payload.ok, true);
-  assert.equal(dreamInput.payload.dream_input.schema_version, "lifepilot.openclaw_dream_input.v1");
-  assert.equal(dreamInput.payload.dream_input.user_id, "smoke_user");
-  assert.equal(dreamInput.payload.dream_input.day_id, dayId);
-  assert.equal(dreamInput.payload.dream_input.policy.memory_authority, "lifepilot_backend");
-  assert.equal(dreamInput.payload.dream_input.policy.may_create_confirmed_preferences, false);
-  assert.equal(dreamInput.payload.dream_input.policy.may_modify_meal_session, false);
-  assert.ok(dreamInput.payload.dream_input.allowed_outputs.includes("memory_candidates"));
-  assert.ok(dreamInput.payload.dream_input.meal_sessions.length >= 2);
-  const dreamMealSession = dreamInput.payload.dream_input.meal_sessions.find((item) => item.session_id === "smoke_p1_session");
-  assert.ok(dreamMealSession);
-  assert.equal(dreamMealSession.status, "finalized");
-  assert.equal(dreamMealSession.direction_events.length, 2);
-  assert.equal(dreamInput.payload.dream_input.confirmed_preferences.length, 1);
-  assert.ok(Array.isArray(dreamInput.payload.dream_input.pending_memory_candidates));
-  assert.ok(dreamInput.payload.dream_input.merchant_feedback_summary.merchants.length >= 1);
+  const intelligenceInput = await request(`/api/memory/intelligence/input?user_id=smoke_user&day_id=${encodeURIComponent(dayId)}&mode=manual_daily_review`);
+  assert.equal(intelligenceInput.status, 200);
+  assert.equal(intelligenceInput.payload.ok, true);
+  assert.equal(intelligenceInput.payload.input.schema_version, "lifepilot.memory_intelligence_input.v1");
+  assert.equal(intelligenceInput.payload.input.mode, "manual_daily_review");
+  assert.equal(intelligenceInput.payload.input.user_id, "smoke_user");
+  assert.equal(intelligenceInput.payload.input.day_id, dayId);
+  assert.equal(intelligenceInput.payload.input.policy.memory_authority, "lifepilot_backend");
+  assert.equal(intelligenceInput.payload.input.policy.may_create_confirmed_preferences, false);
+  assert.equal(intelligenceInput.payload.input.policy.may_modify_meal_session, false);
+  assert.ok(intelligenceInput.payload.input.meal_sessions.length >= 2);
+  const reviewMealSession = intelligenceInput.payload.input.meal_sessions.find((item) => item.session_id === "smoke_p1_session");
+  assert.ok(reviewMealSession);
+  assert.equal(reviewMealSession.status, "finalized");
+  assert.equal(reviewMealSession.direction_event_count, 2);
+  assert.equal(intelligenceInput.payload.input.confirmed_preferences.length, 1);
+  assert.ok(Array.isArray(intelligenceInput.payload.input.pending_memory_candidates));
+  assert.ok(intelligenceInput.payload.input_metrics.char_count > 0);
 
-  const dreamId = dreamInput.payload.dream_input.dream_id;
-  const dreamResult = await request("/api/openclaw/dream-result", {
+  const intelligenceResult = await request("/api/memory/intelligence/result", {
     method: "POST",
     body: {
-      dream_id: dreamId,
       user_id: "smoke_user",
       day_id: dayId,
-      status: "completed",
+      mode: "manual_daily_review",
+      engine: "openclaw_agent",
       summary: "今天主人对重油反馈明确，后续可以更小心油腻负担。",
       memory_candidates: [
         {
@@ -648,32 +647,29 @@ try {
       ],
     },
   });
-  assert.equal(dreamResult.status, 200);
-  assert.equal(dreamResult.payload.ok, true);
-  assert.ok(dreamResult.payload.job.job_id.startsWith("dreamjob_"));
-  assert.equal(dreamResult.payload.job.dream_id, dreamId);
-  assert.equal(dreamResult.payload.job.accepted_memory_candidates.length, 1);
-  assert.equal(dreamResult.payload.job.accepted_memory_candidates[0].source, "openclaw_dream");
-  assert.equal(dreamResult.payload.job.accepted_memory_candidates[0].status, "pending");
-  assert.equal(dreamResult.payload.job.rejected_memory_candidates.length, 1);
-  assert.equal(dreamResult.payload.job.xiaowang_next_interaction_ideas.length, 1);
+  assert.equal(intelligenceResult.status, 200);
+  assert.equal(intelligenceResult.payload.ok, true);
+  assert.ok(intelligenceResult.payload.job.job_id.startsWith("mi_"));
+  assert.equal(intelligenceResult.payload.job.mode, "manual_daily_review");
+  assert.equal(intelligenceResult.payload.job.engine, "openclaw_agent");
+  assert.equal(intelligenceResult.payload.job.accepted_memory_candidates.length, 1);
+  assert.equal(intelligenceResult.payload.job.accepted_memory_candidates[0].source, "memory_intelligence");
+  assert.equal(intelligenceResult.payload.job.accepted_memory_candidates[0].status, "pending");
+  assert.equal(intelligenceResult.payload.job.accepted_memory_candidates[0].source_event.job_id, intelligenceResult.payload.job.job_id);
+  assert.equal(intelligenceResult.payload.job.rejected_memory_candidates.length, 1);
+  assert.equal(intelligenceResult.payload.job.xiaowang_next_interaction_ideas.length, 1);
 
-  const dreamJob = await request(`/api/openclaw/jobs/${encodeURIComponent(dreamResult.payload.job.job_id)}`);
-  assert.equal(dreamJob.status, 200);
-  assert.equal(dreamJob.payload.ok, true);
-  assert.equal(dreamJob.payload.job.dream_id, dreamId);
+  const intelligenceJobs = await request(`/api/memory/intelligence/jobs?user_id=smoke_user&day_id=${encodeURIComponent(dayId)}`);
+  assert.equal(intelligenceJobs.status, 200);
+  assert.equal(intelligenceJobs.payload.ok, true);
+  assert.ok(intelligenceJobs.payload.jobs.some((job) => job.job_id === intelligenceResult.payload.job.job_id));
 
-  const dreamJobByDream = await request(`/api/openclaw/jobs/by-dream/${encodeURIComponent(dreamId)}`);
-  assert.equal(dreamJobByDream.status, 200);
-  assert.equal(dreamJobByDream.payload.ok, true);
-  assert.equal(dreamJobByDream.payload.job.job_id, dreamResult.payload.job.job_id);
-
-  const candidatesAfterDream = await request("/api/memory/candidates?user_id=smoke_user&status=pending");
-  assert.equal(candidatesAfterDream.status, 200);
-  assert.equal(candidatesAfterDream.payload.ok, true);
-  assert.ok(candidatesAfterDream.payload.candidates.some((candidate) => (
-    candidate.source === "openclaw_dream"
-    && candidate.source_event.dream_id === dreamId
+  const candidatesAfterReview = await request("/api/memory/candidates?user_id=smoke_user&status=pending");
+  assert.equal(candidatesAfterReview.status, 200);
+  assert.equal(candidatesAfterReview.payload.ok, true);
+  assert.ok(candidatesAfterReview.payload.candidates.some((candidate) => (
+    candidate.source === "memory_intelligence"
+    && candidate.source_event.job_id === intelligenceResult.payload.job.job_id
     && candidate.statement === "主人对明显油腻的晚饭体验比较敏感。"
   )));
 

@@ -15,7 +15,6 @@ import {
 import { executeMemoryManageOperations } from "./memory-manager.mjs";
 import { requestOpenClawAgent, resetOpenClawGatewayClient } from "./openclaw-gateway-client.mjs";
 import { callArkChat } from "./ai/ark-provider.mjs";
-import { getLatestOpenClawJobForDay } from "./openclaw-store.mjs";
 import { buildDealSearchContext, buildMerchantCompareContext, buildMerchantIntelContext, resolveMerchantIdsFromText } from "./merchant-tools.mjs";
 
 const DEFAULT_USER_ID = "demo_weiyingru";
@@ -64,11 +63,11 @@ const SKILL_REGISTRY = [
     status: "available",
   },
   {
-    skill: "openclaw_dreaming",
+    skill: "memory_intelligence_review",
     title: "后台复盘",
-    description: "让小汪在后台整理 day context，生成候选记忆和下一次互动建议。",
+    description: "让小汪整理今日上下文，生成候选记忆和下一次互动建议。",
     trigger_examples: ["复盘今天", "整理今天的吃饭记录"],
-    action: "run_dreaming",
+    action: "run_memory_review",
     cta: "开始复盘",
     runtime: "openclaw_gateway_client",
     status: "available",
@@ -427,7 +426,7 @@ function frontendSkillCardContract() {
     "- 饭点商户卡：{skill:\"meal_swipe\", action:\"open_meal_session\", cta:\"开始滑卡\", payload:{session_id:\"meal_...\", entry_mode:\"offer_only|merchant_compare\"}}",
     "- 创建饭点商户卡时，调用 meal-swipe 脚本的 --source-message 必须保留用户最新原话，不要改写或删掉“按我之前/像上次/别再”等历史线索。",
     "- 汪记本：{skill:\"diary_review\", action:\"open_diary\", cta:\"打开汪记本\", payload:{}}",
-    "- 复盘：{skill:\"openclaw_dreaming\", action:\"run_dreaming\", cta:\"开始复盘\", payload:{day_id:\"day_...\"}}",
+    "- 复盘：{skill:\"memory_intelligence_review\", action:\"run_memory_review\", cta:\"开始复盘\", payload:{day_id:\"day_...\"}}",
     "- 其他证据卡优先放 skill_result_cards；只有需要打开产品页面时才放 skill_cards。",
   ].join("\n");
 }
@@ -713,7 +712,7 @@ function uniqueItems(items = []) {
   return [...new Set(items.filter(Boolean))];
 }
 
-function buildDiarySummary({mealSessions = [], memoryCandidates = [], confirmedPreferences = [], latestMemoryJob = null, latestDreamJob = null} = {}) {
+function buildDiarySummary({mealSessions = [], memoryCandidates = [], confirmedPreferences = [], latestMemoryJob = null} = {}) {
   if (latestMemoryJob?.summary) {
     return {
       source: "memory_intelligence",
@@ -724,14 +723,6 @@ function buildDiarySummary({mealSessions = [], memoryCandidates = [], confirmedP
       requested_engine: latestMemoryJob.requested_engine || "",
       fallback_reason: latestMemoryJob.fallback_reason || "",
       updated_at: latestMemoryJob.stored_at || "",
-    };
-  }
-  if (latestDreamJob?.summary) {
-    return {
-      source: "openclaw_dreaming",
-      text: `小汪复盘过啦：${latestDreamJob.summary}`,
-      next_prompt: (latestDreamJob.xiaowang_next_interaction_ideas || [])[0]?.text || "要不要让小汪根据今天的记录，继续帮主人挑一轮？",
-      dream_job_id: latestDreamJob.job_id,
     };
   }
   const finalizedCount = mealSessions.filter((item) => item.finalized_at || item.status === "finalized").length;
@@ -755,14 +746,14 @@ function buildDiarySummary({mealSessions = [], memoryCandidates = [], confirmedP
     next_prompt: memoryCandidates.length
       ? "主人，要不要先确认一条小汪觉得有用的偏好？"
       : "主人如果现在要吃饭，小汪可以结合今天的记录帮你继续挑。",
-    dream_job_id: "",
+    job_id: "",
   };
 }
 
 function buildWeeklySummary({latestWeekJob = null} = {}) {
   if (latestWeekJob?.summary) {
     return {
-      source: "memory_intelligence_week_dreaming",
+      source: "memory_intelligence_weekly_review",
       text: latestWeekJob.summary,
       job_id: latestWeekJob.job_id || "",
       updated_at: latestWeekJob.stored_at || "",
@@ -1190,13 +1181,15 @@ export async function handleXiaowangChat({body = {}, onProgress = null} = {}) {
   const currentContext = compactCurrentContext(body.current_context || body.currentContext || {});
   const promptMode = normalizeOpenClawPromptMode(body.openclaw_prompt_mode || body.openclawPromptMode || process.env.LIFEPILOT_XIAOWANG_OPENCLAW_PROMPT_MODE);
   const mealSessionsForSummary = (dayContext?.meal_sessions || []).map(xiaowangMealDiaryItem);
-  const latestDreamJob = await getLatestOpenClawJobForDay({userId, dayId});
+  const dailyMemoryJobs = await listMemoryIntelligenceJobs({userId, dayId, limit: 6});
+  const latestDailyMemoryJob = (dailyMemoryJobs.jobs || [])
+    .find((job) => job.mode === "manual_daily_review") || null;
   reportProgress({step: "context_ready", label: "已整理今日上下文，准备交给 OpenClaw 判断"});
   const diarySummary = buildDiarySummary({
     mealSessions: mealSessionsForSummary,
     memoryCandidates: pending.candidates || [],
     confirmedPreferences: preferences.preferences || [],
-    latestDreamJob,
+    latestMemoryJob: latestDailyMemoryJob,
   });
   let skillCards = [];
   let skillCalls = [];
@@ -1588,7 +1581,6 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date, include
     });
     if (profileJob?.profile) foodInsightProfile = profileJob.profile;
   }
-  const latestDreamJob = await getLatestOpenClawJobForDay({userId, dayId});
   const latestDailyMemoryJob = (intelligenceJobs.jobs || [])
     .find((job) => job.mode === "manual_daily_review") || null;
   const dailySummary = buildDiarySummary({
@@ -1596,7 +1588,6 @@ export async function readXiaowangDiary({userId = DEFAULT_USER_ID, date, include
     memoryCandidates,
     confirmedPreferences,
     latestMemoryJob: latestDailyMemoryJob,
-    latestDreamJob,
   });
   const weeklySummary = buildWeeklySummary({latestWeekJob: (weekJobs.jobs || [])[0] || null});
   return {

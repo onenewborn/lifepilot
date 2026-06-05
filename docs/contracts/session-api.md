@@ -12,10 +12,10 @@
 
 ```text
 meal_session = 入口需求 + 位置 + 方向滑卡 + 商家滑卡 + 最终选择 + 餐后反馈
-day_context  = 同一天的多个 meal_session + 小汪互动 + 推送互动 + 后台任务结果
+day_context  = 同一天的多个 meal_session + 小汪互动 + 推送互动 + 记忆加工任务结果
 ```
 
-OpenClaw dreaming 后续按 `day_context` 做后台复盘，但实时推荐主链路只操作当前 `meal_session`。
+Memory Intelligence 按 `day_context` 做手动日/周复盘，但实时推荐主链路只操作当前 `meal_session`。
 
 ## 归属
 
@@ -111,7 +111,7 @@ P5 第一刀只自动写 `active` 和 `finalized`；`abandoned/expired` 后续�
 
 ## Day Context
 
-`day_context` 是 OpenClaw dreaming 后续读取的日级索引，不是实时推荐状态机。
+`day_context` 是 Memory Intelligence 读取的日级索引，不是实时推荐状态机。
 
 它只保存当天各类活动的索引和摘要，不复制完整 session，避免状态双写不一致。
 
@@ -154,7 +154,7 @@ GET /api/day-context/:day_id
 
 如果不存在，返回 `day_context_not_found`。
 
-后续 OpenClaw dreaming 只能读取 `day_context` 和相关 session，输出 memory candidate 或 job result，不能直接修改 meal session。
+Memory Intelligence 只能读取 `day_context` 和相关 session，输出 memory candidate 或 job result，不能直接修改 meal session。
 
 ## 滑卡事件结构
 

@@ -178,13 +178,13 @@
         "session_id 使用 meal_* 前缀；session 增加 schema_version、day_id、meal_slot、status。",
         "start/swipe/advance/finalize 都会写入 data/runtime/meal_sessions。",
         "每次 meal_session 写入后会同步更新 data/runtime/day_contexts/<day_id>.json。",
-        "新增 GET /api/day-context/:day_id，供前端调试和未来 OpenClaw dreaming 读取日级索引。",
+        "新增 GET /api/day-context/:day_id，供前端调试和未来 Memory Intelligence 读取日级索引。",
         "P5 第三刀新增 memory candidates / confirmed preferences JSON store。",
         "POST /api/memory/post-meal-feedback 先用 deterministic rules 生成 pending candidates，不直接写长期记忆。",
         "确认 candidate 后才创建 active confirmed preference；candidate id 会回挂到 day_context.memory_candidate_ids。",
         "P5 第四刀已将 active confirmed preferences 接回 P2 方向小结和 P3 商户解释；pending candidates 不参与推荐上下文。",
         "前端刷新后应通过 GET /api/session/:id 恢复当前饭点流程。",
-        "day_context 和 OpenClaw dreaming 后续再接，不混入实时滑卡主链路。"
+        "day_context 和 Memory Intelligence 后续再接，不混入实时滑卡主链路。"
       ]
     },
     {
@@ -201,8 +201,8 @@
       "implementation_notes": [
         "已建立 OpenClaw memory bridge 的最小闭环：产品后端可以把上下文交给 OpenClaw，由 OpenClaw skill 处理长期记忆问题，并把处理结果返回给 LifePilot。",
         "已用多轮测试观察 OpenClaw runner 总耗时、agent 内部耗时和 gateway/启动/注入之间的差值。",
-        "已讨论并验证常驻 OpenClaw Gateway client 可以作为后续降延迟方向；dreaming 也可以走常驻 client，而不是每次冷启动。",
-        "已新增/整理 memory dreaming 相关系统文档和 skill 设计，dreaming 输入以 day_context 为主，不阻塞实时滑卡链路。",
+        "已讨论并验证常驻 OpenClaw Gateway client 可以作为后续降延迟方向；Memory Intelligence 也可以走常驻 client，而不是每次冷启动。",
+        "已新增/整理 memory intelligence review 相关系统文档和 skill 设计，Memory Intelligence 输入以 day_context 为主，不阻塞实时滑卡链路。",
         "Evermind 已接入测试：可以写入长期记忆、读取长期记忆，并让 AI 入口/推荐链路读取到记忆上下文。",
         "后续未完成：OpenClaw 原生消息渠道、tool/thinking 过程展示、OpenClaw trace 前端展示、完整问小汪 IM 入口。"
       ]

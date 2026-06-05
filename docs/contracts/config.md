@@ -76,11 +76,14 @@ LIFEPILOT_OPENCLAW_GATEWAY_URL=ws://127.0.0.1:18789
 LIFEPILOT_OPENCLAW_DIST_DIR=/usr/local/lib/node_modules/openclaw/dist
 ```
 
-`/api/openclaw/run-dream` 是本机实验触发接口：
+Memory Intelligence 通过统一入口触发：
 
-- `LIFEPILOT_OPENCLAW_LOCAL=false`：走默认 OpenClaw Gateway/sandbox，适合模拟真实 OpenClaw 隔离环境，但可能无法访问宿主机后端。
-- `LIFEPILOT_OPENCLAW_LOCAL=true`：走 `openclaw agent --local`。注意这不一定关闭工具 sandbox；如果 OpenClaw 配置仍是 `agents.defaults.sandbox.mode=all` 且网络为 `none`，skill 仍访问不到 `127.0.0.1`。
-- `LIFEPILOT_OPENCLAW_API_BASE` 是传给 OpenClaw skill 的 LifePilot 后端地址。`local=true` 时通常写 `http://127.0.0.1:4331`。
+```text
+POST /api/memory/intelligence/run
+```
+
+- `engine=local_policy`：后端快速规则复盘。
+- `engine=openclaw_agent`：通过常驻 OpenClaw Gateway client 调用 OpenClaw 做深度复盘。
 - `LIFEPILOT_OPENCLAW_GATEWAY_URL` 是 LifePilot 后端常驻 gateway client 连接的 WebSocket 地址。
 - `LIFEPILOT_OPENCLAW_DIST_DIR` 是 OpenClaw npm 包的 `dist` 目录。云服务器上全局安装 OpenClaw 后，通常需要设成 `npm root -g` 下的 `openclaw/dist`，例如 `/usr/local/lib/node_modules/openclaw/dist` 或 `/usr/lib/node_modules/openclaw/dist`。
 - 如果 OpenClaw 版本的内部文件名变化，可以用 `LIFEPILOT_OPENCLAW_CLIENT_FILE` 和 `LIFEPILOT_OPENCLAW_CLIENT_INFO_FILE` 指定 dist 里的文件名；极端情况下也可以用 `LIFEPILOT_OPENCLAW_CLIENT_MODULE` 和 `LIFEPILOT_OPENCLAW_CLIENT_INFO_MODULE` 指定完整模块路径。

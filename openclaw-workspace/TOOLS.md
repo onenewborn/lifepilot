@@ -131,8 +131,8 @@ lifepilot-memory-intelligence
 
 ```text
 instant_review   即时单条 observation 审查
-day_dreaming     日级复盘，旧 lifepilot-dreaming 兼容入口
-week_dreaming    跨天重复模式分析
+manual_daily_review   日级复盘
+manual_weekly_review  跨天重复模式分析
 profile_update   FCQ / 新奇接受度 / reward profile 汪记本画像
 ```
 

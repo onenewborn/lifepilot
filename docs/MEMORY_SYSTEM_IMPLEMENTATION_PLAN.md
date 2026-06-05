@@ -4,7 +4,7 @@
 
 ## 1. 目标
 
-把 LifePilot 记忆系统从当前的 OpenClaw Dreaming、Memory Intelligence、后端规则混合状态，收束成一个清晰、可实现、可向评委解释的架构：
+把 LifePilot 记忆系统从当前的 Memory Intelligence、OpenClaw 执行器、后端规则兜底混合状态，收束成一个清晰、可实现、可向评委解释的架构：
 
 ```text
 LifePilot 后端 memory service = 唯一记忆权威
@@ -27,24 +27,18 @@ Agent 负责理解和提出记忆
 当前复盘触发原则：
 
 ```text
-day_dreaming 和 week_dreaming 当前先做手动触发
+手动日复盘和手动周复盘 当前先做手动触发
 不在本阶段注册 cron、systemd timer 或 OpenClaw heartbeat
 等手动复盘、输入压缩、结果落库和前端展示全部稳定后，再单独设计定期触发
 ```
 
 ## 2. 当前问题
 
-### 2.1 系统概念半合并
+### 2.1 系统概念已收口
 
-现在代码里同时存在两套入口：
+现在代码里的记忆加工入口统一为：
 
 ```text
-OpenClaw Dreaming
-- /api/openclaw/dream-input
-- /api/openclaw/run-dream
-- /api/openclaw/dream-result
-- openclaw-workspace/skills/lifepilot-dreaming
-
 Memory Intelligence
 - /api/memory/intelligence/input
 - /api/memory/intelligence/run
@@ -53,7 +47,7 @@ Memory Intelligence
 - openclaw-workspace/skills/lifepilot-memory-intelligence
 ```
 
-产品概念上已经希望把 dreaming 归入 Memory Intelligence，但工程实现上还没有完全收口。
+工程上已收口为 Memory Intelligence；OpenClaw、Ark 和 local_policy 只是执行器。
 
 ### 2.2 后端仍有自然语言规则兜底
 
@@ -417,8 +411,8 @@ POST /api/memory/intelligence/run
 
 ```text
 instant_review
-day_dreaming
-week_dreaming
+manual_daily_review
+manual_weekly_review
 profile_update
 signal_refresh
 ```
@@ -443,7 +437,7 @@ weak hypothesis
 memory candidate
 ```
 
-### 8.2 day_dreaming
+### 8.2 manual_daily_review
 
 输入：当天 compact day context、compact sessions、observations、pending candidates、confirmed preferences。
 
@@ -463,7 +457,7 @@ next interaction ideas
 不做自动定时触发
 ```
 
-### 8.3 week_dreaming
+### 8.3 manual_weekly_review
 
 输入：近 7 天 summaries 和 compact sessions。
 
@@ -530,7 +524,7 @@ ark
 openclaw_agent
 ```
 
-深度复盘，适合 day/week dreaming 和汪记本复杂分析。
+深度复盘，适合 day/week 复盘 和汪记本复杂分析。
 
 ## 9. Recommendation Signals 设计
 
@@ -695,7 +689,7 @@ docs/MEMORY_SYSTEM_IMPLEMENTATION_PLAN.md
 
 ```text
 docs/contracts/memory.md
-docs/contracts/openclaw-dreaming.md
+docs/contracts/memory.md
 docs/PROJECT_STATE.md
 openclaw-workspace/TOOLS.md
 openclaw-workspace/BOOT.md
@@ -713,7 +707,7 @@ TOOLS.md 和 BOOT.md 是 OpenClaw 实际操作约束
 
 ```text
 docs/contracts/memory.md：更新权威账本和 API 合同
-docs/contracts/openclaw-dreaming.md：改为 Memory Intelligence day_dreaming 兼容入口说明
+docs/contracts/memory.md：改为 Memory Intelligence manual_daily_review 兼容入口说明
 docs/PROJECT_STATE.md：同步项目状态
 openclaw-workspace/TOOLS.md：只写已经存在且可调用的工具
 openclaw-workspace/BOOT.md：只写已经确定的运行边界
@@ -802,36 +796,30 @@ Phase 5 拆成：
 ```text
 Phase 5A：定义统一边界和可观测性
 Phase 5B：输入压缩和 prompt 可观测性
-Phase 5C：接口收拢和兼容入口变薄
+Phase 5C：移除旧兼容入口
 ```
 
-把：
-
-```text
-/api/openclaw/run-dream
-```
-
-变成兼容入口，内部转向：
+唯一入口：
 
 ```text
 /api/memory/intelligence/run
-mode=day_dreaming
-engine=openclaw_agent
 ```
+
+调用方通过 `mode` 选择手动日复盘、手动周复盘、即时复盘或画像刷新，通过 `engine` 选择 local_policy、Ark 或 OpenClaw 执行器。
 
 压缩输入：
 
 ```text
-day_dreaming <= 120k chars
-week_dreaming <= 120k chars
+manual_daily_review <= 120k chars
+manual_weekly_review <= 120k chars
 profile_update <= 80k chars
 ```
 
 本阶段只实现手动复盘：
 
 ```text
-汪记本按钮触发 day_dreaming
-后台/调试接口手动触发 week_dreaming
+汪记本按钮触发手动日复盘
+后台/调试接口手动触发手动周复盘
 不新增 cron 自动任务
 不新增 heartbeat 自动任务
 不新增 systemd timer
@@ -1007,7 +995,7 @@ OpenClaw skill 更新流程：
 ```text
 产品后端 memory service 是唯一记忆权威
 Memory Intelligence 是统一记忆加工系统
-OpenClaw Dreaming 收敛为 Memory Intelligence 的 day_dreaming engine
+Memory Intelligence 统一承接手动日复盘
 当天复盘和每周复盘当前只做手动触发
 定期 cron 触发暂不进入当前实施范围
 Agent 有记忆工具，但所有写入必须走后端 API

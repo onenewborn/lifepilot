@@ -1,6 +1,6 @@
 ---
 name: lifepilot-memory-intelligence
-description: Use this skill when LifePilot needs unified memory intelligence across instant review, day dreaming, week dreaming, or food insight profile updates. It analyzes LifePilot backend evidence and returns observations, weak hypotheses, pending memory candidates, profile updates, and Xiaowang interaction ideas without directly creating confirmed preferences or editing product runtime files.
+description: Use this skill when LifePilot needs unified memory intelligence across instant review, manual daily review, manual weekly review, or food insight profile updates. It analyzes LifePilot backend evidence and returns observations, weak hypotheses, pending memory candidates, profile updates, and Xiaowang interaction ideas without directly creating confirmed preferences or editing product runtime files.
 category: memory
 summary: LifePilot 统一记忆智能：即时审查、日/周复盘和食物选择画像。
 ---
@@ -9,15 +9,15 @@ summary: LifePilot 统一记忆智能：即时审查、日/周复盘和食物选
 
 ## 定位
 
-这是 LifePilot 统一记忆智能 skill。旧的 `lifepilot-dreaming` 是本 skill 的 `day_dreaming` 兼容入口。
+这是 LifePilot 统一记忆智能 skill。
 
 支持四种模式：
 
 ```text
-instant_review   单条或小窗口 evidence 的即时审查
-day_dreaming     日级复盘，合并当天饭点、小汪聊天和 observations
-week_dreaming    多日复盘，发现跨天重复模式
-profile_update   生成 FCQ / food neophobia / reward profile，供汪记本展示
+instant_review        单条或小窗口 evidence 的即时审查
+manual_daily_review   日级复盘，合并当天饭点、小汪聊天和 observations
+manual_weekly_review  多日复盘，发现跨天重复模式
+profile_update        生成 FCQ / food neophobia / reward profile，供汪记本展示
 ```
 
 ## 权威边界
@@ -55,9 +55,9 @@ LifePilot 产品后端仍是唯一权威账本。
 - 识别明确长期意图，例如“以后”“下次”“记住”“少推荐”“别推”。
 - 输出 pending candidate 时，必须保留 evidence 和可编辑 confirmation_text。
 
-不要在 `instant_review` 里发现重复模式；重复模式属于 day/week dreaming。
+不要在 `instant_review` 里发现重复模式；重复模式属于 daily/weekly review。
 
-### day_dreaming
+### manual_daily_review
 
 输入是一天的 day context、meal sessions、observations、pending candidates、confirmed preferences。
 
@@ -68,7 +68,7 @@ LifePilot 产品后端仍是唯一权威账本。
 - 生成小汪下一次互动建议。
 - 可顺手生成 food_insight_profile，但它只用于汪记本展示。
 
-### week_dreaming
+### manual_weekly_review
 
 输入是多日窗口。
 
