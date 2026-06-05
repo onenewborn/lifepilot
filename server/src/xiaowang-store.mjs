@@ -420,15 +420,24 @@ function normalizeOpenClawPromptMode(value = "") {
   return mode === "full" ? "full" : "workspace_minimal";
 }
 
-function buildOpenClawChatMessage({message, session, userId = DEFAULT_USER_ID, dayId = "", pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = [], currentContext = null, promptMode = "workspace_minimal"}) {
+function frontendSkillCardContract() {
+  return [
+    "前端可渲染的 skill_cards action 契约：",
+    "- 饭点泛需求：{skill:\"meal_swipe\", action:\"open_meal_entry\", cta:\"去确认需求\", payload:{prefill_text:\"用户原话\"}}",
+    "- 饭点商户卡：{skill:\"meal_swipe\", action:\"open_meal_session\", cta:\"开始滑卡\", payload:{session_id:\"meal_...\", entry_mode:\"offer_only|merchant_compare\"}}",
+    "- 汪记本：{skill:\"diary_review\", action:\"open_diary\", cta:\"打开汪记本\", payload:{}}",
+    "- 复盘：{skill:\"openclaw_dreaming\", action:\"run_dreaming\", cta:\"开始复盘\", payload:{day_id:\"day_...\"}}",
+    "- 其他证据卡优先放 skill_result_cards；只有需要打开产品页面时才放 skill_cards。",
+  ].join("\n");
+}
+
+function buildOpenClawChatMessage({message, session, userId = DEFAULT_USER_ID, dayId = "", pendingCount, preferenceCount, diarySummary = null, preferences = [], pending = [], currentContext = null, promptMode = "workspace_minimal", target = "openclaw"} = {}) {
   const context = recentChatContext(session.messages || []);
   const openClawApiBase = (process.env.LIFEPILOT_OPENCLAW_API_BASE || process.env.LIFEPILOT_PUBLIC_API_BASE || `http://${config.host}:${config.port}`).replace(/\/$/, "");
   const mode = normalizeOpenClawPromptMode(promptMode);
+  const includeRoutingDetails = target === "ark_fallback" || mode === "full";
   const fullSkills = SKILL_REGISTRY.map((skill) => (
     `- ${skill.skill}: ${skill.description} action=${skill.action} cta=${skill.cta} status=${skill.status}`
-  )).join("\n");
-  const minimalSkills = SKILL_REGISTRY.map((skill) => (
-    `- ${skill.skill}: title=${skill.title} action=${skill.action} cta=${skill.cta} status=${skill.status}`
   )).join("\n");
   const preferenceText = preferences.slice(0, 6)
     .map((item) => `- ${item.confirmation_text || item.statement}`)
@@ -437,25 +446,28 @@ function buildOpenClawChatMessage({message, session, userId = DEFAULT_USER_ID, d
     .map((item) => `- ${item.confirmation_text || item.statement}`)
     .join("\n") || "暂无";
   const baseLines = [
-    "你是 LifePilot 小汪。请按 OpenClaw workspace 的 SOUL.md 和 AGENTS.md 处理用户消息，并自行判断是否需要调用 LifePilot 独立 skills/tools。",
+    "你是 LifePilot 小汪。",
     "",
-    "用户正在和小汪聊天。你需要自己判断是否调用 LifePilot 产品 tool。",
+    includeRoutingDetails
+      ? "用户正在和小汪聊天。你需要判断是否调用 LifePilot 产品 skill。"
+      : "请按 OpenClaw workspace 的 SOUL.md、AGENTS.md、TOOLS.md 和 skills/*/SKILL.md 判断业务动作；本消息只提供动态上下文和前端输出契约。",
     "请只输出 JSON，不要加 Markdown，不要解释 JSON。",
     "",
     "JSON schema:",
     "{\"message\":\"小汪要发给用户的一段自然回复，最多 3 句。\",\"skill_calls\":[],\"skill_cards\":[],\"skill_result_cards\":[],\"memory_prompts\":[]}",
     "",
-    "可用 LifePilot tool ids（当前 JSON 兼容层仍使用 snake_case；OpenClaw skill 目录使用 hyphen 命名）:",
-    mode === "workspace_minimal" ? minimalSkills : fullSkills,
-    "",
     "不要暴露 gateway、runner、transport、schema、OpenClaw 等内部实现。",
-    "自然语言理解和目标选择由 OpenClaw 完成；LifePilot 后端只执行结构化工具和 API，不会帮你用规则猜用户意思。",
     `OpenClaw 工具调用 LifePilot API 时必须使用这个 api base：${openClawApiBase}`,
     `当前 user_id：${userId}`,
     `调用任何 LifePilot Python skill 脚本时，必须显式传入 --user-id ${userId}；不要使用 demo_weiyingru、示例占位符或空 user_id。`,
     `当前 day_id：${dayId || "暂无"}`,
+    "",
+    frontendSkillCardContract(),
   ];
   const fullRoutingLines = [
+    "可用 LifePilot tool ids（当前 JSON 兼容层仍使用 snake_case；OpenClaw skill 目录使用 hyphen 命名）:",
+    fullSkills,
+    "",
     "不要再通过二级 router skill 处理。",
     "记忆规则：自然语言理解和目标选择由你完成；LifePilot 后端只执行结构化 memory_manage，不会帮你用规则猜用户意思。",
     "如果用户只是表达可能的长期偏好、但没有明确要求确认/写入，用 memory_capture 生成待确认候选，并在 memory_prompts 中给出待确认文本。",
@@ -476,15 +488,13 @@ function buildOpenClawChatMessage({message, session, userId = DEFAULT_USER_ID, d
     "如果当前上下文里有 current_merchant，用户说“这家/这店”时优先使用它的 merchant_id。",
     "如果不需要 skill，skill_calls 返回空数组。",
   ];
-  const minimalLines = [
-    "请以 OpenClaw workspace 中的 AGENTS.md、TOOLS.md、MEMORY.md、SOUL.md 和 skills/*/SKILL.md 作为业务 skill 规则来源。",
-    "后端只提供当前上下文、输出 JSON 契约和 API base；饭点、商户、优惠、记忆等业务路由不要依赖本消息里的额外规则。",
-    "如果不需要 skill，skill_calls、skill_cards、skill_result_cards 和 memory_prompts 返回空数组。",
-  ];
   return [
     ...baseLines,
     "",
-    ...(mode === "workspace_minimal" ? minimalLines : fullRoutingLines),
+    ...(includeRoutingDetails ? fullRoutingLines : [
+      "如果不需要 skill，skill_calls、skill_cards、skill_result_cards 和 memory_prompts 返回空数组。",
+      "业务路由、脚本调用和产品边界以 OpenClaw workspace 文件为准，不在本消息重复。",
+    ]),
     "",
     `当前已确认偏好数量：${preferenceCount}`,
     `待确认记忆数量：${pendingCount}`,
@@ -505,7 +515,7 @@ async function getOpenClawChatReply({message, session, userId, dayId, pendingCou
     sessionId: `lifepilot-chat-${session.session_id}`,
     timeoutSeconds: process.env.LIFEPILOT_XIAOWANG_OPENCLAW_TIMEOUT_SECONDS || 90,
     idempotencyKey: `lifepilot-chat-${session.session_id}-${Date.now()}-${randomUUID().slice(0, 6)}`,
-    message: buildOpenClawChatMessage({message, session, userId, dayId, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}),
+    message: buildOpenClawChatMessage({message, session, userId, dayId, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode, target: "openclaw"}),
   });
   const text = parseOpenClawText(result);
   if (result?.status !== "ok" || !text) {
@@ -544,7 +554,7 @@ async function getArkChatReply({message, session, userId, dayId, pendingCount, p
       },
       {
         role: "user",
-        content: buildOpenClawChatMessage({message, session, userId, dayId, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode}),
+        content: buildOpenClawChatMessage({message, session, userId, dayId, pendingCount, preferenceCount, diarySummary, preferences, pending, currentContext, promptMode, target: "ark_fallback"}),
       },
     ],
   });
