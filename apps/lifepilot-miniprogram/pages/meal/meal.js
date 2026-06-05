@@ -30,6 +30,9 @@ function skillDisplayName(skill) {
 function buildChatDebugTrace(message) {
   if (!message || message.role === "user" || message.isThinking) return null;
   const lines = [];
+  const sourceLabel = message.mode === "local_greeting"
+    ? "本地快速回复"
+    : (message.mode === "openclaw_gateway_client" ? "Agent 调用" : "兜底处理");
   if (message.openclaw && message.openclaw.error) {
     lines.push(`OpenClaw 异常：${message.openclaw.error}`);
   }
@@ -1250,10 +1253,7 @@ Page({
                   openclaw: {
                     ...(item.openclaw || {}),
                     status: "running",
-                    progress: [
-                      "OpenClaw 仍在处理",
-                      `${elapsed}s：等待 skill 判断或工具结果`
-                    ]
+                    progress: []
                   }
                 })
               : item
