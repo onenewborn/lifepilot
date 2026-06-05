@@ -53,9 +53,10 @@ function parseAgentFinalText(result) {
 
 export function buildMemoryIntelligenceAgentPrompt(input = {}) {
   return [
-    "请使用 lifepilot-memory-intelligence skill 完成一次 LifePilot 记忆智能复盘。",
+    "请按 lifepilot-memory-intelligence 的规则完成一次 LifePilot 记忆智能复盘。",
     "",
     "你不是在聊天回复用户，而是在为 LifePilot 后端生成结构化 JSON。",
+    "不要调用工具，不要读取文件，不要访问 API；本 prompt 已包含完整输入和输出规则。",
     "",
     "必须遵守：",
     "1. 只根据下面的 memory_intelligence_input 分析，不直接读写产品 runtime 文件。",
