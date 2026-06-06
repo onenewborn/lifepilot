@@ -4,6 +4,14 @@ LifePilot 是一个把“今天吃什么”做成可协作 AI 体验的小程序
 
 我们的核心想法是：**吃饭推荐不应该只回答“附近有什么”，而应该逐渐理解“这个人为什么会这样选”。**
 
+## 产品介绍视频
+
+<video controls src="https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com/assets/final.mp4" style="width:100%; max-width:960px;">
+  你的浏览器不支持视频播放，请点击下方链接观看。
+</video>
+
+[观看 LifePilot 完整介绍视频](https://lifepilot-assets-1331466052.cos.ap-guangzhou.myqcloud.com/assets/final.mp4)
+
 ## 学术架构图
 
 ![LifePilot 学术架构图](docs/lifepilot-academic-architecture.svg)
