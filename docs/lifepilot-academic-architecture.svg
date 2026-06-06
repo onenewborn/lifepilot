@@ -1,0 +1,262 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1240" viewBox="0 0 1800 1240">
+  <defs>
+    <style>
+      .bg { fill: #fbfaf7; }
+      .title { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 34px; font-weight: 800; fill: #201815; }
+      .subtitle { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 18px; fill: #5d514b; }
+      .section-title { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 22px; font-weight: 800; fill: #2a211d; }
+      .label { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 17px; font-weight: 700; fill: #2f2521; }
+      .small { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 14px; fill: #5b514d; }
+      .tiny { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 12px; fill: #665c57; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px; fill: #4d4541; }
+      .layer { fill: #fffdf9; stroke: #d6c8bc; stroke-width: 2; rx: 18; }
+      .panel { fill: #fff8eb; stroke: #e4d0b8; stroke-width: 1.5; rx: 14; }
+      .panel2 { fill: #f7fbff; stroke: #b8d3e9; stroke-width: 1.5; rx: 14; }
+      .panel3 { fill: #f7fff9; stroke: #bddcc3; stroke-width: 1.5; rx: 14; }
+      .panel4 { fill: #fff5f2; stroke: #e8bdad; stroke-width: 1.5; rx: 14; }
+      .dark { fill: #2b1d17; stroke: #2b1d17; rx: 16; }
+      .dark-text { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 17px; font-weight: 800; fill: #fff7ea; }
+      .orange { fill: #ff6238; }
+      .orange-stroke { stroke: #ff6238; stroke-width: 3; fill: none; }
+      .blue-stroke { stroke: #4384bd; stroke-width: 3; fill: none; }
+      .green-stroke { stroke: #4f9b62; stroke-width: 3; fill: none; }
+      .brown-stroke { stroke: #6a4a3d; stroke-width: 3; fill: none; }
+      .dash { stroke-dasharray: 8 7; }
+      .arrow-label { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 13px; font-weight: 700; fill: #4e443f; }
+      .badge { fill: #ffffff; stroke: #ccb8a9; stroke-width: 1.5; rx: 11; }
+      .badge-text { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 13px; font-weight: 700; fill: #4a403b; }
+      .contrib { fill: #2b1d17; rx: 13; }
+      .contrib-text { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 14px; font-weight: 700; fill: #fff6ed; }
+    </style>
+    <marker id="arrow-orange" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#ff6238"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#4384bd"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#4f9b62"/>
+    </marker>
+    <marker id="arrow-brown" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#6a4a3d"/>
+    </marker>
+    <filter id="soft-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#5a3426" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <rect class="bg" width="1800" height="1240"/>
+
+  <text x="70" y="58" class="title">LifePilot 饭点定了：Human-in-the-loop Food Decision &amp; Memory Intelligence Architecture</text>
+  <text x="70" y="90" class="subtitle">从“问一句 AI 推荐”改造成“滑卡表达偏好 → 可解释排序 → 透明记忆确认 → 复盘生成下一轮推荐信号”的持续学习闭环</text>
+
+  <rect x="70" y="112" width="1660" height="92" class="layer" filter="url(#soft-shadow)"/>
+  <text x="96" y="146" class="section-title">Research Problem: 不是缺少附近商家信息，而是用户在当下饥饿、情绪、预算、距离与口味之间做决策困难</text>
+  <rect x="96" y="162" width="310" height="28" class="badge"/>
+  <text x="112" y="181" class="badge-text">模糊需求：我饿了但不知道吃什么</text>
+  <rect x="424" y="162" width="300" height="28" class="badge"/>
+  <text x="440" y="181" class="badge-text">不想接受 AI 的单点答案</text>
+  <rect x="742" y="162" width="320" height="28" class="badge"/>
+  <text x="758" y="181" class="badge-text">不想在冷冰冰列表里机械筛选</text>
+  <rect x="1080" y="162" width="312" height="28" class="badge"/>
+  <text x="1096" y="181" class="badge-text">希望个性化透明、可编辑、可拒绝</text>
+  <rect x="1410" y="162" width="284" height="28" class="badge"/>
+  <text x="1426" y="181" class="badge-text">每次选择都能帮助下一次推荐</text>
+
+  <!-- User experience layer -->
+  <rect x="70" y="230" width="1660" height="214" class="layer"/>
+  <text x="96" y="263" class="section-title">A. User Experience Layer：把工具问题变成内容化、可反馈的决策过程</text>
+
+  <rect x="100" y="288" width="250" height="110" class="panel" filter="url(#soft-shadow)"/>
+  <text x="122" y="318" class="label">问小汪 Chat</text>
+  <text x="122" y="346" class="small">自然语言输入当下状态</text>
+  <text x="122" y="369" class="small">位置、预算、人数、口味</text>
+  <text x="122" y="392" class="mono">mode: openclaw_gateway_client</text>
+
+  <rect x="390" y="288" width="250" height="110" class="panel" filter="url(#soft-shadow)"/>
+  <text x="412" y="318" class="label">饭点方向滑卡</text>
+  <text x="412" y="346" class="small">热乎下饭 / 省心快餐</text>
+  <text x="412" y="369" class="small">清爽轻负担 / 想吃辣</text>
+  <text x="412" y="392" class="mono">keep / dislike / dwell</text>
+
+  <rect x="680" y="288" width="250" height="110" class="panel" filter="url(#soft-shadow)"/>
+  <text x="702" y="318" class="label">商户与优惠滑卡</text>
+  <text x="702" y="346" class="small">视频、图片、套餐、距离</text>
+  <text x="702" y="369" class="small">AI 推荐语解释适配原因</text>
+  <text x="702" y="392" class="mono">offer cards + explanation</text>
+
+  <rect x="970" y="288" width="250" height="110" class="panel" filter="url(#soft-shadow)"/>
+  <text x="992" y="318" class="label">最终确认</text>
+  <text x="992" y="346" class="small">用户保留最终决策权</text>
+  <text x="992" y="369" class="small">不是完全外包给模型</text>
+  <text x="992" y="392" class="mono">finalize meal_session</text>
+
+  <rect x="1260" y="288" width="250" height="110" class="panel" filter="url(#soft-shadow)"/>
+  <text x="1282" y="318" class="label">小汪日记本</text>
+  <text x="1282" y="346" class="small">今日小结、本周小结</text>
+  <text x="1282" y="369" class="small">食物画像、待确认记忆</text>
+  <text x="1282" y="392" class="mono">transparent memory UI</text>
+
+  <rect x="1538" y="288" width="162" height="110" class="dark" filter="url(#soft-shadow)"/>
+  <text x="1562" y="322" class="dark-text">用户控制权</text>
+  <text x="1558" y="352" class="small" fill="#fff4e8">保留 / 放弃</text>
+  <text x="1558" y="374" class="small" fill="#fff4e8">确认 / 编辑</text>
+  <text x="1558" y="396" class="small" fill="#fff4e8">拒绝记忆</text>
+
+  <path d="M350 343 C365 343 374 343 390 343" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+  <path d="M640 343 C655 343 664 343 680 343" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+  <path d="M930 343 C945 343 954 343 970 343" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+  <path d="M1220 343 C1235 343 1244 343 1260 343" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+  <path d="M1510 343 C1522 343 1528 343 1538 343" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+
+  <!-- Backend and agent runtime -->
+  <rect x="70" y="476" width="800" height="330" class="layer"/>
+  <text x="96" y="510" class="section-title">B. Product Runtime：稳定执行过滤、排序、会话与记忆账本</text>
+
+  <rect x="100" y="535" width="225" height="94" class="panel2"/>
+  <text x="120" y="562" class="label">Session Ledger</text>
+  <text x="120" y="589" class="small">入口需求、方向事件</text>
+  <text x="120" y="612" class="small">商户滑卡、最终确认</text>
+
+  <rect x="355" y="535" width="225" height="94" class="panel2"/>
+  <text x="375" y="562" class="label">Hard Constraints</text>
+  <text x="375" y="589" class="small">菜系、预算、人数</text>
+  <text x="375" y="612" class="small">辣度、距离、放弃方向</text>
+
+  <rect x="610" y="535" width="225" height="94" class="panel2"/>
+  <text x="630" y="562" class="label">Feature Scoring</text>
+  <text x="630" y="589" class="small">current_need / swipe</text>
+  <text x="630" y="612" class="small">memory / merchant_feedback</text>
+
+  <rect x="100" y="660" width="225" height="94" class="panel2"/>
+  <text x="120" y="687" class="label">Offer Explanation</text>
+  <text x="120" y="714" class="small">rank / score / top features</text>
+  <text x="120" y="737" class="small">Ark 生成差异化优缺点</text>
+
+  <rect x="355" y="660" width="225" height="94" class="panel2"/>
+  <text x="375" y="687" class="label">Memory CRUD</text>
+  <text x="375" y="714" class="small">observations / candidates</text>
+  <text x="375" y="737" class="small">confirmed preferences</text>
+
+  <rect x="610" y="660" width="225" height="94" class="panel2"/>
+  <text x="630" y="687" class="label">Runtime JSON Stores</text>
+  <text x="630" y="714" class="small">meal_sessions / day_contexts</text>
+  <text x="630" y="737" class="small">memory users / jobs / signals</text>
+
+  <path d="M325 582 C338 582 342 582 355 582" class="blue-stroke" marker-end="url(#arrow-blue)"/>
+  <path d="M580 582 C593 582 597 582 610 582" class="blue-stroke" marker-end="url(#arrow-blue)"/>
+  <path d="M722 629 C710 646 685 654 650 660" class="blue-stroke" marker-end="url(#arrow-blue)"/>
+  <path d="M467 629 C455 646 430 654 395 660" class="blue-stroke" marker-end="url(#arrow-blue)"/>
+
+  <rect x="930" y="476" width="800" height="330" class="layer"/>
+  <text x="956" y="510" class="section-title">C. Agent Runtime：OpenClaw workspace 负责人格、技能与自然语言协作</text>
+
+  <rect x="960" y="535" width="225" height="94" class="panel3"/>
+  <text x="980" y="562" class="label">小汪人格与规则</text>
+  <text x="980" y="589" class="small">AGENTS / SOUL / MEMORY</text>
+  <text x="980" y="612" class="small">产品边界与输出契约</text>
+
+  <rect x="1215" y="535" width="225" height="94" class="panel3"/>
+  <text x="1235" y="562" class="label">OpenClaw Skills</text>
+  <text x="1235" y="589" class="small">meal-swipe / memory-search</text>
+  <text x="1235" y="612" class="small">diary-review / merchant-intel</text>
+
+  <rect x="1470" y="535" width="225" height="94" class="panel3"/>
+  <text x="1490" y="562" class="label">Gateway Client</text>
+  <text x="1490" y="589" class="small">常驻 agent runtime</text>
+  <text x="1490" y="612" class="small">通过后端 API 读写上下文</text>
+
+  <rect x="960" y="660" width="225" height="94" class="panel3"/>
+  <text x="980" y="687" class="label">Memory Tools</text>
+  <text x="980" y="714" class="small">search / capture / manage</text>
+  <text x="980" y="737" class="small">读相关记忆，不直接改账本</text>
+
+  <rect x="1215" y="660" width="225" height="94" class="panel3"/>
+  <text x="1235" y="687" class="label">Memory Intelligence</text>
+  <text x="1235" y="714" class="small">manual_daily / weekly_review</text>
+  <text x="1235" y="737" class="small">借鉴 Claude Code dreaming 思想</text>
+
+  <rect x="1470" y="660" width="225" height="94" class="panel3"/>
+  <text x="1490" y="687" class="label">Ark / LLM Engines</text>
+  <text x="1490" y="714" class="small">商户解释、语义解析</text>
+  <text x="1490" y="737" class="small">失败时 local_policy 兜底</text>
+
+  <path d="M1185 582 C1198 582 1202 582 1215 582" class="green-stroke" marker-end="url(#arrow-green)"/>
+  <path d="M1440 582 C1453 582 1457 582 1470 582" class="green-stroke" marker-end="url(#arrow-green)"/>
+  <path d="M1327 629 C1315 646 1290 654 1255 660" class="green-stroke" marker-end="url(#arrow-green)"/>
+  <path d="M1440 707 C1453 707 1457 707 1470 707" class="green-stroke" marker-end="url(#arrow-green)"/>
+
+  <path d="M870 645 C900 645 900 645 930 645" class="brown-stroke dash" marker-end="url(#arrow-brown)"/>
+  <text x="884" y="626" class="arrow-label">API contract boundary</text>
+
+  <!-- Memory transformation layer -->
+  <rect x="70" y="838" width="1660" height="244" class="layer"/>
+  <text x="96" y="872" class="section-title">D. Memory Intelligence Pipeline：从行为证据到可执行推荐信号，而不是把聊天记录堆进 prompt</text>
+
+  <rect x="100" y="905" width="190" height="94" class="panel4"/>
+  <text x="120" y="932" class="label">Evidence</text>
+  <text x="120" y="959" class="small">聊天、滑卡、停留</text>
+  <text x="120" y="982" class="small">确认、反馈、day context</text>
+
+  <rect x="330" y="905" width="190" height="94" class="panel4"/>
+  <text x="350" y="932" class="label">Observations</text>
+  <text x="350" y="959" class="small">短期观察</text>
+  <text x="350" y="982" class="mono">memory_observations</text>
+
+  <rect x="560" y="905" width="190" height="94" class="panel4"/>
+  <text x="580" y="932" class="label">Hypotheses</text>
+  <text x="580" y="959" class="small">弱假设，不直接生效</text>
+  <text x="580" y="982" class="mono">weak_hypotheses</text>
+
+  <rect x="790" y="905" width="190" height="94" class="panel4"/>
+  <text x="810" y="932" class="label">Candidates</text>
+  <text x="810" y="959" class="small">待确认记忆</text>
+  <text x="810" y="982" class="mono">memory_candidates</text>
+
+  <rect x="1020" y="905" width="190" height="94" class="panel4"/>
+  <text x="1040" y="932" class="label">User Consent</text>
+  <text x="1040" y="959" class="small">确认 / 编辑 / 拒绝</text>
+  <text x="1040" y="982" class="small">透明记忆治理</text>
+
+  <rect x="1250" y="905" width="190" height="94" class="panel4"/>
+  <text x="1270" y="932" class="label">Preferences</text>
+  <text x="1270" y="959" class="small">长期偏好与画像</text>
+  <text x="1270" y="982" class="mono">confirmed_preferences</text>
+
+  <rect x="1480" y="905" width="190" height="94" class="panel4"/>
+  <text x="1500" y="932" class="label">Signals</text>
+  <text x="1500" y="959" class="small">机器可执行特征</text>
+  <text x="1500" y="982" class="mono">recommendation_signals</text>
+
+  <path d="M290 952 C307 952 313 952 330 952" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+  <path d="M520 952 C537 952 543 952 560 952" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+  <path d="M750 952 C767 952 773 952 790 952" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+  <path d="M980 952 C997 952 1003 952 1020 952" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+  <path d="M1210 952 C1227 952 1233 952 1250 952" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+  <path d="M1440 952 C1457 952 1463 952 1480 952" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+
+  <path d="M1575 905 C1540 825 1240 800 720 806 C410 810 270 738 252 630" class="green-stroke dash" marker-end="url(#arrow-green)"/>
+  <text x="1135" y="815" class="arrow-label">signals feed next ranking / explanation</text>
+
+  <!-- Contributions -->
+  <rect x="70" y="1112" width="1660" height="86" class="layer"/>
+  <text x="96" y="1145" class="section-title">Academic-style Contributions</text>
+  <rect x="420" y="1126" width="270" height="48" class="contrib"/>
+  <text x="438" y="1156" class="contrib-text">C1: Human-in-the-loop Swipe Decision</text>
+  <rect x="710" y="1126" width="270" height="48" class="contrib"/>
+  <text x="728" y="1156" class="contrib-text">C2: Content-native Local-life Recommendation</text>
+  <rect x="1000" y="1126" width="270" height="48" class="contrib"/>
+  <text x="1018" y="1156" class="contrib-text">C3: Transparent Memory Governance</text>
+  <rect x="1290" y="1126" width="300" height="48" class="contrib"/>
+  <text x="1308" y="1156" class="contrib-text">C4: Dual Runtime Product-Agent Architecture</text>
+
+  <!-- Legend -->
+  <line x1="96" y1="1181" x2="138" y2="1181" class="orange-stroke" marker-end="url(#arrow-orange)"/>
+  <text x="150" y="1186" class="tiny">user decision / memory transformation flow</text>
+  <line x1="405" y1="1181" x2="447" y2="1181" class="blue-stroke" marker-end="url(#arrow-blue)"/>
+  <text x="459" y="1186" class="tiny">product runtime computation</text>
+  <line x1="680" y1="1181" x2="722" y2="1181" class="green-stroke" marker-end="url(#arrow-green)"/>
+  <text x="734" y="1186" class="tiny">agent / memory feedback loop</text>
+  <line x1="975" y1="1181" x2="1017" y2="1181" class="brown-stroke dash" marker-end="url(#arrow-brown)"/>
+  <text x="1029" y="1186" class="tiny">API boundary, workspace never mutates runtime files directly</text>
+</svg>
