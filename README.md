@@ -173,18 +173,196 @@ openclaw-workspace/             云端 OpenClaw agent workspace 干净快照
 - Agent runtime 负责小汪人格、OpenClaw skills、记忆复盘、后台任务和自然语言协作。
 - OpenClaw 通过后端 API 读取和提交产品上下文，不直接修改产品数据库运行态。
 
-## 云端部署状态
+## 如何体验与部署
 
-当前比赛调试为了绕过域名公网拦截，前端临时使用：
+### 方式一：评审直接体验云端服务
+
+如果只是评审或演示，不需要重新部署后端和 OpenClaw。当前云端后端已经部署在：
 
 ```text
 http://110.42.208.125
 ```
 
-域名 `api.lifepilot-xiaowang.cn` 已配置到服务器并由 Caddy 管理 HTTPS，但公网访问目前会被腾讯云/DNSPod 侧拦截。等备案或域名拦截解除后，可以切回：
+健康检查：
 
 ```text
-https://api.lifepilot-xiaowang.cn
+http://110.42.208.125/api/health
+```
+
+前端是微信小程序源码，不是 Web 页面。评审推荐使用微信开发者工具导入：
+
+```text
+apps/lifepilot-miniprogram
+```
+
+导入时可以选择测试号或无 AppID，并在微信开发者工具本地设置里勾选：
+
+```text
+不校验合法域名、web-view、TLS 版本以及 HTTPS 证书
+```
+
+当前小程序默认 API 模式在：
+
+```text
+apps/lifepilot-miniprogram/config/api.js
+```
+
+比赛调试阶段默认：
+
+```js
+const API_MODE = "cloud";
+const CLOUD_API_BASE_URL = "http://110.42.208.125";
+```
+
+域名 `api.lifepilot-xiaowang.cn` 已配置到服务器并由 Caddy 管理 HTTPS，但因为备案和小程序合法域名限制，比赛前最稳的是使用上面的云服务器 IP，并在开发者工具里关闭合法域名校验。
+
+### 方式二：只部署产品后端
+
+这种方式可以跑饭点 session、商户推荐、记忆账本、汪记本和 Ark 解释，但如果没有 OpenClaw gateway，问小汪的完整 agent 能力会受限或走 fallback。
+
+```bash
+git clone https://github.com/onenewborn/lifepilot.git
+cd lifepilot
+npm install
+cp .env.example .env.local
+```
+
+在 `.env.local` 里至少填写：
+
+```bash
+LIFEPILOT_AI_PROVIDER=ark
+ARK_API_KEY=你的火山方舟 API Key
+ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+ARK_MODEL=doubao-seed-1-6-flash-250828
+
+# 可选：天气/地图上下文
+LIFEPILOT_AMAP_KEY=你的高德 Key
+
+# 可选：运行态目录；不填则默认 data/runtime
+LIFEPILOT_RUNTIME_ROOT=/absolute/path/to/lifepilot-runtime
+```
+
+启动后端：
+
+```bash
+npm run check
+npm start
+```
+
+默认监听：
+
+```text
+http://127.0.0.1:4331
+```
+
+如果部署到服务器，常见做法是：
+
+```bash
+HOST=0.0.0.0 PORT=4331 npm start
+```
+
+然后把小程序里的：
+
+```text
+apps/lifepilot-miniprogram/config/api.js
+```
+
+改成你的服务器地址，例如：
+
+```js
+const CLOUD_API_BASE_URL = "http://你的服务器 IP:4331";
+const API_MODE = "cloud";
+```
+
+### 方式三：完整迁移部署 OpenClaw + LifePilot
+
+完整能力需要两部分同时运行：
+
+```text
+LifePilot 产品后端
+OpenClaw agent runtime
+```
+
+本仓库里的：
+
+```text
+openclaw-workspace/
+```
+
+是 LifePilot 的 OpenClaw workspace 快照。迁移时，把它作为 OpenClaw 的 workspace 使用。最直接的方式是备份原 workspace，然后用本仓库目录替换：
+
+```bash
+# 示例：请按自己的 OpenClaw 安装位置调整路径
+mv ~/.openclaw/workspace ~/.openclaw/workspace.backup
+cp -R /path/to/lifepilot/openclaw-workspace ~/.openclaw/workspace
+```
+
+OpenClaw 里模型选择：
+
+```text
+provider/model: kimi/kimi-for-coding
+```
+
+也就是 Kimi 的 coding 模型。这个配置在 OpenClaw 自身的模型设置里完成，不在 LifePilot 后端代码里硬编码。
+
+OpenClaw 工具需要能访问 LifePilot 后端。建议在 OpenClaw 运行环境中设置：
+
+```bash
+export LIFEPILOT_API_BASE=http://127.0.0.1:4331
+export LIFEPILOT_OPENCLAW_API_BASE=http://127.0.0.1:4331
+```
+
+如果 OpenClaw 和 LifePilot 后端不在同一台机器，就改成公网地址：
+
+```bash
+export LIFEPILOT_API_BASE=http://你的后端服务器地址
+export LIFEPILOT_OPENCLAW_API_BASE=http://你的后端服务器地址
+```
+
+LifePilot 后端连接 OpenClaw gateway 时，需要 `.env.local` 里配置：
+
+```bash
+LIFEPILOT_OPENCLAW_GATEWAY_URL=ws://127.0.0.1:18789
+LIFEPILOT_OPENCLAW_API_BASE=http://127.0.0.1:4331
+LIFEPILOT_PUBLIC_API_BASE=http://127.0.0.1:4331
+LIFEPILOT_XIAOWANG_OPENCLAW_TIMEOUT_SECONDS=45
+LIFEPILOT_XIAOWANG_OPENCLAW_THINKING=low
+```
+
+如果后端无法自动找到 OpenClaw 的 dist 目录，还需要指定：
+
+```bash
+LIFEPILOT_OPENCLAW_DIST_DIR=/path/to/openclaw/dist
+```
+
+完整部署完成后，验证：
+
+```bash
+curl http://127.0.0.1:4331/api/health
+curl http://127.0.0.1:4331/api/xiaowang/skills
+curl -X POST http://127.0.0.1:4331/api/xiaowang/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"demo_weiyingru","message":"川菜有什么推荐吗"}'
+```
+
+预期问小汪返回里应包含：
+
+```text
+mode: openclaw_gateway_client
+skill_cards: meal_swipe / open_meal_session
+```
+
+### 哪些能力不依赖重新部署
+
+如果使用我们当前云端服务，评审方不需要配置 API key，也不需要安装 OpenClaw，只需要用微信开发者工具打开小程序源码即可。
+
+如果评审方要完全复现部署，则需要准备：
+
+```text
+火山方舟 Ark API Key
+可选的高德地图 Key
+OpenClaw runtime
+Kimi 模型配置：kimi/kimi-for-coding
 ```
 
 ## 本地检查
@@ -196,14 +374,6 @@ npm run smoke:deals
 npm run smoke:memory
 npm run smoke:memory-intelligence
 ```
-
-小程序入口：
-
-```text
-apps/lifepilot-miniprogram/
-```
-
-开发者工具调试临时 IP 入口时，需要勾选“不校验合法域名、web-view、TLS 版本以及 HTTPS 证书”。
 
 ## 交付重点
 
