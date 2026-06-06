@@ -12,6 +12,25 @@ LifePilot 不把“今天吃什么”做成普通商户列表，而是做成一�
 - Memory Intelligence：可从汪记本手动触发今日复盘和本周复盘。
 - 媒体体验：方向视频、商户视频、多图 gallery、视频错误兜底和 COS 资产加载。
 
+## 体验闭环
+
+小程序主线不是“打开页面看商户”，而是一条完整的饭点决策闭环：
+
+```text
+问小汪表达状态
+-> 生成饭点方向
+-> 用户滑卡保留/放弃
+-> 进入商户与优惠滑卡
+-> 小汪解释优缺点
+-> 用户最终确认
+-> 汪记本复盘与记忆确认
+```
+
+这条闭环让前端承担两个核心价值：
+
+- **把选择做轻**：滑卡比填写偏好表更自然，也比反复追问 AI 更低成本。
+- **把个性化做透明**：汪记本展示系统如何理解用户，而不是悄悄形成黑盒画像。
+
 ## 本地调试
 
 1. 在微信开发者工具里导入这个目录：`apps/lifepilot-miniprogram`。
@@ -38,6 +57,18 @@ LifePilot 不把“今天吃什么”做成普通商户列表，而是做成一�
 - `config/`：后端地址和 COS 资产地址。
 - `data/`：小程序端轻量 manifest。
 - `docs/`：小程序工程内的运行配置和调试说明。
+
+## 关键文件
+
+- `app.json`：小程序页面注册和全局配置。
+- `config/api.js`：切换 `local / lan / cloud / tunnel` 后端地址。
+- `config/assets.js`：COS 资产 URL 拼接。
+- `pages/meal/meal.js`：主页面状态、聊天轮询、滑卡推进、复盘触发。
+- `pages/meal/meal.wxml`：问小汪、挑饭、汪记本三段 UI 结构。
+- `pages/meal/meal.wxss`：卡片、聊天、底部导航、汪记本样式。
+- `services/session-api.js`：饭点 session 和滑卡接口。
+- `services/xiaowang-api.js`：问小汪、历史会话、汪记本、Memory Intelligence。
+- `utils/card-normalizer.js`：后端卡片字段到 UI 字段的适配层。
 
 ## 维护提醒
 

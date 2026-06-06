@@ -173,6 +173,42 @@ openclaw-workspace/             云端 OpenClaw agent workspace 干净快照
 - Agent runtime 负责小汪人格、OpenClaw skills、记忆复盘、后台任务和自然语言协作。
 - OpenClaw 通过后端 API 读取和提交产品上下文，不直接修改产品数据库运行态。
 
+## 代码目录与服务地图
+
+这不是一个只有前端和后端的普通小程序仓库。LifePilot 的代码被拆成五类运行责任：小程序体验、产品后端、结构化数据、OpenClaw agent workspace、验证与交付文档。
+
+| 目录 | 支持的服务/能力 | 为什么重要 |
+| --- | --- | --- |
+| `apps/` | 用户端应用入口，目前正式应用是微信小程序 `lifepilot-miniprogram` | 承载问小汪、挑饭、汪记本，是评审和用户直接体验产品创新的地方 |
+| `apps/lifepilot-miniprogram/pages/meal/` | 小程序主页面，包含聊天、滑卡、商户详情、复盘和记忆展示 | 把“AI 问答”变成“可参与的饭点决策过程” |
+| `apps/lifepilot-miniprogram/services/` | 小程序访问后端的 API 封装 | 让页面只管交互，饭点状态、推荐和记忆权威都回到后端 |
+| `server/` | Node.js 产品后端 | 负责 session、推荐排序、Memory Intelligence、OpenClaw gateway、后台管理和证据 API |
+| `server/src/app.mjs` | HTTP 路由总入口 | 统一暴露 `/api/session/*`、`/api/xiaowang/*`、`/api/memory/*`、`/api/tools/*` |
+| `server/src/session-store.mjs` | 饭点 session 和 day context | 记录一次饭点决策过程，让滑卡行为可以被复盘和记忆系统使用 |
+| `server/src/offer-cards.mjs` | 方向卡、商户卡、硬过滤和排序 | 实现“先过滤硬约束，再对候选做可解释打分”的核心推荐逻辑 |
+| `server/src/xiaowang-store.mjs` | 问小汪聊天、skill 卡、汪记本聚合 | 把 OpenClaw agent 结果转成小程序可展示的聊天和卡片 |
+| `server/src/memory-*.mjs` | observations、候选记忆、长期偏好、Memory Intelligence jobs | 让个性化不是黑盒 prompt，而是可确认、可审计、可参与排序的结构化账本 |
+| `server/src/ai/` | Ark/Doubao provider 和 prompt | 负责入口解析、商户解释和推荐语，但不直接拥有业务状态 |
+| `server/public/admin/` | 浏览器后台管理和 Memory Pipeline 调试 | 支持维护商户、offer、deal、口碑和记忆流转，方便演示前校准数据 |
+| `data/synthetic_food_futian/` | 福田饭点方向、商户、offer、deal seed | 为滑卡推荐提供结构化候选，支撑“有证据的 AI 推荐” |
+| `data/merchant_reputation/` | 商户口碑证据 seed | 支持小汪解释“这家为什么稳、哪里要注意” |
+| `data/runtime/` | 本地运行态：session、chat、memory jobs、用户记忆 | 不提交 Git；部署时由服务器生成和维护 |
+| `assets/` | 本地资产占位和后台上传映射 | 正式媒体多走 COS，本目录保留仓库侧资产结构 |
+| `openclaw-workspace/` | OpenClaw agent workspace 快照 | 包含小汪人格、工具规则、skills、Memory Intelligence 规则；完整迁移时可直接替换 OpenClaw workspace |
+| `openclaw-workspace/skills/` | 小汪可调用的工具能力 | 让 agent 能发起滑卡、查记忆、管理记忆、读汪记本、查商户和优惠 |
+| `docs/` | 架构图、交接、合同、实施计划和归档 | 解释前端、后端、数据、agent、记忆系统之间的边界 |
+| `tests/` | smoke tests 和 prompt eval | 快速验证饭点主链路、推荐排序、Memory Intelligence、后台和商户证据没有断 |
+| `.env.example` | 部署环境变量模板 | 说明 Ark、高德、OpenClaw gateway、运行态目录等配置在哪里填 |
+
+关键边界：
+
+```text
+小程序不直接写推荐结果或长期记忆
+OpenClaw 不直接修改产品 runtime 文件
+后端是 session、商户证据、记忆账本和推荐排序的权威
+Memory Intelligence 生成候选和 signals，用户确认后才成为长期偏好
+```
+
 ## 如何体验与部署
 
 ### 方式一：评审直接体验云端服务
