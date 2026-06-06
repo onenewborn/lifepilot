@@ -10,6 +10,7 @@
       .small { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 16px; fill: #645851; }
       .badge-text { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 17px; font-weight: 700; fill: #4c403a; }
       .caption { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 16px; font-weight: 700; fill: #5a4d46; }
+      .boundary { font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 13px; font-weight: 700; fill: #6a5a51; }
       .panel { fill: #fffdf9; stroke: #d6c7ba; stroke-width: 2; rx: 24; }
       .problem { fill: #fff7ea; stroke: #e0c3a4; stroke-width: 2; rx: 18; }
       .ux { fill: #fff4ee; stroke: #efbaa2; stroke-width: 2; rx: 20; }
@@ -154,7 +155,8 @@
   <path d="M1442 712 L1500 742" class="arrow-green" marker-end="url(#arrow-green)"/>
 
   <path d="M862 680 L938 680" class="arrow-soft" marker-end="url(#arrow-soft)"/>
-  <text x="868" y="655" class="caption">API 边界：智能体不直接改运行数据</text>
+  <text x="884" y="736" class="boundary">API 边界</text>
+  <text x="842" y="756" class="boundary">不直接改运行数据</text>
 
   <!-- Memory pipeline -->
   <rect x="72" y="854" width="1656" height="226" class="panel"/>
